@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  COLLABORATOR
+  CLIENT
+}
+
+enum DocumentType {
+  CONTRACT
+  VACATION_REQUEST
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING_SIGNATURE
+  SIGNED
+  ARCHIVED
+}
+
+enum VacationStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  DOCUMENT_GENERATED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedDocuments    Document[] @relation("DocumentOwner")
+  uploadedDocuments Document[] @relation("DocumentUploader")
+  signatures        Signature[]
+  vacationRequests  VacationRequest[] @relation("VacationCollaborator")
+  reviewedVacations VacationRequest[] @relation("VacationReviewer")
+}
+
+model Document {
+  id               String         @id @default(cuid())
+  title            String
+  type             DocumentType
+  status           DocumentStatus @default(PENDING_SIGNATURE)
+  filePath         String
+  fileName         String
+  mimeType         String
+  fileSize         Int
+  ownerUserId      String
+  uploadedByUserId String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  owner           User             @relation("DocumentOwner", fields: [ownerUserId], references: [id])
+  uploadedBy      User             @relation("DocumentUploader", fields: [uploadedByUserId], references: [id])
+  signature       Signature?
+  vacationRequest VacationRequest?
+
+  @@index([ownerUserId])
+}
+
+model Signature {
+  id         String   @id @default(cuid())
+  documentId String   @unique
+  userId     String
+  signerName String
+  signedAt   DateTime @default(now())
+  ipAddress  String
+  userAgent  String
+
+  document Document @relation(fields: [documentId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+}
+
+model VacationRequest {
+  id                 String         @id @default(cuid())
+  collaboratorUserId String
+  startDate          DateTime
+  endDate            DateTime
+  notes              String?
+  status             VacationStatus @default(REQUESTED)
+  reviewedByUserId   String?
+  reviewedAt         DateTime?
+  reviewNotes        String?
+  documentId         String?        @unique
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  collaborator User     @relation("VacationCollaborator", fields: [collaboratorUserId], references: [id])
+  reviewedBy   User?    @relation("VacationReviewer", fields: [reviewedByUserId], references: [id])
+  document     Document? @relation(fields: [documentId], references: [id])
+
+  @@index([collaboratorUserId])
+}

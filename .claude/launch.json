@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "portal-documentos",
+      "runtimeExecutable": "C:\\DOCUMENTOS\\imersao-claude\\dev-server.cmd",
+      "runtimeArgs": [],
+      "port": 3000
+    }
+  ]
+}
