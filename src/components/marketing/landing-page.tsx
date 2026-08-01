@@ -105,9 +105,15 @@ export function LandingPage() {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-[13px] font-medium uppercase tracking-[0.12em] text-[#a8a295] transition-colors hover:text-[#c9a96e]"
+                className="group relative text-[13px] font-medium uppercase tracking-[0.12em] text-[#a8a295] transition-colors hover:text-[#c9a96e]"
               >
+                <span className="mr-1 font-[family-name:var(--font-display)] italic text-[#c9a96e] opacity-0 transition-opacity group-hover:opacity-100">
+                  [
+                </span>
                 {link.label}
+                <span className="ml-1 font-[family-name:var(--font-display)] italic text-[#c9a96e] opacity-0 transition-opacity group-hover:opacity-100">
+                  ]
+                </span>
               </a>
             ))}
             <Link
@@ -184,11 +190,17 @@ export function LandingPage() {
             />
             <div
               aria-hidden
-              className="absolute right-[10%] top-[15%] h-28 w-28 rounded-full border border-[rgba(201,169,110,0.12)]"
+              className="dw-float absolute right-[10%] top-[15%] h-28 w-28 rounded-full border border-[rgba(201,169,110,0.12)]"
             />
             <div
               aria-hidden
-              className="absolute bottom-[22%] left-[10%] h-14 w-14 rounded-full border border-[rgba(201,169,110,0.12)]"
+              className="dw-float absolute bottom-[22%] left-[10%] h-14 w-14 rounded-full border border-[rgba(201,169,110,0.12)]"
+              style={{ animationDelay: "-2s" }}
+            />
+            <div
+              aria-hidden
+              className="dw-float absolute bottom-[10%] right-[20%] h-44 w-44 rounded-full border border-[rgba(201,169,110,0.12)] opacity-40"
+              style={{ animationDelay: "-4s" }}
             />
 
             <Reveal delay={0.3} className="relative w-[82%] max-w-[420px]">
@@ -228,7 +240,7 @@ export function LandingPage() {
           <Reveal>
             <div className="mb-14 max-w-2xl">
               <h2 className="font-[family-name:var(--font-display)] text-3xl font-medium text-[#f0ece4] sm:text-4xl">
-                Todo o financeiro e o RH, num só lugar.
+                Financeiro e RH, num só lugar.
               </h2>
               <p className="mt-4 text-base leading-relaxed text-[#a8a295]">
                 Da rotina financeira aos processos de RH, cuidamos de cada detalhe
@@ -239,7 +251,13 @@ export function LandingPage() {
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Reveal>
-              <div className="h-full rounded-xl border border-[rgba(201,169,110,0.12)] bg-[#1c1a15] p-8">
+              <div
+                className="h-full rounded-xl border border-[rgba(201,169,110,0.12)] p-8"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 100% 0%, rgba(201,169,110,0.08) 0%, transparent 55%), #1c1a15",
+                }}
+              >
                 <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(201,169,110,0.25)] text-[#c9a96e]">
                   <ChartLineUp size={22} />
                 </div>
@@ -307,9 +325,12 @@ export function LandingPage() {
           </Reveal>
 
           <Reveal delay={0.1} className="order-1 md:order-2">
-            <span className="mb-4 block text-[13px] font-medium uppercase tracking-[0.25em] text-[#c9a96e]">
-              Portal Digital
-            </span>
+            <div className="mb-4 flex items-center gap-4">
+              <span className="h-px w-8 bg-[#c9a96e]" />
+              <span className="text-[13px] font-medium uppercase tracking-[0.25em] text-[#c9a96e]">
+                Portal Digital
+              </span>
+            </div>
             <h2 className="mb-5 font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[#f0ece4] sm:text-4xl">
               Cada documento, ao alcance de um clique.
             </h2>

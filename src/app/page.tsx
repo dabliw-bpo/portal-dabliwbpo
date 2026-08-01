@@ -5,7 +5,7 @@ import { homePathForRole } from "@/lib/authz";
 import { LandingPage } from "@/components/marketing/landing-page";
 
 export const metadata: Metadata = {
-  title: "DABLIW BPO — Financeiro e RH para empresas",
+  title: "DABLIW BPO: Financeiro e RH para empresas",
   description:
     "BPO financeiro e de RH: análises, contas a pagar e a receber, folha de pagamento, admissões e um portal digital para acompanhar tudo.",
 };
