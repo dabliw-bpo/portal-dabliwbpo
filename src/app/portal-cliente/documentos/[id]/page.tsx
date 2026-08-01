@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { DocumentViewer } from "@/components/documents/document-viewer";
@@ -12,12 +12,16 @@ export default async function ClienteDocumentoPage({
 }) {
   const { id } = await params;
   const session = await auth();
+  if (!session?.user) {
+    redirect("/login");
+  }
+
   const document = await prisma.document.findUnique({
     where: { id },
     include: { signature: true },
   });
 
-  if (!document || document.ownerUserId !== session!.user.id) {
+  if (!document || document.ownerUserId !== session.user.id) {
     notFound();
   }
 
@@ -46,7 +50,7 @@ export default async function ClienteDocumentoPage({
         </div>
       ) : (
         <div className="mt-4">
-          <SignDocumentModal documentId={document.id} signerName={session!.user.name ?? ""} />
+          <SignDocumentModal documentId={document.id} signerName={session.user.name ?? ""} />
         </div>
       )}
     </div>

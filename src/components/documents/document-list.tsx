@@ -16,7 +16,7 @@ export function DocumentList({
   basePath: string;
 }) {
   if (documents.length === 0) {
-    return <p className="mt-6 text-sm text-slate-400">Nenhum documento por aqui ainda.</p>;
+    return <p className="mt-6 text-sm text-slate-600">Nenhum documento por aqui ainda.</p>;
   }
 
   return (
@@ -24,9 +24,9 @@ export function DocumentList({
       <table className="w-full text-left text-sm">
         <thead className="bg-slate-50 text-slate-500">
           <tr>
-            <th className="px-4 py-2 font-medium">Título</th>
-            <th className="px-4 py-2 font-medium">Tipo</th>
-            <th className="px-4 py-2 font-medium">Status</th>
+            <th scope="col" className="px-4 py-2 font-medium">Título</th>
+            <th scope="col" className="px-4 py-2 font-medium">Tipo</th>
+            <th scope="col" className="px-4 py-2 font-medium">Status</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">

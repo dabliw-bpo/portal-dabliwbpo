@@ -26,9 +26,9 @@ export default async function AdminUsuariosPage() {
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-2 font-medium">Nome</th>
-              <th className="px-4 py-2 font-medium">Email</th>
-              <th className="px-4 py-2 font-medium">Papel</th>
+              <th scope="col" className="px-4 py-2 font-medium">Nome</th>
+              <th scope="col" className="px-4 py-2 font-medium">Email</th>
+              <th scope="col" className="px-4 py-2 font-medium">Papel</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -41,7 +41,7 @@ export default async function AdminUsuariosPage() {
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={3} className="px-4 py-6 text-center text-slate-600">
                   Nenhum usuário cadastrado ainda.
                 </td>
               </tr>

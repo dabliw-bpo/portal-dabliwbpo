@@ -21,7 +21,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
           type="email"
           required
           autoComplete="email"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-slate-500"
         />
       </div>
       <div className="flex flex-col gap-1">
@@ -34,7 +34,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
           type="password"
           required
           autoComplete="current-password"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-slate-500"
         />
       </div>
       {state.error && (

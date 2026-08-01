@@ -42,7 +42,7 @@ export function NovoUsuarioForm() {
           name="password"
           type="password"
           required
-          minLength={6}
+          minLength={10}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
         />
       </div>

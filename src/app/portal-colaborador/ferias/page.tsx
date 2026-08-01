@@ -27,9 +27,9 @@ export default async function PortalColaboradorFeriasPage() {
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-2 font-medium">Período</th>
-              <th className="px-4 py-2 font-medium">Status</th>
-              <th className="px-4 py-2 font-medium">Documento</th>
+              <th scope="col" className="px-4 py-2 font-medium">Período</th>
+              <th scope="col" className="px-4 py-2 font-medium">Status</th>
+              <th scope="col" className="px-4 py-2 font-medium">Documento</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -50,14 +50,14 @@ export default async function PortalColaboradorFeriasPage() {
                       Ver / assinar
                     </Link>
                   ) : (
-                    <span className="text-slate-400">—</span>
+                    <span className="text-slate-600">—</span>
                   )}
                 </td>
               </tr>
             ))}
             {requests.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={3} className="px-4 py-6 text-center text-slate-600">
                   Nenhuma solicitação ainda.
                 </td>
               </tr>

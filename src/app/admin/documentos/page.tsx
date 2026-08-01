@@ -30,10 +30,10 @@ export default async function AdminDocumentosPage() {
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-2 font-medium">Título</th>
-              <th className="px-4 py-2 font-medium">Destinatário</th>
-              <th className="px-4 py-2 font-medium">Tipo</th>
-              <th className="px-4 py-2 font-medium">Status</th>
+              <th scope="col" className="px-4 py-2 font-medium">Título</th>
+              <th scope="col" className="px-4 py-2 font-medium">Destinatário</th>
+              <th scope="col" className="px-4 py-2 font-medium">Tipo</th>
+              <th scope="col" className="px-4 py-2 font-medium">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -56,7 +56,7 @@ export default async function AdminDocumentosPage() {
             ))}
             {documents.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={4} className="px-4 py-6 text-center text-slate-600">
                   Nenhum documento cadastrado ainda.
                 </td>
               </tr>

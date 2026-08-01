@@ -55,3 +55,6 @@ next-env.d.ts
 /briefing_imersao_ia.docx
 /previsao_faturamento.xlsx
 /teste.txt
+
+# local secrets
+*.local

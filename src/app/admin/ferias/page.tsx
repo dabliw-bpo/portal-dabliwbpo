@@ -17,10 +17,12 @@ export default async function AdminFeriasPage() {
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-2 font-medium">Colaborador</th>
-              <th className="px-4 py-2 font-medium">Período</th>
-              <th className="px-4 py-2 font-medium">Status</th>
-              <th className="px-4 py-2 font-medium"></th>
+              <th scope="col" className="px-4 py-2 font-medium">Colaborador</th>
+              <th scope="col" className="px-4 py-2 font-medium">Período</th>
+              <th scope="col" className="px-4 py-2 font-medium">Status</th>
+              <th scope="col" className="px-4 py-2 font-medium">
+                <span className="sr-only">Ações</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -42,14 +44,14 @@ export default async function AdminFeriasPage() {
                       Revisar
                     </Link>
                   ) : (
-                    <span className="text-slate-400">—</span>
+                    <span className="text-slate-600">—</span>
                   )}
                 </td>
               </tr>
             ))}
             {requests.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={4} className="px-4 py-6 text-center text-slate-600">
                   Nenhuma solicitação ainda.
                 </td>
               </tr>
