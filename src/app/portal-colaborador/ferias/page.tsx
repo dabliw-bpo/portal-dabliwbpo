@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { VacationStatusBadge } from "@/components/vacation/vacation-status-badge";
 import { formatDateOnly } from "@/lib/format";
+import { buttonPrimary } from "@/components/ui/styles";
 
 export default async function PortalColaboradorFeriasPage() {
   const session = await auth();
@@ -17,7 +18,7 @@ export default async function PortalColaboradorFeriasPage() {
         <h1 className="text-lg font-semibold text-slate-900">Minhas férias</h1>
         <Link
           href="/portal-colaborador/ferias/nova"
-          className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className={buttonPrimary}
         >
           Solicitar férias
         </Link>

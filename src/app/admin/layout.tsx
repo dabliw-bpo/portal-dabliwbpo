@@ -22,7 +22,7 @@ export default async function AdminLayout({
         title="Admin"
         userName={session?.user?.name ?? ""}
         links={[
-          { href: "/admin", label: "Painel" },
+          { href: "/admin", label: "Painel", exact: true },
           { href: "/admin/usuarios", label: "Usuários" },
           { href: "/admin/documentos", label: "Documentos" },
           { href: "/admin/ferias", label: "Férias" },

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { reviewVacationRequestAction, type VacationFormState } from "@/lib/actions/vacation";
+import { buttonPrimary, inputBase } from "@/components/ui/styles";
 
 const initialState: VacationFormState = {};
 
@@ -47,7 +48,7 @@ export function ReviewForm({ requestId }: { requestId: string }) {
             type="file"
             required
             accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className={inputBase}
           />
         </div>
       )}
@@ -60,7 +61,7 @@ export function ReviewForm({ requestId }: { requestId: string }) {
           id="reviewNotes"
           name="reviewNotes"
           rows={3}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputBase}
         />
       </div>
 
@@ -73,7 +74,7 @@ export function ReviewForm({ requestId }: { requestId: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+        className={`mt-2 ${buttonPrimary}`}
       >
         {pending ? "Salvando..." : decision === "APPROVE" ? "Aprovar e enviar documento" : "Rejeitar solicitação"}
       </button>

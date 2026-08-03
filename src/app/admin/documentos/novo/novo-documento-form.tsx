@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { uploadDocumentAction, type UploadDocumentState } from "@/lib/actions/documents";
+import { buttonPrimary, inputBase } from "@/components/ui/styles";
 
 const initialState: UploadDocumentState = {};
 
@@ -20,7 +21,7 @@ export function NovoDocumentoForm({ owners }: { owners: OwnerOption[] }) {
           id="title"
           name="title"
           required
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputBase}
         />
       </div>
       <div className="flex flex-col gap-1">
@@ -31,7 +32,7 @@ export function NovoDocumentoForm({ owners }: { owners: OwnerOption[] }) {
           id="ownerUserId"
           name="ownerUserId"
           required
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputBase}
         >
           <option value="">Selecione...</option>
           {owners.map((owner) => (
@@ -49,7 +50,7 @@ export function NovoDocumentoForm({ owners }: { owners: OwnerOption[] }) {
           id="type"
           name="type"
           defaultValue="CONTRACT"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputBase}
         >
           <option value="CONTRACT">Contrato</option>
           <option value="VACATION_REQUEST">Férias</option>
@@ -66,7 +67,7 @@ export function NovoDocumentoForm({ owners }: { owners: OwnerOption[] }) {
           type="file"
           required
           accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputBase}
         />
       </div>
       {state.error && (
@@ -77,7 +78,7 @@ export function NovoDocumentoForm({ owners }: { owners: OwnerOption[] }) {
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+        className={`mt-2 ${buttonPrimary}`}
       >
         {pending ? "Enviando..." : "Enviar documento"}
       </button>

@@ -22,7 +22,7 @@ export default async function PortalColaboradorLayout({
         title="Portal do Colaborador"
         userName={session?.user?.name ?? ""}
         links={[
-          { href: "/portal-colaborador", label: "Meus documentos" },
+          { href: "/portal-colaborador", label: "Meus documentos", exact: true },
           { href: "/portal-colaborador/ferias", label: "Férias" },
         ]}
       />

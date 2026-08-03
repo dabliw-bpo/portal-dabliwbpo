@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { createVacationRequestAction, type VacationFormState } from "@/lib/actions/vacation";
+import { buttonPrimary, inputBase } from "@/components/ui/styles";
 
 const initialState: VacationFormState = {};
 
@@ -19,7 +20,7 @@ export function NovaSolicitacaoForm() {
           name="startDate"
           type="date"
           required
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputBase}
         />
       </div>
       <div className="flex flex-col gap-1">
@@ -31,7 +32,7 @@ export function NovaSolicitacaoForm() {
           name="endDate"
           type="date"
           required
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputBase}
         />
       </div>
       <div className="flex flex-col gap-1">
@@ -42,7 +43,7 @@ export function NovaSolicitacaoForm() {
           id="notes"
           name="notes"
           rows={3}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputBase}
         />
       </div>
       {state.error && (
@@ -53,7 +54,7 @@ export function NovaSolicitacaoForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+        className={`mt-2 ${buttonPrimary}`}
       >
         {pending ? "Enviando..." : "Solicitar férias"}
       </button>

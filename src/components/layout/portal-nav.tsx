@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { signOut } from "@/lib/auth";
+import { NavLink } from "./nav-link";
 
-type NavLink = { href: string; label: string };
+type NavLinkItem = { href: string; label: string; exact?: boolean };
 
 export function PortalNav({
   title,
@@ -10,22 +10,20 @@ export function PortalNav({
 }: {
   title: string;
   userName: string;
-  links: NavLink[];
+  links: NavLinkItem[];
 }) {
   return (
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-        <div className="flex items-center gap-8">
-          <span className="text-sm font-semibold text-slate-900">{title}</span>
-          <nav className="flex gap-4">
+        <div className="flex items-center gap-6">
+          <span className="text-sm font-semibold tracking-tight text-slate-900">
+            DABLIW<span className="text-[#6e5a35]"> BPO</span>
+          </span>
+          <span className="hidden h-4 w-px bg-slate-200 sm:block" aria-hidden />
+          <span className="hidden text-sm text-slate-500 sm:block">{title}</span>
+          <nav className="flex gap-5">
             {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm text-slate-600 hover:text-slate-900"
-              >
-                {link.label}
-              </Link>
+              <NavLink key={link.href} href={link.href} label={link.label} exact={link.exact} />
             ))}
           </nav>
         </div>

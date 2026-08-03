@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { DocumentStatusBadge } from "@/components/documents/document-status-badge";
+import { buttonPrimary } from "@/components/ui/styles";
 
 const TYPE_LABELS: Record<string, string> = {
   CONTRACT: "Contrato",
@@ -20,7 +21,7 @@ export default async function AdminDocumentosPage() {
         <h1 className="text-lg font-semibold text-slate-900">Documentos</h1>
         <Link
           href="/admin/documentos/novo"
-          className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className={buttonPrimary}
         >
           Novo documento
         </Link>
