@@ -44,11 +44,24 @@ model User {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  ownedDocuments    Document[]        @relation("DocumentOwner")
-  uploadedDocuments Document[]        @relation("DocumentUploader")
-  signatures        Signature[]
-  vacationRequests  VacationRequest[] @relation("VacationCollaborator")
-  reviewedVacations VacationRequest[] @relation("VacationReviewer")
+  ownedDocuments      Document[]           @relation("DocumentOwner")
+  uploadedDocuments   Document[]           @relation("DocumentUploader")
+  signatures          Signature[]
+  vacationRequests    VacationRequest[]    @relation("VacationCollaborator")
+  reviewedVacations   VacationRequest[]    @relation("VacationReviewer")
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Document {

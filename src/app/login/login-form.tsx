@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { loginAction, type LoginState } from "@/lib/actions/auth";
 import { buttonPrimary, inputBase } from "@/components/ui/styles";
 
@@ -26,9 +27,14 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="password" className="text-sm font-medium text-slate-700">
-          Senha
-        </label>
+        <div className="flex items-center justify-between">
+          <label htmlFor="password" className="text-sm font-medium text-slate-700">
+            Senha
+          </label>
+          <Link href="/esqueci-senha" className="text-xs text-slate-500 underline hover:text-slate-900">
+            Esqueceu a senha?
+          </Link>
+        </div>
         <input
           id="password"
           name="password"
