@@ -30,6 +30,7 @@ const COLABORADORES: Array<{ name: string; email: string }> = [
   { name: "Rafael do Nascimento Rosa", email: "rafaeldonascimento642@gmail.com" },
   { name: "Rogério Ferreira Rios", email: "rogeriogrorios@gmail.com" },
   { name: "Samuel de Almeida Leão", email: "samuelsamukaleao@gmail.com" },
+  { name: "Terezinha Ferreira Vieira", email: "terezinhaferreiravieira317@gmail.com" },
   { name: "Wesley Barbosa", email: "wesleybarbosa8282@gmail.com" },
 ];
 
@@ -57,7 +58,7 @@ async function main() {
   }
 
   console.log(`\nConcluido. ${COLABORADORES.length} colaboradores processados.`);
-  console.log("Nao incluidos (dados pendentes): Damiao Alexandre da Silva (sem e-mail), Terezinha Ferreira Vieira (e-mail nao confirmado).");
+  console.log("Nao incluido (dados pendentes): Damiao Alexandre da Silva (sem e-mail).");
 }
 
 main()
