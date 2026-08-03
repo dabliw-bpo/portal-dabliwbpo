@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { homePathForRole } from "@/lib/authz";
+import { prisma } from "@/lib/prisma";
+import { getAvatarUrl } from "@/lib/avatar";
 import { PortalNav } from "@/components/layout/portal-nav";
 
 export default async function PortalColaboradorLayout({
@@ -16,13 +18,20 @@ export default async function PortalColaboradorLayout({
     redirect(homePathForRole(session.user.role));
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { avatarPath: true },
+  });
+
   return (
     <div className="flex flex-1 flex-col">
       <PortalNav
         title="Portal do Colaborador"
         userName={session?.user?.name ?? ""}
+        avatarUrl={getAvatarUrl(user?.avatarPath ?? null)}
         links={[
-          { href: "/portal-colaborador", label: "Meus documentos", exact: true },
+          { href: "/portal-colaborador", label: "Meu perfil", exact: true },
+          { href: "/portal-colaborador/documentos", label: "Meus documentos" },
           { href: "/portal-colaborador/ferias", label: "Férias" },
         ]}
       />

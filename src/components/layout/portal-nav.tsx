@@ -1,4 +1,5 @@
 import { signOut } from "@/lib/auth";
+import { Avatar } from "@/components/ui/avatar";
 import { NavLink } from "./nav-link";
 
 type NavLinkItem = { href: string; label: string; exact?: boolean };
@@ -6,10 +7,12 @@ type NavLinkItem = { href: string; label: string; exact?: boolean };
 export function PortalNav({
   title,
   userName,
+  avatarUrl = null,
   links,
 }: {
   title: string;
   userName: string;
+  avatarUrl?: string | null;
   links: NavLinkItem[];
 }) {
   return (
@@ -27,7 +30,8 @@ export function PortalNav({
             ))}
           </nav>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <Avatar name={userName || "?"} src={avatarUrl} size={24} />
           <span className="text-sm text-slate-500">{userName}</span>
           <form
             action={async () => {
