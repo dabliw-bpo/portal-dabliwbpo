@@ -8,6 +8,10 @@ import { requireRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { createUserSchema, updateUserSchema } from "@/lib/validations/user";
 
+function listPathForActor(role: string): string {
+  return role === "COMPANY_HR" ? "/portal-rh/colaboradores" : "/admin/usuarios";
+}
+
 export type CreateUserState = {
   error?: string;
 };
@@ -17,18 +21,27 @@ export async function createUserAction(
   formData: FormData
 ): Promise<CreateUserState> {
   const session = await auth();
-  requireRole(session, ["ADMIN"]);
+  const authSession = requireRole(session, ["ADMIN", "COMPANY_HR"]);
+  const isHr = authSession.user.role === "COMPANY_HR";
 
   const parsed = createUserSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
     role: formData.get("role"),
+    companyId: formData.get("companyId"),
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
+
+  if (isHr && !authSession.user.companyId) {
+    return { error: "Sua conta não está vinculada a uma empresa." };
+  }
+
+  const role = isHr ? "COLLABORATOR" : parsed.data.role;
+  const companyId = isHr ? authSession.user.companyId : (parsed.data.companyId ?? null);
 
   const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (existing) {
@@ -41,12 +54,14 @@ export async function createUserAction(
       name: parsed.data.name,
       email: parsed.data.email,
       passwordHash,
-      role: parsed.data.role,
+      role,
+      companyId,
     },
   });
 
-  revalidatePath("/admin/usuarios");
-  redirect("/admin/usuarios");
+  const listPath = listPathForActor(authSession.user.role);
+  revalidatePath(listPath);
+  redirect(listPath);
 }
 
 export type UpdateUserState = {
@@ -59,12 +74,21 @@ export async function updateUserAction(
   formData: FormData
 ): Promise<UpdateUserState> {
   const session = await auth();
-  const authSession = requireRole(session, ["ADMIN"]);
+  const authSession = requireRole(session, ["ADMIN", "COMPANY_HR"]);
+  const isHr = authSession.user.role === "COMPANY_HR";
+
+  if (isHr) {
+    const target = await prisma.user.findUnique({ where: { id: userId } });
+    if (!target || target.role !== "COLLABORATOR" || target.companyId !== authSession.user.companyId) {
+      return { error: "Sem permissão para editar este usuário." };
+    }
+  }
 
   const parsed = updateUserSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
     role: formData.get("role"),
+    companyId: formData.get("companyId"),
   });
 
   if (!parsed.success) {
@@ -73,7 +97,7 @@ export async function updateUserAction(
 
   const active = formData.get("active") === "on";
 
-  if (authSession.user.id === userId && (parsed.data.role !== "ADMIN" || !active)) {
+  if (!isHr && authSession.user.id === userId && (parsed.data.role !== "ADMIN" || !active)) {
     return { error: "Você não pode remover seu próprio acesso de administrador." };
   }
 
@@ -88,19 +112,24 @@ export async function updateUserAction(
   }
   const passwordHash = newPassword ? await bcrypt.hash(newPassword, 10) : undefined;
 
+  const role = isHr ? "COLLABORATOR" : parsed.data.role;
+  const companyId = isHr ? authSession.user.companyId : (parsed.data.companyId ?? null);
+
   await prisma.user.update({
     where: { id: userId },
     data: {
       name: parsed.data.name,
       email: parsed.data.email,
-      role: parsed.data.role,
+      role,
+      companyId,
       active,
       ...(passwordHash ? { passwordHash } : {}),
     },
   });
 
-  revalidatePath("/admin/usuarios");
-  redirect("/admin/usuarios");
+  const listPath = listPathForActor(authSession.user.role);
+  revalidatePath(listPath);
+  redirect(listPath);
 }
 
 export type DeleteUsersState = {
@@ -113,7 +142,8 @@ export async function deleteUsersAction(
   formData: FormData
 ): Promise<DeleteUsersState> {
   const session = await auth();
-  const authSession = requireRole(session, ["ADMIN"]);
+  const authSession = requireRole(session, ["ADMIN", "COMPANY_HR"]);
+  const isHr = authSession.user.role === "COMPANY_HR";
 
   const ids = formData.getAll("userId").map(String).filter(Boolean);
   if (ids.length === 0) {
@@ -135,14 +165,23 @@ export async function deleteUsersAction(
         prisma.signature.count({ where: { userId: id } }),
         prisma.vacationRequest.count({ where: { collaboratorUserId: id } }),
         prisma.vacationRequest.count({ where: { reviewedByUserId: id } }),
-        prisma.user.findUnique({ where: { id }, select: { name: true } }),
+        prisma.user.findUnique({ where: { id } }),
       ]);
+
+    if (!user) {
+      continue;
+    }
+
+    if (isHr && (user.role !== "COLLABORATOR" || user.companyId !== authSession.user.companyId)) {
+      blockedNames.push(`${user.name} (sem permissão)`);
+      continue;
+    }
 
     const hasRelatedRecords =
       ownedDocs > 0 || uploadedDocs > 0 || signatures > 0 || vacationsAsCollaborator > 0 || vacationsAsReviewer > 0;
 
     if (hasRelatedRecords) {
-      blockedNames.push(user?.name ?? id);
+      blockedNames.push(user.name);
       continue;
     }
 
@@ -150,11 +189,12 @@ export async function deleteUsersAction(
     deletedCount++;
   }
 
-  revalidatePath("/admin/usuarios");
+  const listPath = listPathForActor(authSession.user.role);
+  revalidatePath(listPath);
 
   if (blockedNames.length > 0) {
     return {
-      error: `Não foi possível excluir ${blockedNames.join(", ")}: possuem documentos ou registros vinculados. Desative o acesso em vez de excluir.`,
+      error: `Não foi possível excluir ${blockedNames.join(", ")}: possuem documentos ou registros vinculados, ou você não tem permissão sobre eles. Desative o acesso em vez de excluir.`,
       ...(deletedCount > 0 ? { success: `${deletedCount} usuário(s) excluído(s).` } : {}),
     };
   }

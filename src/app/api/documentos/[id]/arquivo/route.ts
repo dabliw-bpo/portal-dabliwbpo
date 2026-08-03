@@ -10,14 +10,19 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   }
 
   const { id } = await params;
-  const document = await prisma.document.findUnique({ where: { id } });
+  const document = await prisma.document.findUnique({ where: { id }, include: { owner: true } });
   if (!document) {
     return NextResponse.json({ error: "Documento não encontrado." }, { status: 404 });
   }
 
   const isOwner = document.ownerUserId === session.user.id;
   const isAdmin = session.user.role === "ADMIN";
-  if (!isOwner && !isAdmin) {
+  const isSameCompanyHr =
+    session.user.role === "COMPANY_HR" &&
+    session.user.companyId !== null &&
+    document.owner.companyId === session.user.companyId;
+
+  if (!isOwner && !isAdmin && !isSameCompanyHr) {
     return NextResponse.json({ error: "Sem permissão para acessar este documento." }, { status: 403 });
   }
 

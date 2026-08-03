@@ -10,6 +10,7 @@ datasource db {
 
 enum Role {
   ADMIN
+  COMPANY_HR
   COLLABORATOR
   CLIENT
 }
@@ -33,6 +34,16 @@ enum VacationStatus {
   DOCUMENT_GENERATED
 }
 
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  cnpj      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+}
+
 model User {
   id                 String   @id @default(cuid())
   name               String
@@ -41,8 +52,12 @@ model User {
   role               Role
   active             Boolean  @default(true)
   mustChangePassword Boolean  @default(false)
+  companyId          String?
+  avatarPath         String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+
+  company Company? @relation(fields: [companyId], references: [id])
 
   ownedDocuments      Document[]           @relation("DocumentOwner")
   uploadedDocuments   Document[]           @relation("DocumentUploader")
@@ -50,6 +65,8 @@ model User {
   vacationRequests    VacationRequest[]    @relation("VacationCollaborator")
   reviewedVacations   VacationRequest[]    @relation("VacationReviewer")
   passwordResetTokens PasswordResetToken[]
+
+  @@index([companyId])
 }
 
 model PasswordResetToken {

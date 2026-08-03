@@ -4,6 +4,7 @@ import { homePathForRole } from "@/lib/authz";
 
 const SECTION_ROLES = {
   "/admin": ["ADMIN"],
+  "/portal-rh": ["COMPANY_HR"],
   "/portal-colaborador": ["COLLABORATOR"],
   "/portal-cliente": ["CLIENT"],
 } as const;
@@ -39,5 +40,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/portal-cliente/:path*", "/portal-colaborador/:path*", "/admin/:path*"],
+  matcher: ["/portal-cliente/:path*", "/portal-colaborador/:path*", "/portal-rh/:path*", "/admin/:path*"],
 };

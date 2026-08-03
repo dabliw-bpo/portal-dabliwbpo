@@ -1,17 +1,17 @@
 "use client";
 
 import { useActionState } from "react";
-import type { Company } from "@prisma/client";
 import { createUserAction, type CreateUserState } from "@/lib/actions/users";
 import { buttonPrimary, inputBase } from "@/components/ui/styles";
 
 const initialState: CreateUserState = {};
 
-export function NovoUsuarioForm({ companies }: { companies: Company[] }) {
+export function NovoColaboradorForm() {
   const [state, formAction, pending] = useActionState(createUserAction, initialState);
 
   return (
     <form action={formAction} className="mt-6 flex max-w-md flex-col gap-4">
+      <input type="hidden" name="role" value="COLLABORATOR" />
       <div className="flex flex-col gap-1">
         <label htmlFor="name" className="text-sm font-medium text-slate-700">
           Nome
@@ -30,37 +30,13 @@ export function NovoUsuarioForm({ companies }: { companies: Company[] }) {
         </label>
         <input id="password" name="password" type="password" required minLength={10} className={inputBase} />
       </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="role" className="text-sm font-medium text-slate-700">
-          Papel
-        </label>
-        <select id="role" name="role" defaultValue="CLIENT" className={inputBase}>
-          <option value="CLIENT">Cliente</option>
-          <option value="COLLABORATOR">Colaborador</option>
-          <option value="COMPANY_HR">RH da empresa</option>
-          <option value="ADMIN">Admin</option>
-        </select>
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="companyId" className="text-sm font-medium text-slate-700">
-          Empresa (opcional)
-        </label>
-        <select id="companyId" name="companyId" defaultValue="" className={inputBase}>
-          <option value="">Nenhuma</option>
-          {companies.map((company) => (
-            <option key={company.id} value={company.id}>
-              {company.name}
-            </option>
-          ))}
-        </select>
-      </div>
       {state.error && (
         <p className="text-sm text-red-600" role="alert">
           {state.error}
         </p>
       )}
       <button type="submit" disabled={pending} className={`mt-2 ${buttonPrimary}`}>
-        {pending ? "Salvando..." : "Criar usuário"}
+        {pending ? "Salvando..." : "Criar colaborador"}
       </button>
     </form>
   );

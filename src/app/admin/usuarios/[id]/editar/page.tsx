@@ -8,7 +8,10 @@ export default async function EditarUsuarioPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const user = await prisma.user.findUnique({ where: { id } });
+  const [user, companies] = await Promise.all([
+    prisma.user.findUnique({ where: { id } }),
+    prisma.company.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   if (!user) {
     notFound();
@@ -19,11 +22,13 @@ export default async function EditarUsuarioPage({
       <h1 className="text-lg font-semibold text-slate-900">Editar usuário</h1>
       <EditarUsuarioForm
         userId={user.id}
+        companies={companies}
         defaultValues={{
           name: user.name,
           email: user.email,
           role: user.role,
           active: user.active,
+          companyId: user.companyId,
         }}
       />
     </div>

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { NovoDocumentoForm } from "./novo-documento-form";
+import { NovoDocumentoForm } from "@/components/documents/novo-documento-form";
 
 export default async function NovoDocumentoPage() {
   const owners = await prisma.user.findMany({

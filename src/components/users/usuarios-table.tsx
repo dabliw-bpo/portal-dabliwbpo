@@ -1,19 +1,33 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import type { User } from "@prisma/client";
+import type { Company, User } from "@prisma/client";
 import { deleteUsersAction, type DeleteUsersState } from "@/lib/actions/users";
 import { buttonGhost } from "@/components/ui/styles";
+import { Avatar } from "@/components/ui/avatar";
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Admin",
+  COMPANY_HR: "RH da empresa",
   COLLABORATOR: "Colaborador",
   CLIENT: "Cliente",
 };
 
+type UserRow = User & { company: Company | null; avatarUrl: string | null };
+
 const initialState: DeleteUsersState = {};
 
-export function UsuariosTable({ users, currentUserId }: { users: User[]; currentUserId: string }) {
+export function UsuariosTable({
+  users,
+  currentUserId,
+  basePath = "/admin/usuarios",
+  showCompanyColumn = true,
+}: {
+  users: UserRow[];
+  currentUserId: string;
+  basePath?: string;
+  showCompanyColumn?: boolean;
+}) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [state, formAction, pending] = useActionState(deleteUsersAction, initialState);
@@ -29,6 +43,7 @@ export function UsuariosTable({ users, currentUserId }: { users: User[]; current
 
   const selectableIds = users.filter((user) => user.id !== currentUserId).map((user) => user.id);
   const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
+  const columnCount = showCompanyColumn ? 5 : 4;
 
   function toggleAll() {
     setSelected(allSelected ? new Set() : new Set(selectableIds));
@@ -53,7 +68,7 @@ export function UsuariosTable({ users, currentUserId }: { users: User[]; current
         <div className="mb-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5">
           <span className="text-sm text-slate-600">{selected.size} selecionado(s)</span>
           {selected.size === 1 && (
-            <a href={`/admin/usuarios/${[...selected][0]}/editar`} className={buttonGhost}>
+            <a href={`${basePath}/${[...selected][0]}/editar`} className={buttonGhost}>
               Alterar
             </a>
           )}
@@ -127,6 +142,11 @@ export function UsuariosTable({ users, currentUserId }: { users: User[]; current
               <th scope="col" className="px-4 py-2 font-medium">
                 Papel
               </th>
+              {showCompanyColumn && (
+                <th scope="col" className="px-4 py-2 font-medium">
+                  Empresa
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -141,14 +161,22 @@ export function UsuariosTable({ users, currentUserId }: { users: User[]; current
                     aria-label={`Selecionar ${user.name}`}
                   />
                 </td>
-                <td className="px-4 py-2 text-slate-900">{user.name}</td>
+                <td className="px-4 py-2 text-slate-900">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar name={user.name} src={user.avatarUrl} size={26} />
+                    {user.name}
+                  </div>
+                </td>
                 <td className="px-4 py-2 text-slate-600">{user.email}</td>
                 <td className="px-4 py-2 text-slate-600">{ROLE_LABELS[user.role]}</td>
+                {showCompanyColumn && (
+                  <td className="px-4 py-2 text-slate-600">{user.company?.name ?? "-"}</td>
+                )}
               </tr>
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-600">
+                <td colSpan={columnCount} className="px-4 py-6 text-center text-slate-600">
                   Nenhum usuário cadastrado ainda.
                 </td>
               </tr>

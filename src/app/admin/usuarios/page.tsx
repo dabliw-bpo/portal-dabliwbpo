@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buttonPrimary } from "@/components/ui/styles";
-import { UsuariosTable } from "./usuarios-table";
+import { getAvatarUrl } from "@/lib/avatar";
+import { UsuariosTable } from "@/components/users/usuarios-table";
 
 export default async function AdminUsuariosPage() {
   const session = await auth();
@@ -11,7 +12,15 @@ export default async function AdminUsuariosPage() {
     redirect("/login");
   }
 
-  const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { company: true },
+  });
+
+  const rows = users.map((user) => ({
+    ...user,
+    avatarUrl: getAvatarUrl(user.avatarPath),
+  }));
 
   return (
     <div>
@@ -22,7 +31,7 @@ export default async function AdminUsuariosPage() {
         </Link>
       </div>
 
-      <UsuariosTable users={users} currentUserId={session.user.id} />
+      <UsuariosTable users={rows} currentUserId={session.user.id} />
     </div>
   );
 }

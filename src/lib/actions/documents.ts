@@ -20,7 +20,8 @@ export async function uploadDocumentAction(
   formData: FormData
 ): Promise<UploadDocumentState> {
   const session = await auth();
-  const authSession = requireRole(session, ["ADMIN"]);
+  const authSession = requireRole(session, ["ADMIN", "COMPANY_HR"]);
+  const isHr = authSession.user.role === "COMPANY_HR";
 
   const parsed = uploadDocumentSchema.safeParse({
     title: formData.get("title"),
@@ -50,6 +51,10 @@ export async function uploadDocumentAction(
     return { error: "Destinatário não encontrado." };
   }
 
+  if (isHr && (owner.role !== "COLLABORATOR" || owner.companyId !== authSession.user.companyId)) {
+    return { error: "Você só pode enviar documentos para colaboradores da sua empresa." };
+  }
+
   const id = createId();
   const buffer = Buffer.from(await file.arrayBuffer());
   const filePath = await saveFile(buffer, file.name, id);
@@ -74,8 +79,9 @@ export async function uploadDocumentAction(
     documentTitle: parsed.data.title,
   });
 
-  revalidatePath("/admin/documentos");
-  redirect("/admin/documentos");
+  const listPath = isHr ? "/portal-rh/documentos" : "/admin/documentos";
+  revalidatePath(listPath);
+  redirect(listPath);
 }
 
 export type SignDocumentState = {
@@ -126,7 +132,11 @@ export async function signDocumentAction(
   ]);
 
   revalidatePath(`${basePath}/documentos/${document.id}`);
-  revalidatePath(basePath);
+  revalidatePath(`${basePath}/documentos`);
+  if (basePath === "/portal-colaborador") {
+    revalidatePath(basePath);
+  }
   revalidatePath(`/admin/documentos/${document.id}`);
+  revalidatePath(`/portal-rh/documentos/${document.id}`);
   return {};
 }
