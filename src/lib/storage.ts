@@ -1,7 +1,24 @@
-import { mkdir, readFile, unlink, writeFile } from "fs/promises";
 import path from "path";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const STORAGE_DIR = path.resolve(process.cwd(), process.env.STORAGE_DIR ?? "./storage/documents");
+const BUCKET = "documents";
+
+let client: SupabaseClient | null = null;
+
+function getClient(): SupabaseClient {
+  if (client) {
+    return client;
+  }
+
+  const url = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) {
+    throw new Error("SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY não configurados.");
+  }
+
+  client = createClient(url, serviceRoleKey);
+  return client;
+}
 
 function safeExtension(fileName: string): string {
   const ext = path.extname(fileName).toLowerCase();
@@ -9,24 +26,22 @@ function safeExtension(fileName: string): string {
 }
 
 export async function saveFile(buffer: Buffer, originalFileName: string, id: string): Promise<string> {
-  await mkdir(STORAGE_DIR, { recursive: true });
   const relativePath = `${id}${safeExtension(originalFileName)}`;
-  await writeFile(path.join(STORAGE_DIR, relativePath), buffer);
+  const { error } = await getClient().storage.from(BUCKET).upload(relativePath, buffer, { upsert: false });
+  if (error) {
+    throw new Error(`Falha ao salvar arquivo: ${error.message}`);
+  }
   return relativePath;
 }
 
 export async function readStoredFile(relativePath: string): Promise<Buffer> {
-  const resolved = path.resolve(STORAGE_DIR, relativePath);
-  if (!resolved.startsWith(STORAGE_DIR)) {
-    throw new Error("Caminho de arquivo inválido.");
+  const { data, error } = await getClient().storage.from(BUCKET).download(relativePath);
+  if (error || !data) {
+    throw new Error(`Falha ao ler arquivo: ${error?.message ?? "não encontrado"}`);
   }
-  return readFile(resolved);
+  return Buffer.from(await data.arrayBuffer());
 }
 
 export async function deleteStoredFile(relativePath: string): Promise<void> {
-  const resolved = path.resolve(STORAGE_DIR, relativePath);
-  if (!resolved.startsWith(STORAGE_DIR)) {
-    throw new Error("Caminho de arquivo inválido.");
-  }
-  await unlink(resolved).catch(() => undefined);
+  await getClient().storage.from(BUCKET).remove([relativePath]);
 }

@@ -58,3 +58,6 @@ next-env.d.ts
 
 # local secrets
 *.local
+
+# supabase CLI local state
+/supabase/.temp
