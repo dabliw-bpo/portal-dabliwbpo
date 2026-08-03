@@ -10,16 +10,26 @@ const initialState: UpdateUserState = {};
 export function EditarUsuarioForm({
   userId,
   companies,
+  redirectTo,
   defaultValues,
 }: {
   userId: string;
   companies: Company[];
-  defaultValues: { name: string; email: string; role: Role; active: boolean; companyId: string | null };
+  redirectTo?: string;
+  defaultValues: {
+    name: string;
+    email: string;
+    role: Role;
+    active: boolean;
+    companyId: string | null;
+    whatsapp: string | null;
+  };
 }) {
   const [state, formAction, pending] = useActionState(updateUserAction.bind(null, userId), initialState);
 
   return (
     <form action={formAction} className="mt-6 flex max-w-md flex-col gap-4">
+      {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
       <div className="flex flex-col gap-1">
         <label htmlFor="name" className="text-sm font-medium text-slate-700">
           Nome
@@ -36,6 +46,18 @@ export function EditarUsuarioForm({
           type="email"
           required
           defaultValue={defaultValues.email}
+          className={inputBase}
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="whatsapp" className="text-sm font-medium text-slate-700">
+          WhatsApp (opcional)
+        </label>
+        <input
+          id="whatsapp"
+          name="whatsapp"
+          placeholder="(65) 99999-9999"
+          defaultValue={defaultValues.whatsapp ?? ""}
           className={inputBase}
         />
       </div>

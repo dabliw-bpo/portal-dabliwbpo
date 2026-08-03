@@ -11,7 +11,7 @@ export function EditarColaboradorForm({
   defaultValues,
 }: {
   userId: string;
-  defaultValues: { name: string; email: string; active: boolean };
+  defaultValues: { name: string; email: string; active: boolean; whatsapp: string | null };
 }) {
   const [state, formAction, pending] = useActionState(updateUserAction.bind(null, userId), initialState);
 
@@ -34,6 +34,18 @@ export function EditarColaboradorForm({
           type="email"
           required
           defaultValue={defaultValues.email}
+          className={inputBase}
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="whatsapp" className="text-sm font-medium text-slate-700">
+          WhatsApp (opcional)
+        </label>
+        <input
+          id="whatsapp"
+          name="whatsapp"
+          placeholder="(65) 99999-9999"
+          defaultValue={defaultValues.whatsapp ?? ""}
           className={inputBase}
         />
       </div>

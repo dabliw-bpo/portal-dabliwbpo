@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import type { Company, User } from "@prisma/client";
 import { deleteUsersAction, type DeleteUsersState } from "@/lib/actions/users";
 import { buttonGhost } from "@/components/ui/styles";
@@ -14,6 +14,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 type UserRow = User & { company: Company | null; avatarUrl: string | null };
+type SortDirection = "asc" | "desc";
 
 const initialState: DeleteUsersState = {};
 
@@ -22,14 +23,17 @@ export function UsuariosTable({
   currentUserId,
   basePath = "/admin/usuarios",
   showCompanyColumn = true,
+  editRedirectTo,
 }: {
   users: UserRow[];
   currentUserId: string;
   basePath?: string;
   showCompanyColumn?: boolean;
+  editRedirectTo?: string;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [state, formAction, pending] = useActionState(deleteUsersAction, initialState);
 
   const [lastHandledSuccess, setLastHandledSuccess] = useState(state.success);
@@ -41,9 +45,19 @@ export function UsuariosTable({
     }
   }
 
+  const sortedUsers = useMemo(() => {
+    const collator = new Intl.Collator("pt-BR", { sensitivity: "base" });
+    return [...users].sort((a, b) =>
+      sortDirection === "asc" ? collator.compare(a.name, b.name) : collator.compare(b.name, a.name)
+    );
+  }, [users, sortDirection]);
+
   const selectableIds = users.filter((user) => user.id !== currentUserId).map((user) => user.id);
   const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
-  const columnCount = showCompanyColumn ? 5 : 4;
+  const columnCount = showCompanyColumn ? 7 : 6;
+  const editHref = `${basePath}/${[...selected][0]}/editar${
+    editRedirectTo ? `?returnTo=${encodeURIComponent(editRedirectTo)}` : ""
+  }`;
 
   function toggleAll() {
     setSelected(allSelected ? new Set() : new Set(selectableIds));
@@ -62,13 +76,17 @@ export function UsuariosTable({
     setConfirmingDelete(false);
   }
 
+  function toggleSort() {
+    setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+  }
+
   return (
     <div className="mt-6">
       {selected.size > 0 && !confirmingDelete && (
         <div className="mb-3 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5">
           <span className="text-sm text-slate-600">{selected.size} selecionado(s)</span>
           {selected.size === 1 && (
-            <a href={`${basePath}/${[...selected][0]}/editar`} className={buttonGhost}>
+            <a href={editHref} className={buttonGhost}>
               Alterar
             </a>
           )}
@@ -91,6 +109,7 @@ export function UsuariosTable({
             {[...selected].map((id) => (
               <input key={id} type="hidden" name="userId" value={id} />
             ))}
+            {editRedirectTo && <input type="hidden" name="redirectTo" value={editRedirectTo} />}
             <button
               type="submit"
               disabled={pending}
@@ -134,10 +153,23 @@ export function UsuariosTable({
                 />
               </th>
               <th scope="col" className="px-4 py-2 font-medium">
-                Nome
+                <button
+                  type="button"
+                  onClick={toggleSort}
+                  className="flex items-center gap-1 font-medium text-slate-500 hover:text-slate-900"
+                >
+                  Nome
+                  <span aria-hidden>{sortDirection === "asc" ? "↑" : "↓"}</span>
+                  <span className="sr-only">
+                    {sortDirection === "asc" ? "Ordenado de A a Z. Clique para inverter." : "Ordenado de Z a A. Clique para inverter."}
+                  </span>
+                </button>
               </th>
               <th scope="col" className="px-4 py-2 font-medium">
                 Email
+              </th>
+              <th scope="col" className="px-4 py-2 font-medium">
+                WhatsApp
               </th>
               <th scope="col" className="px-4 py-2 font-medium">
                 Papel
@@ -147,10 +179,13 @@ export function UsuariosTable({
                   Empresa
                 </th>
               )}
+              <th scope="col" className="px-4 py-2 font-medium">
+                Ativo
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {users.map((user) => (
+            {sortedUsers.map((user) => (
               <tr key={user.id} className={selected.has(user.id) ? "bg-slate-50" : undefined}>
                 <td className="px-4 py-2">
                   <input
@@ -168,10 +203,20 @@ export function UsuariosTable({
                   </div>
                 </td>
                 <td className="px-4 py-2 text-slate-600">{user.email}</td>
+                <td className="px-4 py-2 text-slate-600">{user.whatsapp ?? "-"}</td>
                 <td className="px-4 py-2 text-slate-600">{ROLE_LABELS[user.role]}</td>
                 {showCompanyColumn && (
                   <td className="px-4 py-2 text-slate-600">{user.company?.name ?? "-"}</td>
                 )}
+                <td className="px-4 py-2">
+                  <span
+                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                      user.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {user.active ? "Ativo" : "Inativo"}
+                  </span>
+                </td>
               </tr>
             ))}
             {users.length === 0 && (

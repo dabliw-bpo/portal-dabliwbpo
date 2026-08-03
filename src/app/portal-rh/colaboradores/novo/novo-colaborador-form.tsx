@@ -25,6 +25,12 @@ export function NovoColaboradorForm() {
         <input id="email" name="email" type="email" required className={inputBase} />
       </div>
       <div className="flex flex-col gap-1">
+        <label htmlFor="whatsapp" className="text-sm font-medium text-slate-700">
+          WhatsApp (opcional)
+        </label>
+        <input id="whatsapp" name="whatsapp" placeholder="(65) 99999-9999" className={inputBase} />
+      </div>
+      <div className="flex flex-col gap-1">
         <label htmlFor="password" className="text-sm font-medium text-slate-700">
           Senha inicial
         </label>

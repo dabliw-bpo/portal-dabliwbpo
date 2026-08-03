@@ -24,9 +24,6 @@ export default async function AdminLayout({
         links={[
           { href: "/admin", label: "Painel", exact: true },
           { href: "/admin/empresas", label: "Empresas" },
-          { href: "/admin/usuarios", label: "Usuários" },
-          { href: "/admin/documentos", label: "Documentos" },
-          { href: "/admin/ferias", label: "Férias" },
         ]}
       />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>

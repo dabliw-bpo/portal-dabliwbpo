@@ -25,7 +25,7 @@ export default async function EditarColaboradorPage({
       <h1 className="text-lg font-semibold text-slate-900">Editar colaborador</h1>
       <EditarColaboradorForm
         userId={user.id}
-        defaultValues={{ name: user.name, email: user.email, active: user.active }}
+        defaultValues={{ name: user.name, email: user.email, active: user.active, whatsapp: user.whatsapp }}
       />
     </div>
   );

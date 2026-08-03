@@ -5,10 +5,13 @@ import { ReviewForm } from "./review-form";
 
 export default async function AdminRevisarFeriasPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
 }) {
   const { id } = await params;
+  const { returnTo } = await searchParams;
   const vacationRequest = await prisma.vacationRequest.findUnique({
     where: { id },
     include: { collaborator: true },
@@ -21,7 +24,7 @@ export default async function AdminRevisarFeriasPage({
   return (
     <div>
       <h1 className="text-lg font-semibold text-slate-900">
-        Revisar solicitação — {vacationRequest.collaborator.name}
+        Revisar solicitação de {vacationRequest.collaborator.name}
       </h1>
       <p className="mt-1 text-sm text-slate-500">
         {formatDateOnly(vacationRequest.startDate)} a {formatDateOnly(vacationRequest.endDate)}
@@ -31,7 +34,10 @@ export default async function AdminRevisarFeriasPage({
       )}
 
       {vacationRequest.status === "REQUESTED" ? (
-        <ReviewForm requestId={vacationRequest.id} />
+        <ReviewForm
+          requestId={vacationRequest.id}
+          redirectTo={returnTo && returnTo.startsWith("/admin/") ? returnTo : undefined}
+        />
       ) : (
         <p className="mt-6 text-sm text-slate-500">Esta solicitação já foi revisada.</p>
       )}

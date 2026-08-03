@@ -7,11 +7,20 @@ import { buttonPrimary, inputBase } from "@/components/ui/styles";
 
 const initialState: CreateUserState = {};
 
-export function NovoUsuarioForm({ companies }: { companies: Company[] }) {
+export function NovoUsuarioForm({
+  companies,
+  lockedCompany,
+  redirectTo,
+}: {
+  companies: Company[];
+  lockedCompany?: { id: string; name: string };
+  redirectTo?: string;
+}) {
   const [state, formAction, pending] = useActionState(createUserAction, initialState);
 
   return (
     <form action={formAction} className="mt-6 flex max-w-md flex-col gap-4">
+      {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
       <div className="flex flex-col gap-1">
         <label htmlFor="name" className="text-sm font-medium text-slate-700">
           Nome
@@ -25,6 +34,12 @@ export function NovoUsuarioForm({ companies }: { companies: Company[] }) {
         <input id="email" name="email" type="email" required className={inputBase} />
       </div>
       <div className="flex flex-col gap-1">
+        <label htmlFor="whatsapp" className="text-sm font-medium text-slate-700">
+          WhatsApp (opcional)
+        </label>
+        <input id="whatsapp" name="whatsapp" placeholder="(65) 99999-9999" className={inputBase} />
+      </div>
+      <div className="flex flex-col gap-1">
         <label htmlFor="password" className="text-sm font-medium text-slate-700">
           Senha inicial
         </label>
@@ -34,26 +49,36 @@ export function NovoUsuarioForm({ companies }: { companies: Company[] }) {
         <label htmlFor="role" className="text-sm font-medium text-slate-700">
           Papel
         </label>
-        <select id="role" name="role" defaultValue="CLIENT" className={inputBase}>
-          <option value="CLIENT">Cliente</option>
+        <select id="role" name="role" defaultValue={lockedCompany ? "COLLABORATOR" : "CLIENT"} className={inputBase}>
+          {!lockedCompany && <option value="CLIENT">Cliente</option>}
           <option value="COLLABORATOR">Colaborador</option>
           <option value="COMPANY_HR">RH da empresa</option>
-          <option value="ADMIN">Admin</option>
+          {!lockedCompany && <option value="ADMIN">Admin</option>}
         </select>
       </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="companyId" className="text-sm font-medium text-slate-700">
-          Empresa (opcional)
-        </label>
-        <select id="companyId" name="companyId" defaultValue="" className={inputBase}>
-          <option value="">Nenhuma</option>
-          {companies.map((company) => (
-            <option key={company.id} value={company.id}>
-              {company.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {lockedCompany ? (
+        <div className="flex flex-col gap-1">
+          <span className="text-sm font-medium text-slate-700">Empresa</span>
+          <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            {lockedCompany.name}
+          </p>
+          <input type="hidden" name="companyId" value={lockedCompany.id} />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1">
+          <label htmlFor="companyId" className="text-sm font-medium text-slate-700">
+            Empresa (opcional)
+          </label>
+          <select id="companyId" name="companyId" defaultValue="" className={inputBase}>
+            <option value="">Nenhuma</option>
+            {companies.map((company) => (
+              <option key={company.id} value={company.id}>
+                {company.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       {state.error && (
         <p className="text-sm text-red-600" role="alert">
           {state.error}

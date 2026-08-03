@@ -46,12 +46,18 @@ export async function createVacationRequestAction(
   redirect("/portal-colaborador/ferias");
 }
 
+function safeAdminRedirect(formData: FormData, fallback: string): string {
+  const requested = formData.get("redirectTo");
+  return typeof requested === "string" && requested.startsWith("/admin/") ? requested : fallback;
+}
+
 export async function reviewVacationRequestAction(
   _prevState: VacationFormState,
   formData: FormData
 ): Promise<VacationFormState> {
   const session = await auth();
   const authSession = requireRole(session, ["ADMIN"]);
+  const listPath = safeAdminRedirect(formData, "/admin/ferias");
 
   const requestId = String(formData.get("requestId") ?? "");
   const parsed = reviewVacationRequestSchema.safeParse({
@@ -81,9 +87,9 @@ export async function reviewVacationRequestAction(
         reviewNotes: parsed.data.reviewNotes,
       },
     });
-    revalidatePath("/admin/ferias");
+    revalidatePath(listPath);
     revalidatePath("/portal-colaborador/ferias");
-    redirect("/admin/ferias");
+    redirect(listPath);
   }
 
   const file = formData.get("file");
@@ -134,7 +140,7 @@ export async function reviewVacationRequestAction(
     documentTitle,
   });
 
-  revalidatePath("/admin/ferias");
+  revalidatePath(listPath);
   revalidatePath("/portal-colaborador/ferias");
-  redirect("/admin/ferias");
+  redirect(listPath);
 }

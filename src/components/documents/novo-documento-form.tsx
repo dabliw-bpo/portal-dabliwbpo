@@ -8,11 +8,18 @@ const initialState: UploadDocumentState = {};
 
 type OwnerOption = { id: string; name: string; email: string };
 
-export function NovoDocumentoForm({ owners }: { owners: OwnerOption[] }) {
+export function NovoDocumentoForm({
+  owners,
+  redirectTo,
+}: {
+  owners: OwnerOption[];
+  redirectTo?: string;
+}) {
   const [state, formAction, pending] = useActionState(uploadDocumentAction, initialState);
 
   return (
     <form action={formAction} className="mt-6 flex max-w-md flex-col gap-4">
+      {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
       <div className="flex flex-col gap-1">
         <label htmlFor="title" className="text-sm font-medium text-slate-700">
           Título

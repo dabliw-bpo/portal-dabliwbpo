@@ -12,6 +12,14 @@ function listPathForActor(role: string): string {
   return role === "COMPANY_HR" ? "/portal-rh/colaboradores" : "/admin/usuarios";
 }
 
+function safeRedirectPath(formData: FormData, fallback: string): string {
+  const requested = formData.get("redirectTo");
+  if (typeof requested === "string" && (requested.startsWith("/admin/") || requested.startsWith("/portal-rh/"))) {
+    return requested;
+  }
+  return fallback;
+}
+
 export type CreateUserState = {
   error?: string;
 };
@@ -30,6 +38,7 @@ export async function createUserAction(
     password: formData.get("password"),
     role: formData.get("role"),
     companyId: formData.get("companyId"),
+    whatsapp: formData.get("whatsapp"),
   });
 
   if (!parsed.success) {
@@ -56,10 +65,11 @@ export async function createUserAction(
       passwordHash,
       role,
       companyId,
+      whatsapp: parsed.data.whatsapp ?? null,
     },
   });
 
-  const listPath = listPathForActor(authSession.user.role);
+  const listPath = safeRedirectPath(formData, listPathForActor(authSession.user.role));
   revalidatePath(listPath);
   redirect(listPath);
 }
@@ -89,6 +99,7 @@ export async function updateUserAction(
     email: formData.get("email"),
     role: formData.get("role"),
     companyId: formData.get("companyId"),
+    whatsapp: formData.get("whatsapp"),
   });
 
   if (!parsed.success) {
@@ -123,11 +134,12 @@ export async function updateUserAction(
       role,
       companyId,
       active,
+      whatsapp: parsed.data.whatsapp ?? null,
       ...(passwordHash ? { passwordHash } : {}),
     },
   });
 
-  const listPath = listPathForActor(authSession.user.role);
+  const listPath = safeRedirectPath(formData, listPathForActor(authSession.user.role));
   revalidatePath(listPath);
   redirect(listPath);
 }
@@ -189,7 +201,7 @@ export async function deleteUsersAction(
     deletedCount++;
   }
 
-  const listPath = listPathForActor(authSession.user.role);
+  const listPath = safeRedirectPath(formData, listPathForActor(authSession.user.role));
   revalidatePath(listPath);
 
   if (blockedNames.length > 0) {

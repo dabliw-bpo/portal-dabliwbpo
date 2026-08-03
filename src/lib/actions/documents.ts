@@ -79,7 +79,13 @@ export async function uploadDocumentAction(
     documentTitle: parsed.data.title,
   });
 
-  const listPath = isHr ? "/portal-rh/documentos" : "/admin/documentos";
+  const requestedRedirect = formData.get("redirectTo");
+  const defaultListPath = isHr ? "/portal-rh/documentos" : "/admin/documentos";
+  const listPath =
+    typeof requestedRedirect === "string" &&
+    (requestedRedirect.startsWith("/admin/") || requestedRedirect.startsWith("/portal-rh/"))
+      ? requestedRedirect
+      : defaultListPath;
   revalidatePath(listPath);
   redirect(listPath);
 }
