@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -33,17 +34,18 @@ enum VacationStatus {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  name               String
+  email              String   @unique
+  passwordHash       String
+  role               Role
+  active             Boolean  @default(true)
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  ownedDocuments    Document[] @relation("DocumentOwner")
-  uploadedDocuments Document[] @relation("DocumentUploader")
+  ownedDocuments    Document[]        @relation("DocumentOwner")
+  uploadedDocuments Document[]        @relation("DocumentUploader")
   signatures        Signature[]
   vacationRequests  VacationRequest[] @relation("VacationCollaborator")
   reviewedVacations VacationRequest[] @relation("VacationReviewer")
@@ -98,8 +100,8 @@ model VacationRequest {
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 
-  collaborator User     @relation("VacationCollaborator", fields: [collaboratorUserId], references: [id])
-  reviewedBy   User?    @relation("VacationReviewer", fields: [reviewedByUserId], references: [id])
+  collaborator User      @relation("VacationCollaborator", fields: [collaboratorUserId], references: [id])
+  reviewedBy   User?     @relation("VacationReviewer", fields: [reviewedByUserId], references: [id])
   document     Document? @relation(fields: [documentId], references: [id])
 
   @@index([collaboratorUserId])

@@ -8,6 +8,7 @@ import { createId } from "@/lib/id";
 import { formatDateOnly } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { saveFile } from "@/lib/storage";
+import { sendDocumentUploadedEmail } from "@/lib/email";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/validations/document";
 import { createVacationRequestSchema, reviewVacationRequestSchema } from "@/lib/validations/vacation";
 
@@ -62,7 +63,10 @@ export async function reviewVacationRequestAction(
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
 
-  const vacationRequest = await prisma.vacationRequest.findUnique({ where: { id: requestId } });
+  const vacationRequest = await prisma.vacationRequest.findUnique({
+    where: { id: requestId },
+    include: { collaborator: true },
+  });
   if (!vacationRequest || vacationRequest.status !== "REQUESTED") {
     return { error: "Solicitação não encontrada ou já revisada." };
   }
@@ -96,12 +100,13 @@ export async function reviewVacationRequestAction(
   const documentId = createId();
   const buffer = Buffer.from(await file.arrayBuffer());
   const filePath = await saveFile(buffer, file.name, documentId);
+  const documentTitle = `Acordo de férias - ${formatDateOnly(vacationRequest.startDate)} a ${formatDateOnly(vacationRequest.endDate)}`;
 
   await prisma.$transaction([
     prisma.document.create({
       data: {
         id: documentId,
-        title: `Acordo de férias — ${formatDateOnly(vacationRequest.startDate)} a ${formatDateOnly(vacationRequest.endDate)}`,
+        title: documentTitle,
         type: "VACATION_REQUEST",
         ownerUserId: vacationRequest.collaboratorUserId,
         uploadedByUserId: authSession.user.id,
@@ -122,6 +127,12 @@ export async function reviewVacationRequestAction(
       },
     }),
   ]);
+
+  await sendDocumentUploadedEmail({
+    to: vacationRequest.collaborator.email,
+    recipientName: vacationRequest.collaborator.name,
+    documentTitle,
+  });
 
   revalidatePath("/admin/ferias");
   revalidatePath("/portal-colaborador/ferias");

@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { saveFile } from "@/lib/storage";
+import { sendDocumentUploadedEmail } from "@/lib/email";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES, uploadDocumentSchema } from "@/lib/validations/document";
 
 export type UploadDocumentState = {
@@ -65,6 +66,12 @@ export async function uploadDocumentAction(
       mimeType: file.type,
       fileSize: file.size,
     },
+  });
+
+  await sendDocumentUploadedEmail({
+    to: owner.email,
+    recipientName: owner.name,
+    documentTitle: parsed.data.title,
   });
 
   revalidatePath("/admin/documentos");

@@ -37,6 +37,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           email: user.email,
           role: user.role,
+          mustChangePassword: user.mustChangePassword,
         };
       },
     }),
@@ -46,12 +47,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id as string;
         token.role = user.role;
+        token.mustChangePassword = (user as { mustChangePassword: boolean }).mustChangePassword;
       }
       return token;
     },
     session: async ({ session, token }) => {
       session.user.id = token.id as string;
       session.user.role = token.role as Role;
+      session.user.mustChangePassword = token.mustChangePassword as boolean;
       return session;
     },
   },

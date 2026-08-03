@@ -31,6 +31,10 @@ export default auth((req) => {
     return NextResponse.redirect(new URL(homePathForRole(session.user.role), req.nextUrl.origin));
   }
 
+  if (session.user.mustChangePassword && pathname !== "/alterar-senha") {
+    return NextResponse.redirect(new URL("/alterar-senha", req.nextUrl.origin));
+  }
+
   return NextResponse.next();
 });
 
