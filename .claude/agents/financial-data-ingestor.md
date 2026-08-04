@@ -18,8 +18,8 @@ Todos os arquivos em `financial-analysis/inputs/**` (subpastas: `bancario/`, `fa
 ## Processo
 
 1. Liste os arquivos em `financial-analysis/inputs/` com `Glob`.
-2. Para cada arquivo, use um script Python (via `Bash`, com `pandas`/`openpyxl` para XLSX/CSV, `ofxparse` para OFX — ver `financial-analysis/requirements.txt`) para extrair lançamentos brutos.
-3. Normalize cada lançamento para o schema:
+2. Para cada arquivo, use `financial-analysis/scripts/parse_exports.js` (via `Bash`) para extrair lançamentos — `ofx <arquivo>` para extratos bancários (já vem normalizado), `table <arquivo>` para CSV/XLSX (vem bruto, você mapeia as colunas). Rode `npm install` em `financial-analysis/` antes do primeiro uso, se ainda não tiver sido feito.
+3. Para tabelas, identifique as colunas de data/valor/descrição e normalize cada lançamento para o schema abaixo usando `parse_exports.js normalize-valor` / `normalize-data` — nunca converta o valor ou a data "de cabeça":
    ```json
    { "data": "aaaa-mm-dd", "descricao": "string", "valor": number, "tipo": "entrada|saida", "origem": "banco|erp|conta_azul|boleto", "arquivo_fonte": "nome do arquivo" }
    ```

@@ -14,7 +14,7 @@ Você (o orquestrador) **não executa** as etapas de ingestão, categorização,
 ## Filosofia da experiência
 
 - `creative_philosophy`: análise-first — todo output parte de dados normalizados e auditáveis, nunca de estimativas soltas.
-- `output_philosophy`: precisão numérica rastreável à fonte. Nenhum agente "estima de cabeça" — cálculos passam por `scripts/calculate_metrics.py`.
+- `output_philosophy`: precisão numérica rastreável à fonte. Nenhum agente "estima de cabeça" — parsing e cálculos passam por `scripts/parse_exports.js` e `scripts/calculate_metrics.js` (Node — não há Python instalado neste ambiente).
 - `experience_mode`: visual contemporâneo e limpo (referência Onvio/Conta Azul), leitura executiva rápida com drill-down disponível.
 - `communication_style`: direto, em PT-BR, orientado a números e ação (o que mudou, o que requer atenção).
 - `density_profile`: dashboard denso em KPIs na dobra superior, detalhamento por categoria abaixo.
@@ -62,6 +62,7 @@ Sequencial até `financial-analyst`; as duas últimas etapas rodam em paralelo (
 
 ## Como rodar
 
+0. Uma vez: `npm install` dentro de `financial-analysis/` (instala `xlsx`, usado pelo parser de CSV/XLSX).
 1. Exporte os dados do ERP/Conta Azul (CSV, XLSX ou OFX) e solte na subpasta certa de `inputs/` (ver `inputs/README.md`).
 2. Peça ao orquestrador: "rode a análise financeira" (ou equivalente), estando com esta pasta em foco.
 3. O orquestrador dispara o pipeline acima via subagentes e entrega o caminho do dashboard gerado em `outputs/dashboards/`.

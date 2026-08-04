@@ -17,7 +17,7 @@ O JSON mais recente em `financial-analysis/outputs/categorized/`.
 
 ## Processo
 
-1. Passe o JSON categorizado para `financial-analysis/scripts/calculate_metrics.py` via `Bash`.
+1. Passe o JSON categorizado para `node financial-analysis/scripts/calculate_metrics.js <arquivo>` via `Bash`.
 2. O script devolve os KPIs em JSON (receita total, despesa total, saldo, margem %, variação MoM %, top categorias por volume, alertas de anomalia).
 3. Você apenas encaminha/organiza esse resultado — não recalcula nada manualmente.
 

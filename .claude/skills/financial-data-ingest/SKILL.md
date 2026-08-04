@@ -9,20 +9,30 @@ description: Como parsear exports financeiros brasileiros (extratos bancários O
 
 Sempre que for ler um arquivo bruto de `financial-analysis/inputs/` (CSV, XLSX ou OFX) e transformá-lo em lançamentos estruturados. Usado pelo agente `financial-data-ingestor`.
 
+## Ferramenta
+
+`financial-analysis/scripts/parse_exports.js` (Node — `xlsx`/SheetJS para tabelas, parser OFX próprio via regex, sem dependência de Python). Rode `npm install` em `financial-analysis/` uma vez antes do primeiro uso.
+
+```bash
+node financial-analysis/scripts/parse_exports.js ofx <arquivo.ofx>
+node financial-analysis/scripts/parse_exports.js table <arquivo.csv|arquivo.xlsx> [--sheet=Nome]
+node financial-analysis/scripts/parse_exports.js normalize-valor "R$ 1.234,56"
+node financial-analysis/scripts/parse_exports.js normalize-data "05/07/2026"
+```
+
 ## Formatos de arquivo
 
 ### OFX (extratos bancários)
 
-- Use a biblioteca `ofxparse` (Python). Cada `transaction` tem `date`, `amount`, `memo`/`payee`.
-- `amount` negativo = saída, positivo = entrada.
-- Bancos brasileiros às vezes exportam OFX com encoding `ISO-8859-1` — tente `utf-8` primeiro, faça fallback para `latin-1` se decodificar falhar ou gerar caracteres inválidos.
+- `parse_exports.js ofx <arquivo>` já devolve lançamentos totalmente normalizados (`data`, `descricao`, `valor`, `tipo`, `origem`, `arquivo_fonte`) — o schema `<STMTTRN>` do OFX é fixo, então essa etapa é 100% mecânica, sem ambiguidade.
+- `valor` negativo no OFX vira `tipo: "saida"`; positivo vira `"entrada"`.
+- O script lê o arquivo como `latin1` — cobre o encoding `ISO-8859-1` comum em OFX de bancos brasileiros.
 
 ### CSV / XLSX (ERP, Conta Azul, planilhas de faturamento/comissões)
 
-- Use `pandas.read_csv` / `pandas.read_excel` (`openpyxl` como engine para `.xlsx`).
-- Valores monetários costumam vir como string `"R$ 1.234,56"` — remover `"R$"`, trocar `.` (separador de milhar) por nada e `,` (separador decimal) por `.`, depois converter para `float`.
-- Datas costumam vir como `dd/mm/aaaa` — parsear com `dayfirst=True`, nunca assumir formato americano `mm/dd/aaaa`.
-- A primeira linha nem sempre é o cabeçalho real (algumas planilhas do ERP têm 1-2 linhas de título antes da tabela) — inspecione as primeiras linhas antes de fixar `header=0`.
+- `parse_exports.js table <arquivo>` devolve as linhas brutas (`linhas: [{cabeçalho: valor}]`) e a lista de planilhas disponíveis — a extração de arquivo é mecânica, mas mapear qual coluna é data/valor/descrição varia entre ERP, Conta Azul e planilhas manuais, então **essa parte é julgamento do agente**, não do script.
+- Depois de identificar a coluna certa, use `normalize-valor` (remove `"R$"`, separador de milhar `.`, troca `,` decimal por `.`) e `normalize-data` (converte `dd/mm/aaaa` → `aaaa-mm-dd`) para não fazer essa conversão "de cabeça" — nunca assuma formato americano `mm/dd/aaaa`.
+- A primeira linha nem sempre é o cabeçalho real (algumas planilhas do ERP têm 1-2 linhas de título antes da tabela) — inspecione as primeiras linhas do resultado de `table` antes de decidir qual é a linha de cabeçalho.
 
 ## Regras gerais
 
@@ -30,11 +40,3 @@ Sempre que for ler um arquivo bruto de `financial-analysis/inputs/` (CSV, XLSX o
 - Uma linha que não tem valor ou data válidos deve ser descartada e contabilizada como erro — nunca preenchida com `0` ou data de hoje.
 - Preserve o nome do arquivo de origem em cada lançamento (`arquivo_fonte`) para rastreabilidade.
 
-## Exemplo de normalização de valor
-
-```python
-def parse_valor_br(valor_str: str) -> float:
-    limpo = valor_str.replace("R$", "").strip()
-    limpo = limpo.replace(".", "").replace(",", ".")
-    return float(limpo)
-```

@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Obsidian vault: bundled third-party plugin code (main.js is a ~3MB
+    // bundle that exhausts ESLint's heap).
+    ".obsidian/**",
+    // Self-contained squad with its own package.json and tooling; it does
+    // not touch this app's src/.
+    "financial-analysis/**",
   ]),
 ]);
 
