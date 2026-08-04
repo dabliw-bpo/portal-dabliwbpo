@@ -10,7 +10,7 @@ export function CompanyTabs({
   const tabs = [
     { key: "cadastro", label: "Cadastro", href: `/admin/empresas/${companyId}/cadastro` },
     { key: "bancos", label: "Dados bancários", href: `/admin/empresas/${companyId}/bancos` },
-    { key: "pessoas", label: "Pessoas", href: `/admin/empresas/${companyId}` },
+    { key: "pessoas", label: "Folha", href: `/admin/empresas/${companyId}` },
     { key: "documentos", label: "Documentos", href: `/admin/empresas/${companyId}/documentos` },
     { key: "ferias", label: "Férias", href: `/admin/empresas/${companyId}/ferias` },
     { key: "integracoes", label: "Integrações", href: `/admin/empresas/${companyId}/integracoes` },

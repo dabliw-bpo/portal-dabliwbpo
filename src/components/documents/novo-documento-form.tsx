@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { uploadDocumentAction, type UploadDocumentState } from "@/lib/actions/documents";
 import { buttonPrimary, inputBase } from "@/components/ui/styles";
 
@@ -16,6 +16,7 @@ export function NovoDocumentoForm({
   redirectTo?: string;
 }) {
   const [state, formAction, pending] = useActionState(uploadDocumentAction, initialState);
+  const [type, setType] = useState("CONTRACT");
 
   return (
     <form action={formAction} className="mt-6 flex max-w-md flex-col gap-4">
@@ -56,14 +57,30 @@ export function NovoDocumentoForm({
         <select
           id="type"
           name="type"
-          defaultValue="CONTRACT"
+          value={type}
+          onChange={(event) => setType(event.target.value)}
           className={inputBase}
         >
           <option value="CONTRACT">Contrato</option>
+          <option value="PAYSLIP">Holerite</option>
           <option value="VACATION_REQUEST">Férias</option>
           <option value="OTHER">Outro</option>
         </select>
       </div>
+      {type === "PAYSLIP" && (
+        <div className="flex flex-col gap-1">
+          <label htmlFor="referenceMonth" className="text-sm font-medium text-slate-700">
+            Competência
+          </label>
+          <input
+            id="referenceMonth"
+            name="referenceMonth"
+            type="month"
+            required
+            className={inputBase}
+          />
+        </div>
+      )}
       <div className="flex flex-col gap-1">
         <label htmlFor="file" className="text-sm font-medium text-slate-700">
           Arquivo (PDF, DOC(X), PNG ou JPG — até 15MB)

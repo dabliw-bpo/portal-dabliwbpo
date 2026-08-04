@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import type { Company, User } from "@prisma/client";
 import { deleteUsersAction, type DeleteUsersState } from "@/lib/actions/users";
@@ -24,12 +25,15 @@ export function UsuariosTable({
   basePath = "/admin/usuarios",
   showCompanyColumn = true,
   editRedirectTo,
+  hubBasePath,
 }: {
   users: UserRow[];
   currentUserId: string;
   basePath?: string;
   showCompanyColumn?: boolean;
   editRedirectTo?: string;
+  /** When set, each name links to `${hubBasePath}/${userId}` (the payroll hub). */
+  hubBasePath?: string;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -199,7 +203,16 @@ export function UsuariosTable({
                 <td className="px-4 py-2 text-slate-900">
                   <div className="flex items-center gap-2.5">
                     <Avatar name={user.name} src={user.avatarUrl} size={26} />
-                    {user.name}
+                    {hubBasePath ? (
+                      <Link
+                        href={`${hubBasePath}/${user.id}`}
+                        className="underline hover:text-slate-700"
+                      >
+                        {user.name}
+                      </Link>
+                    ) : (
+                      user.name
+                    )}
                   </div>
                 </td>
                 <td className="px-4 py-2 text-slate-600">{user.email}</td>

@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { saveFile } from "@/lib/storage";
 import { sendDocumentUploadedEmail } from "@/lib/email";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES, uploadDocumentSchema } from "@/lib/validations/document";
+import { parseSignatureImage } from "@/lib/validations/signature";
 
 export type UploadDocumentState = {
   error?: string;
@@ -27,6 +28,7 @@ export async function uploadDocumentAction(
     title: formData.get("title"),
     type: formData.get("type"),
     ownerUserId: formData.get("ownerUserId"),
+    referenceMonth: formData.get("referenceMonth"),
   });
 
   if (!parsed.success) {
@@ -64,6 +66,7 @@ export async function uploadDocumentAction(
       id,
       title: parsed.data.title,
       type: parsed.data.type,
+      referenceMonth: parsed.data.referenceMonth ?? null,
       ownerUserId: owner.id,
       uploadedByUserId: authSession.user.id,
       filePath,
@@ -94,6 +97,7 @@ export type SignDocumentState = {
   error?: string;
 };
 
+
 export async function signDocumentAction(
   _prevState: SignDocumentState,
   formData: FormData
@@ -114,6 +118,11 @@ export async function signDocumentAction(
     return { error: "Este documento não está pendente de assinatura." };
   }
 
+  const imageData = parseSignatureImage(formData.get("signatureImage"));
+  if (!imageData) {
+    return { error: "Desenhe sua assinatura manuscrita para concluir." };
+  }
+
   const headerList = await headers();
   const ipAddress = headerList.get("x-forwarded-for")?.split(",")[0]?.trim() || "desconhecido";
   const userAgent = headerList.get("user-agent") ?? "desconhecido";
@@ -129,6 +138,7 @@ export async function signDocumentAction(
         signerName: session.user.name ?? session.user.email ?? "Usuário",
         ipAddress,
         userAgent,
+        imageData,
       },
     }),
     prisma.document.update({

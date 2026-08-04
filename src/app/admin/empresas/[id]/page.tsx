@@ -53,6 +53,7 @@ export default async function AdminEmpresaDetalhePage({
         basePath="/admin/usuarios"
         showCompanyColumn={false}
         editRedirectTo={`/admin/empresas/${id}`}
+        hubBasePath={`/admin/empresas/${id}/folha`}
       />
     </div>
   );

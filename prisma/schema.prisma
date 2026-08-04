@@ -17,6 +17,7 @@ enum Role {
 
 enum DocumentType {
   CONTRACT
+  PAYSLIP
   VACATION_REQUEST
   OTHER
 }
@@ -155,6 +156,8 @@ model Document {
   fileSize         Int
   ownerUserId      String
   uploadedByUserId String
+  /// Competência (YYYY-MM) — usada pelos holerites mensais.
+  referenceMonth   String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
@@ -174,6 +177,9 @@ model Signature {
   signedAt   DateTime @default(now())
   ipAddress  String
   userAgent  String
+  /// Assinatura manuscrita capturada no ato, como data URL PNG. Nulo apenas
+  /// para as assinaturas registradas antes da captura passar a ser exigida.
+  imageData  String?
 
   document Document @relation(fields: [documentId], references: [id])
   user     User     @relation(fields: [userId], references: [id])

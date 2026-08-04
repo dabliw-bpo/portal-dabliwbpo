@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { DocumentViewer } from "@/components/documents/document-viewer";
 import { DocumentStatusBadge } from "@/components/documents/document-status-badge";
 import { SignDocumentModal } from "@/components/documents/sign-document-modal";
+import { SignatureProof } from "@/components/documents/signature-proof";
 
 export default async function ColaboradorDocumentoPage({
   params,
@@ -44,9 +45,8 @@ export default async function ColaboradorDocumentoPage({
       </div>
 
       {document.signature ? (
-        <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-          Assinado por {document.signature.signerName} em{" "}
-          {document.signature.signedAt.toLocaleString("pt-BR")} (IP {document.signature.ipAddress})
+        <div className="mt-4">
+          <SignatureProof signature={document.signature} />
         </div>
       ) : (
         <div className="mt-4">

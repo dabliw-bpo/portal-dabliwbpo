@@ -76,6 +76,7 @@ export async function createUserAction(
 
 export type UpdateUserState = {
   error?: string;
+  success?: boolean;
 };
 
 export async function updateUserAction(
@@ -141,6 +142,13 @@ export async function updateUserAction(
 
   const listPath = safeRedirectPath(formData, listPathForActor(authSession.user.role));
   revalidatePath(listPath);
+
+  // Panels that edit in place (the collaborator hub) stay put and just want to
+  // know the save landed, instead of being navigated away to a list.
+  if (formData.get("inline") === "1") {
+    return { success: true };
+  }
+
   redirect(listPath);
 }
 

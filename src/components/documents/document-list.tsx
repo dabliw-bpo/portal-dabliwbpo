@@ -4,6 +4,7 @@ import { DocumentStatusBadge } from "./document-status-badge";
 
 const TYPE_LABELS: Record<string, string> = {
   CONTRACT: "Contrato",
+  PAYSLIP: "Holerite",
   VACATION_REQUEST: "Férias",
   OTHER: "Outro",
 };
