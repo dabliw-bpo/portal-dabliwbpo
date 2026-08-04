@@ -61,3 +61,14 @@ next-env.d.ts
 
 # supabase CLI local state
 /supabase/.temp
+
+# financial-analysis squad: sensitive financial exports and generated reports
+/financial-analysis/inputs/*
+!/financial-analysis/inputs/README.md
+!/financial-analysis/inputs/*/
+/financial-analysis/inputs/*/*
+!/financial-analysis/inputs/*/.gitkeep
+/financial-analysis/outputs/*
+!/financial-analysis/outputs/*/
+/financial-analysis/outputs/*/*
+!/financial-analysis/outputs/*/.gitkeep

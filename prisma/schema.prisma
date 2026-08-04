@@ -34,6 +34,11 @@ enum VacationStatus {
   DOCUMENT_GENERATED
 }
 
+/// Mirrors the fields printed on the Receita Federal "Cartão CNPJ"
+/// (Comprovante de Inscrição e de Situação Cadastral). `name` holds the
+/// NOME EMPRESARIAL (razão social); everything below is transcribed from
+/// the card and is optional so a company can be created before the card
+/// is at hand.
 model Company {
   id        String   @id @default(cuid())
   name      String
@@ -41,7 +46,64 @@ model Company {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users User[]
+  tradeName           String?
+  openingDate         DateTime?
+  branchType          String?
+  legalNature         String?
+  companySize         String?
+  mainActivity        String?
+  secondaryActivities String?
+
+  street       String?
+  streetNumber String?
+  complement   String?
+  district     String?
+  city         String?
+  state        String?
+  zipCode      String?
+
+  email String?
+  phone String?
+
+  federalEntity            String?
+  registrationStatus       String?
+  registrationStatusDate   DateTime?
+  registrationStatusReason String?
+  specialStatus            String?
+  specialStatusDate        DateTime?
+
+  users                User[]
+  bankAccounts         BankAccount[]
+  contaAzulIntegration ContaAzulIntegration?
+}
+
+model BankAccount {
+  id            String   @id @default(cuid())
+  companyId     String
+  bankName      String
+  bankCode      String?
+  agency        String
+  accountNumber String
+  cnpj          String?
+  pixKey        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+model ContaAzulIntegration {
+  id           String   @id @default(cuid())
+  companyId    String   @unique
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  connectedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 model User {

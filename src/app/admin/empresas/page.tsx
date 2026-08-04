@@ -37,7 +37,7 @@ export default async function AdminEmpresasPage() {
               <tr key={company.id}>
                 <td className="px-4 py-2">
                   <Link
-                    href={`/admin/empresas/${company.id}`}
+                    href={`/admin/empresas/${company.id}/cadastro`}
                     className="text-slate-900 underline hover:text-slate-700"
                   >
                     {company.name}
