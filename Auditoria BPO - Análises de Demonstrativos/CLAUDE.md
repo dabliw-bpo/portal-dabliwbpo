@@ -62,10 +62,39 @@ Sequencial até `financial-analyst`; as duas últimas etapas rodam em paralelo (
 
 ## Como rodar
 
-0. Uma vez: `npm install` dentro desta pasta (instala `xlsx`, usado pelo parser de CSV/XLSX).
-1. Exporte os dados do ERP/Conta Azul (CSV, XLSX ou OFX) e solte na subpasta certa de `inputs/` (ver `inputs/README.md`).
-2. Peça ao orquestrador: "rode a análise financeira" (ou equivalente), estando com esta pasta em foco.
-3. O orquestrador dispara o pipeline acima via subagentes e entrega o caminho do dashboard gerado em `outputs/dashboards/`.
+Uma vez: `npm install` dentro desta pasta (instala `xlsx` e `pdf-parse`).
+
+Há **dois fluxos**, e só o primeiro foi rodado ponta a ponta até hoje.
+
+### Fluxo A — Relatórios PDF do ERP de transportes (testado)
+
+Totalmente por script, sem subagentes. Foi o fluxo usado na análise da EGM
+Transportes (jan–jun/2026), com os totais conferidos ao centavo contra os
+totais impressos pelo próprio ERP.
+
+```bash
+node scripts/analyze_reports.js <lucratividade.pdf> <despesas.pdf> > outputs/metrics/metrics_<periodo>.json
+node scripts/build_dashboard.js outputs/metrics/metrics_<periodo>.json outputs/dashboards/dashboard_<empresa>_<periodo>.html
+```
+
+Os scripts aceitam qualquer caminho — não é preciso copiar os PDFs para `inputs/`.
+
+- `scripts/parse_pdf_reports.js` — extrai os totais oficiais dos dois layouts de relatório e roda conferências internas (as parcelas de receita têm de somar o Total Receitas; os itens de despesa têm de somar o Total Geral). Divergência vira `avisos_validacao`, não número errado.
+- `scripts/analyze_reports.js` — classifica os itens de despesa e consolida. **É onde está o julgamento contábil** (constante `CLASSIFICACAO`): o que é dupla contagem com o custo de viagem, o que não é despesa de resultado. Item novo no plano de contas do ERP gera alerta em vez de entrar silenciosamente na conta errada.
+- `scripts/build_dashboard.js` — gera o HTML autocontido (tema claro/escuro, paleta validada).
+
+### Fluxo B — Exports CSV/XLSX/OFX via subagentes (nunca rodado)
+
+O pipeline de 5 agentes descrito acima. Os scripts determinísticos que ele usa
+(`parse_exports.js`, `calculate_metrics.js`) estão testados com dados de
+exemplo, mas os agentes nunca processaram dados reais. Trate como não validado.
+
+> **Aviso sobre a taxonomia.** `.claude/skills/financial-categorization-rules/`
+> foi escrita para os livros do próprio BPO (mensalidade, folha, comissão) a
+> partir do briefing — **não serve** para analisar o demonstrativo operacional de
+> um cliente de transportes. O Fluxo A não a usa; usa a `CLASSIFICACAO` do
+> `analyze_reports.js`. Se o Fluxo B for ativado para analisar clientes, essa
+> skill precisa ser reescrita primeiro.
 
 ## Skills usadas pelo squad
 
