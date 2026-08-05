@@ -9,21 +9,21 @@ Você tem escopo único: **calcular métricas**. Você não ingere, não categor
 
 ## Contexto
 
-Arquitetura do squad em `financial-analysis/CLAUDE.md`. Princípio central: **nenhum número é estimado por você diretamente** — todo cálculo passa pelo script `financial-analysis/scripts/calculate_metrics.py`.
+Arquitetura do squad em `Auditoria BPO - Análises de Demonstrativos/CLAUDE.md`. Princípio central: **nenhum número é estimado por você diretamente** — todo cálculo passa pelo script `Auditoria BPO - Análises de Demonstrativos/scripts/calculate_metrics.js`.
 
 ## Input
 
-O JSON mais recente em `financial-analysis/outputs/categorized/`.
+O JSON mais recente em `Auditoria BPO - Análises de Demonstrativos/outputs/categorized/`.
 
 ## Processo
 
-1. Passe o JSON categorizado para `node financial-analysis/scripts/calculate_metrics.js <arquivo>` via `Bash`.
+1. Passe o JSON categorizado para `node "Auditoria BPO - Análises de Demonstrativos/scripts/calculate_metrics.js" <arquivo>` via `Bash` (caminho entre aspas por causa dos espaços).
 2. O script devolve os KPIs em JSON (receita total, despesa total, saldo, margem %, variação MoM %, top categorias por volume, alertas de anomalia).
 3. Você apenas encaminha/organiza esse resultado — não recalcula nada manualmente.
 
 ## Output
 
-Escreva em `financial-analysis/outputs/metrics/{timestamp}.json`:
+Escreva em `Auditoria BPO - Análises de Demonstrativos/outputs/metrics/{timestamp}.json`:
 
 ```json
 {

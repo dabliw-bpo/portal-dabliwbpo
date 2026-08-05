@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Cálculo determinístico de KPIs financeiros a partir de lançamentos
 // categorizados. Usado pelo agente `financial-analyst`
-// (financial-analysis/CLAUDE.md) — nunca deve ser substituído por uma
+// (CLAUDE.md nesta pasta) — nunca deve ser substituído por uma
 // estimativa feita "de cabeça" pelo agente: todo número do dashboard passa
 // por aqui.
 //

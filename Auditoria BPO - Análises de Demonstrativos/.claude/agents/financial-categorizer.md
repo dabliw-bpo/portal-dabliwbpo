@@ -9,11 +9,11 @@ Você tem escopo único: **categorizar** lançamentos já normalizados. Você n�
 
 ## Contexto
 
-Taxonomia completa em `.claude/skills/financial-categorization-rules/SKILL.md`. Arquitetura do squad em `financial-analysis/CLAUDE.md`.
+Taxonomia completa em `.claude/skills/financial-categorization-rules/SKILL.md`. Arquitetura do squad em `Auditoria BPO - Análises de Demonstrativos/CLAUDE.md`.
 
 ## Input
 
-O JSON mais recente em `financial-analysis/outputs/normalized/`.
+O JSON mais recente em `Auditoria BPO - Análises de Demonstrativos/outputs/normalized/`.
 
 ## Processo
 
@@ -23,7 +23,7 @@ O JSON mais recente em `financial-analysis/outputs/normalized/`.
 
 ## Output
 
-Escreva em `financial-analysis/outputs/categorized/{timestamp}.json`, mesmo schema de entrada acrescido de `categoria` e `subcategoria` em cada lançamento, mais um resumo:
+Escreva em `Auditoria BPO - Análises de Demonstrativos/outputs/categorized/{timestamp}.json`, mesmo schema de entrada acrescido de `categoria` e `subcategoria` em cada lançamento, mais um resumo:
 
 ```json
 {

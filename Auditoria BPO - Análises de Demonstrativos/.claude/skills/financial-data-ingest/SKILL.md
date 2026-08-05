@@ -7,17 +7,17 @@ description: Como parsear exports financeiros brasileiros (extratos bancários O
 
 ## Quando usar
 
-Sempre que for ler um arquivo bruto de `financial-analysis/inputs/` (CSV, XLSX ou OFX) e transformá-lo em lançamentos estruturados. Usado pelo agente `financial-data-ingestor`.
+Sempre que for ler um arquivo bruto de `Auditoria BPO - Análises de Demonstrativos/inputs/` (CSV, XLSX ou OFX) e transformá-lo em lançamentos estruturados. Usado pelo agente `financial-data-ingestor`.
 
 ## Ferramenta
 
-`financial-analysis/scripts/parse_exports.js` (Node — `xlsx`/SheetJS para tabelas, parser OFX próprio via regex, sem dependência de Python). Rode `npm install` em `financial-analysis/` uma vez antes do primeiro uso.
+`Auditoria BPO - Análises de Demonstrativos/scripts/parse_exports.js` (Node — `xlsx`/SheetJS para tabelas, parser OFX próprio via regex, sem dependência de Python). Rode `npm install` dentro dessa pasta uma vez antes do primeiro uso.
 
 ```bash
-node financial-analysis/scripts/parse_exports.js ofx <arquivo.ofx>
-node financial-analysis/scripts/parse_exports.js table <arquivo.csv|arquivo.xlsx> [--sheet=Nome]
-node financial-analysis/scripts/parse_exports.js normalize-valor "R$ 1.234,56"
-node financial-analysis/scripts/parse_exports.js normalize-data "05/07/2026"
+node "Auditoria BPO - Análises de Demonstrativos/scripts/parse_exports.js" ofx <arquivo.ofx>
+node "Auditoria BPO - Análises de Demonstrativos/scripts/parse_exports.js" table <arquivo.csv|arquivo.xlsx> [--sheet=Nome]
+node "Auditoria BPO - Análises de Demonstrativos/scripts/parse_exports.js" normalize-valor "R$ 1.234,56"
+node "Auditoria BPO - Análises de Demonstrativos/scripts/parse_exports.js" normalize-data "05/07/2026"
 ```
 
 ## Formatos de arquivo

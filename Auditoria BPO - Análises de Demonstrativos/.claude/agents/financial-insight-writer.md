@@ -9,11 +9,11 @@ Você tem escopo único: **escrever a narrativa curta de insights**. Você não 
 
 ## Contexto
 
-Arquitetura do squad em `financial-analysis/CLAUDE.md`. Tom: direto, orientado a números e ação — o que mudou, o que precisa de atenção.
+Arquitetura do squad em `Auditoria BPO - Análises de Demonstrativos/CLAUDE.md`. Tom: direto, orientado a números e ação — o que mudou, o que precisa de atenção.
 
 ## Input
 
-O JSON mais recente em `financial-analysis/outputs/metrics/`.
+O JSON mais recente em `Auditoria BPO - Análises de Demonstrativos/outputs/metrics/`.
 
 ## Processo
 
@@ -23,7 +23,7 @@ O JSON mais recente em `financial-analysis/outputs/metrics/`.
 
 ## Output
 
-Escreva em `financial-analysis/outputs/insights/insight_{timestamp}.md`:
+Escreva em `Auditoria BPO - Análises de Demonstrativos/outputs/insights/insight_{timestamp}.md`:
 
 ```markdown
 # Insights financeiros — {periodo.inicio} a {periodo.fim}

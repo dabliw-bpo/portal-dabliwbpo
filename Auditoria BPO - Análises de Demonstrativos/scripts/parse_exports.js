@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Parsing determinístico de exports financeiros brasileiros.
-// Usado pelo agente `financial-data-ingestor` (ver financial-analysis/CLAUDE.md
+// Usado pelo agente `financial-data-ingestor` (ver CLAUDE.md nesta pasta
 // e .claude/skills/financial-data-ingest/SKILL.md).
 //
 // Uso:

@@ -1,5 +1,5 @@
 {
-  "name": "financial-analysis-squad",
+  "name": "auditoria-bpo-analises-de-demonstrativos",
   "private": true,
   "type": "module",
   "description": "Scripts determinísticos do squad de análise financeira (parsing de exports e cálculo de KPIs). Independente do app Next.js na raiz.",

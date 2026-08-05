@@ -1,6 +1,6 @@
-# Squad: Análise Financeira BPO
+# Auditoria BPO - Análises de Demonstrativos
 
-Sistema multi-agente para consolidar exports manuais do ERP interno e do Conta Azul em um dashboard financeiro recorrente. Escopado a esta pasta — não faz parte do app Next.js na raiz do repositório. Gerado pela skill `mestre-squad-builder`.
+Squad multi-agente para consolidar exports manuais do ERP interno e do Conta Azul em um dashboard financeiro recorrente. Escopado a esta pasta — não faz parte do app Next.js na raiz do repositório. Centraliza também o diagnóstico de negócio e os modelos que originaram este squad (briefing, prioridades de automação, modelo de previsão de faturamento). Gerado pela skill `mestre-squad-builder`.
 
 ## Papel do orquestrador
 
@@ -31,7 +31,7 @@ Você (o orquestrador) **não executa** as etapas de ingestão, categorização,
 
 ## Agentes
 
-Definidos em `.claude/agents/` (raiz do repositório, convenção do Claude Code):
+Definidos em `.claude/agents/` (escopados a esta pasta — convenção de skills/agents por diretório do Claude Code):
 
 | Agente | Escopo único | Input | Output |
 |---|---|---|---|
@@ -62,7 +62,7 @@ Sequencial até `financial-analyst`; as duas últimas etapas rodam em paralelo (
 
 ## Como rodar
 
-0. Uma vez: `npm install` dentro de `financial-analysis/` (instala `xlsx`, usado pelo parser de CSV/XLSX).
+0. Uma vez: `npm install` dentro desta pasta (instala `xlsx`, usado pelo parser de CSV/XLSX).
 1. Exporte os dados do ERP/Conta Azul (CSV, XLSX ou OFX) e solte na subpasta certa de `inputs/` (ver `inputs/README.md`).
 2. Peça ao orquestrador: "rode a análise financeira" (ou equivalente), estando com esta pasta em foco.
 3. O orquestrador dispara o pipeline acima via subagentes e entrega o caminho do dashboard gerado em `outputs/dashboards/`.
@@ -71,6 +71,15 @@ Sequencial até `financial-analyst`; as duas últimas etapas rodam em paralelo (
 
 - `.claude/skills/financial-data-ingest/` — como parsear exports financeiros brasileiros (R$, vírgula decimal, datas dd/mm/aaaa, encoding).
 - `.claude/skills/financial-categorization-rules/` — taxonomia de categorias/subcategorias específica deste BPO.
+
+## Documentos de diagnóstico
+
+Também centralizados nesta pasta (contexto de negócio que originou o squad):
+
+- `Briefing BPO Financeiro e RH.md` / `briefing_imersao_ia.docx` — diagnóstico original.
+- `Prioridades das Automações.md` — ordem de prioridade das automações do BPO.
+- `Modelo de Previsão de Faturamento.md` / `previsao_faturamento.xlsx` — modelo de projeção de faturamento (independente deste squad, mas mesma origem de diagnóstico).
+- `Imersão IA Index.md` — índice desses documentos.
 
 ## Regra final
 

@@ -17,7 +17,7 @@ const eslintConfig = defineConfig([
     ".obsidian/**",
     // Self-contained squad with its own package.json and tooling; it does
     // not touch this app's src/.
-    "financial-analysis/**",
+    "Auditoria BPO - Análises de Demonstrativos/**",
   ]),
 ]);
 

@@ -60,4 +60,4 @@ Qualquer lançamento que não se encaixe com confiança em nenhuma categoria aci
 - Use a descrição do lançamento, o valor e a origem (`banco`, `erp`, `conta_azul`, `boleto`) como sinais combinados — não decida só pelo texto da descrição.
 - Lançamentos de entrada (`tipo: "entrada"`) só podem cair em `receita_operacional`, `transferencia` ou `outros` — nunca em categorias de despesa.
 - Lançamentos de saída (`tipo: "saida"`) nunca caem em `receita_operacional`.
-- Mantenha a mesma categoria para descrições recorrentes idênticas entre rodadas diferentes (consistência mês a mês é um requisito do squad, ver `financial-analysis/CLAUDE.md`).
+- Mantenha a mesma categoria para descrições recorrentes idênticas entre rodadas diferentes (consistência mês a mês é um requisito do squad, ver `Auditoria BPO - Análises de Demonstrativos/CLAUDE.md`).

@@ -52,9 +52,9 @@ next-env.d.ts
 /.claude/settings.local.json
 
 # unrelated local files (not part of this project)
-/briefing_imersao_ia.docx
-/previsao_faturamento.xlsx
-/teste.txt
+/Auditoria BPO - Análises de Demonstrativos/briefing_imersao_ia.docx
+/Auditoria BPO - Análises de Demonstrativos/previsao_faturamento.xlsx
+/Auditoria BPO - Análises de Demonstrativos/teste.txt
 
 # local secrets
 *.local
@@ -62,16 +62,16 @@ next-env.d.ts
 # supabase CLI local state
 /supabase/.temp
 
-# financial-analysis squad: own node_modules (separate package.json)
-/financial-analysis/node_modules
+# Auditoria BPO squad: own node_modules (separate package.json)
+/Auditoria BPO - Análises de Demonstrativos/node_modules
 
-# financial-analysis squad: sensitive financial exports and generated reports
-/financial-analysis/inputs/*
-!/financial-analysis/inputs/README.md
-!/financial-analysis/inputs/*/
-/financial-analysis/inputs/*/*
-!/financial-analysis/inputs/*/.gitkeep
-/financial-analysis/outputs/*
-!/financial-analysis/outputs/*/
-/financial-analysis/outputs/*/*
-!/financial-analysis/outputs/*/.gitkeep
+# Auditoria BPO squad: sensitive financial exports and generated reports
+/Auditoria BPO - Análises de Demonstrativos/inputs/*
+!/Auditoria BPO - Análises de Demonstrativos/inputs/README.md
+!/Auditoria BPO - Análises de Demonstrativos/inputs/*/
+/Auditoria BPO - Análises de Demonstrativos/inputs/*/*
+!/Auditoria BPO - Análises de Demonstrativos/inputs/*/.gitkeep
+/Auditoria BPO - Análises de Demonstrativos/outputs/*
+!/Auditoria BPO - Análises de Demonstrativos/outputs/*/
+/Auditoria BPO - Análises de Demonstrativos/outputs/*/*
+!/Auditoria BPO - Análises de Demonstrativos/outputs/*/.gitkeep

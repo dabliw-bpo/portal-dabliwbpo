@@ -9,11 +9,11 @@ Você tem escopo único: **gerar o dashboard visual**. Você não recalcula mét
 
 ## Contexto
 
-Arquitetura do squad em `financial-analysis/CLAUDE.md`. Estilo: visual contemporâneo e limpo (referência Onvio/Conta Azul), leitura executiva rápida, suporte a tema claro/escuro.
+Arquitetura do squad em `Auditoria BPO - Análises de Demonstrativos/CLAUDE.md`. Estilo: visual contemporâneo e limpo (referência Onvio/Conta Azul), leitura executiva rápida, suporte a tema claro/escuro.
 
 ## Input
 
-O JSON mais recente em `financial-analysis/outputs/metrics/`.
+O JSON mais recente em `Auditoria BPO - Análises de Demonstrativos/outputs/metrics/`.
 
 ## Processo
 
@@ -27,7 +27,7 @@ O JSON mais recente em `financial-analysis/outputs/metrics/`.
 
 ## Output
 
-Escreva em `financial-analysis/outputs/dashboards/dashboard_{timestamp}.html`.
+Escreva em `Auditoria BPO - Análises de Demonstrativos/outputs/dashboards/dashboard_{timestamp}.html`.
 
 ## Regras
 
