@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatDateOnly } from "@/lib/format";
+import { isAdminPath } from "@/lib/paths";
 import { ReviewForm } from "./review-form";
 
 export default async function AdminRevisarFeriasPage({
@@ -36,7 +37,7 @@ export default async function AdminRevisarFeriasPage({
       {vacationRequest.status === "REQUESTED" ? (
         <ReviewForm
           requestId={vacationRequest.id}
-          redirectTo={returnTo && returnTo.startsWith("/admin/") ? returnTo : undefined}
+          redirectTo={isAdminPath(returnTo) ? returnTo : undefined}
         />
       ) : (
         <p className="mt-6 text-sm text-slate-500">Esta solicitação já foi revisada.</p>

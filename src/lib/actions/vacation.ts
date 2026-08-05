@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/authz";
 import { createId } from "@/lib/id";
 import { formatDateOnly } from "@/lib/format";
+import { isAdminPath } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
 import { saveFile } from "@/lib/storage";
 import { sendDocumentUploadedEmail } from "@/lib/email";
@@ -48,7 +49,7 @@ export async function createVacationRequestAction(
 
 function safeAdminRedirect(formData: FormData, fallback: string): string {
   const requested = formData.get("redirectTo");
-  return typeof requested === "string" && requested.startsWith("/admin/") ? requested : fallback;
+  return isAdminPath(requested) ? requested : fallback;
 }
 
 export async function reviewVacationRequestAction(

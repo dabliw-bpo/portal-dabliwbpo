@@ -1,12 +1,17 @@
 import Link from "next/link";
+import { countCompanyPending } from "@/lib/pending";
 
-export function CompanyTabs({
+export async function CompanyTabs({
   companyId,
   active,
 }: {
   companyId: string;
   active: "cadastro" | "bancos" | "pessoas" | "integracoes";
 }) {
+  // Vacation reviews and unsigned documents are both reached through Folha,
+  // so the badge lives there.
+  const pendingCount = await countCompanyPending(companyId);
+
   const tabs = [
     { key: "cadastro", label: "Cadastro", href: `/admin/empresas/${companyId}/cadastro` },
     { key: "bancos", label: "Dados bancários", href: `/admin/empresas/${companyId}/bancos` },
@@ -20,13 +25,26 @@ export function CompanyTabs({
         <Link
           key={tab.key}
           href={tab.href}
-          className={`border-b-2 px-3 py-2 text-sm transition-colors ${
+          className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm transition-colors ${
             active === tab.key
               ? "border-[#6e5a35] font-medium text-slate-900"
               : "border-transparent text-slate-500 hover:text-slate-900"
           }`}
         >
           {tab.label}
+          {tab.key === "pessoas" && pendingCount > 0 && (
+            <>
+              <span
+                aria-hidden
+                className="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900"
+              >
+                {pendingCount}
+              </span>
+              <span className="sr-only">
+                {pendingCount === 1 ? "1 pendência" : `${pendingCount} pendências`}
+              </span>
+            </>
+          )}
         </Link>
       ))}
     </div>
