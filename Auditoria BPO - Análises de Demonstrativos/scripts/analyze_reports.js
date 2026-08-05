@@ -15,11 +15,7 @@
 // e trataria adiantamento de sócio como custo. Por isso classificamos item a
 // item antes de consolidar.
 
-import { execFileSync } from "node:child_process";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-const AQUI = path.dirname(fileURLToPath(import.meta.url));
+import { parsearRelatorios } from "./parse_pdf_reports.js";
 
 // Alertas são lidos por pessoas: formate em pt-BR, não em toFixed().
 const brl = (v) =>
@@ -71,22 +67,13 @@ function grupoDoCodigo(codigo) {
   return null;
 }
 
-function parsear(...arquivos) {
-  const saida = execFileSync(
-    process.execPath,
-    [path.join(AQUI, "parse_pdf_reports.js"), ...arquivos],
-    { maxBuffer: 1e8, encoding: "utf8" },
-  );
-  return JSON.parse(saida).blocos;
-}
-
 const arquivos = process.argv.slice(2);
 if (arquivos.length < 2) {
   console.error("uso: node analyze_reports.js <lucratividade.pdf> <despesas.pdf>");
   process.exit(1);
 }
 
-const blocos = parsear(...arquivos);
+const blocos = await parsearRelatorios(arquivos);
 const lucr = blocos.find((b) => b.relatorio === "lucratividade_viagens");
 const desp = blocos.find((b) => b.relatorio === "despesas_gerais");
 

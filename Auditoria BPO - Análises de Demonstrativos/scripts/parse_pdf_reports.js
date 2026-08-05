@@ -17,6 +17,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { PDFParse } from "pdf-parse";
 
 // "1.234,56" -> 1234.56 | "-25,00" -> -25
@@ -201,27 +202,38 @@ function validar(bloco) {
   return avisos;
 }
 
-const arquivos = process.argv.slice(2);
-if (arquivos.length === 0) {
-  console.error("uso: node parse_pdf_reports.js <arquivo.pdf> [...]");
-  process.exit(1);
-}
-
-const blocos = [];
-for (const arquivo of arquivos) {
-  try {
-    const texto = await textoDoPdf(arquivo);
-    const bloco = detectarEParsear(texto);
-    bloco.arquivo_fonte = path.basename(arquivo);
-    bloco.avisos_validacao = validar(bloco);
-    blocos.push(bloco);
-  } catch (err) {
-    blocos.push({
-      arquivo_fonte: path.basename(arquivo),
-      relatorio: "erro",
-      erro: err.message,
-    });
+// API de módulo — usada tanto pelo CLI abaixo quanto pelo servidor web, que
+// importa isto direto em processo (spawnar um filho por PDF pagaria o startup
+// do Node e o import do pdf-parse de novo: ~2s por chamada).
+export async function parsearRelatorios(arquivos) {
+  const blocos = [];
+  for (const arquivo of arquivos) {
+    try {
+      const texto = await textoDoPdf(arquivo);
+      const bloco = detectarEParsear(texto);
+      bloco.arquivo_fonte = path.basename(arquivo);
+      bloco.avisos_validacao = validar(bloco);
+      blocos.push(bloco);
+    } catch (err) {
+      blocos.push({
+        arquivo_fonte: path.basename(arquivo),
+        relatorio: "erro",
+        erro: err.message,
+      });
+    }
   }
+  return blocos;
 }
 
-console.log(JSON.stringify({ blocos }, null, 2));
+// Só roda como CLI quando invocado direto, não quando importado.
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  const arquivos = process.argv.slice(2);
+  if (arquivos.length === 0) {
+    console.error("uso: node parse_pdf_reports.js <arquivo.pdf> [...]");
+    process.exit(1);
+  }
+  console.log(JSON.stringify({ blocos: await parsearRelatorios(arquivos) }, null, 2));
+}
