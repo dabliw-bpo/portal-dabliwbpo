@@ -32,9 +32,13 @@ const pct = (v) =>
 //                       somar de novo seria dupla contagem.
 //   demais grupos    -> despesa de resultado, aditiva à margem de frete.
 const CLASSIFICACAO = {
+  // Decisão do cliente (ago/2026): o desconto concedido sai do total de
+  // despesas. Ele é redutor de receita, não custo de estrutura, e a receita
+  // de frete do relatório de lucratividade já vem líquida — mantê-lo aqui
+  // contaria a mesma concessão duas vezes.
+  excluido_decisao: [11],
   // 559 (título de capitalização) é compra de aplicação, não despesa.
-  // 477 (recuperação de despesas) é dinheiro que volta — ver AJUSTES_A_CONFIRMAR.
-  nao_despesa: [183, 309, 585, 580, 586, 184, 431, 559, 477],
+  nao_despesa: [183, 309, 585, 580, 586, 184, 431, 559],
   // 342 (fretes acertos devolução) é acerto de frete, mesma natureza do 104.
   sobrepoe_frete: [41, 42, 10, 441, 104, 507, 342],
   socios: [462],
@@ -43,12 +47,14 @@ const CLASSIFICACAO = {
     1, 8, 3, 213, 110, 2, 163, 93, 398, 440, 529, 383, 295, 469, 504, 74, 59,
   ],
   // 261 = comissão (genérica), junto das comissões 262/263.
-  comercial: [11, 263, 262, 261],
+  comercial: [263, 262, 261],
   // 536 acompanha 535 (sistema); 488 acompanha 197 (alimentação); 566 uniformes
   // e 291 supermercado são custo de estrutura.
+  // 477 (recuperação de despesas) fica em administrativo por decisão do
+  // cliente (ago/2026).
   administrativo: [
     81, 358, 535, 272, 365, 311, 300, 247, 271, 37, 294, 197, 404, 4, 248, 298,
-    460, 536, 488, 566, 291,
+    460, 536, 488, 566, 291, 477,
   ],
   pessoal: [499, 55],
   // 548 = tarifa de TED, mesma natureza do 544 (tarifa de cobrança).
@@ -58,12 +64,11 @@ const CLASSIFICACAO = {
 };
 
 // Classificações que merecem confirmação do contador antes de virar rotina.
-// O valor é imaterial hoje, mas a natureza do lançamento é ambígua no extrato.
-const AJUSTES_A_CONFIRMAR = {
-  477: 'RECUPERACAO DE DESPESAS tratada como "não é despesa" (dinheiro recuperado). Se no ERP ela representa um pagamento de fato, mova para administrativo.',
-};
+// Vazio hoje: a única pendência (477) foi decidida pelo cliente em ago/2026.
+const AJUSTES_A_CONFIRMAR = {};
 
 const ROTULOS = {
+  excluido_decisao: "Excluído por decisão (desconto concedido)",
   nao_despesa: "Não é despesa (adiantamentos, empréstimos, estornos)",
   sobrepoe_frete: "Já deduzido na margem de frete (ICMS, pedágio, fretes)",
   socios: "Sócios (pró-labore)",
@@ -131,8 +136,9 @@ const totalGrupo = (g) => grupos[g]?.total ?? 0;
 
 const naoDespesa = totalGrupo("nao_despesa");
 const sobrepoeFrete = totalGrupo("sobrepoe_frete");
+const excluidoDecisao = totalGrupo("excluido_decisao");
 const despesasEstrutura =
-  desp.total_geral - naoDespesa - sobrepoeFrete;
+  desp.total_geral - naoDespesa - sobrepoeFrete - excluidoDecisao;
 
 // Resultado consolidado: margem de frete (competência) menos as despesas de
 // estrutura efetivamente pagas, excluindo dupla contagem e não-despesas.
@@ -150,6 +156,14 @@ if (naoDespesa / desp.total_geral > 0.15) {
     `${pct((naoDespesa / desp.total_geral) * 100)} do relatório de "despesas pagas" (${brl(naoDespesa)}) são adiantamentos, empréstimos e estornos — saída de caixa, não despesa de resultado.`,
   );
 }
+// A exclusão do desconto concedido é a decisão de maior impacto do relatório
+// (em jul/2026 ela sozinha vira prejuízo em lucro). Nunca deixe implícita.
+if (excluidoDecisao > 0) {
+  alertas.push(
+    `Desconto concedido de ${brl(excluidoDecisao)} foi EXCLUÍDO do total de despesas por decisão. Isso pressupõe que a receita de frete já vem líquida desse desconto; se não vier, o resultado está superavaliado nesse valor.`,
+  );
+}
+
 // Um único item dominando o período costuma ser evento pontual, não rotina —
 // vale destacar em vez de deixar diluído no grupo.
 for (const item of desp.itens) {
@@ -204,6 +218,10 @@ const metricas = {
     margem_media_por_viagem: Number(
       (lucr.margem_frete / lucr.total_viagens).toFixed(2),
     ),
+    // Cortes vindos das linhas de viagem (validados contra os totais do ERP
+    // em parse_pdf_reports.js). Alimentam a série mensal e a curva ABC.
+    por_mes: lucr.por_mes,
+    por_cliente: lucr.por_cliente,
   },
 
   despesas_pagas: {
@@ -211,6 +229,7 @@ const metricas = {
     quantidade_itens: desp.quantidade_itens,
     nao_despesa: naoDespesa,
     sobrepoe_frete: sobrepoeFrete,
+    excluido_decisao: excluidoDecisao,
     despesas_estrutura: Number(despesasEstrutura.toFixed(2)),
     grupos: Object.values(grupos)
       .map((g) => ({

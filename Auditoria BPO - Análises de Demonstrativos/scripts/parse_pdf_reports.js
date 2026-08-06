@@ -64,6 +64,69 @@ function empresaDoCabecalho(texto) {
 //   (-)Pedágio : 100.995,19
 //   Total Despesas : 8.755.718,68
 //   Margem Frete : 1.030.062,80
+// Extrai as linhas de viagem individuais (uma por conhecimento de transporte).
+//
+// O mapeamento das colunas foi obtido por engenharia reversa e é verificado
+// pelo validar(): a soma das margens tem de bater com a "Margem Frete"
+// impressa e a contagem de linhas com o "Total Viagens". Sem isso não use.
+//
+// Cuidado com o número de campos: linhas com e sem peso de saída produzem 18
+// ou 17 campos. Por isso o frete da empresa é lido pelo FIM da linha, nunca
+// por índice fixo.
+function extrairViagens(texto) {
+  const viagens = [];
+  let clienteAtual = null;
+
+  for (const linha of texto.split("\n")) {
+    const t = linha.trim();
+
+    const mCliente = t.match(/^Cliente:\s*\d+\s*-\s*(.+)$/);
+    if (mCliente) {
+      clienteAtual = mCliente[1].trim();
+      continue;
+    }
+
+    const mData = t.match(/^(\d{2})\/(\d{2})\/(\d{4})\s/);
+    if (!mData) continue;
+
+    const campos = t.split(/[\s\t]+/).slice(1);
+    if (campos.length < 17) continue;
+
+    const freteEmpresa = valorBR(campos[campos.length - 1]);
+    const freteMotorista = valorBR(campos[1]);
+    const margem = valorBR(campos[11]);
+    if (freteEmpresa == null || margem == null) continue;
+
+    viagens.push({
+      data: `${mData[3]}-${mData[2]}-${mData[1]}`,
+      mes: `${mData[3]}-${mData[2]}`,
+      cliente: clienteAtual ?? "(sem cliente identificado)",
+      frete_empresa: freteEmpresa,
+      frete_motorista: freteMotorista ?? 0,
+      margem,
+    });
+  }
+  return viagens;
+}
+
+function agregar(viagens, chave) {
+  const mapa = new Map();
+  for (const v of viagens) {
+    const k = v[chave];
+    const acc = mapa.get(k) ?? { [chave]: k, viagens: 0, frete_empresa: 0, margem: 0 };
+    acc.viagens += 1;
+    acc.frete_empresa += v.frete_empresa;
+    acc.margem += v.margem;
+    mapa.set(k, acc);
+  }
+  return [...mapa.values()].map((a) => ({
+    ...a,
+    frete_empresa: Number(a.frete_empresa.toFixed(2)),
+    margem: Number(a.margem.toFixed(2)),
+    margem_pct: Number(((a.margem / a.frete_empresa) * 100).toFixed(2)),
+  }));
+}
+
 function parseLucratividade(texto) {
   // Rótulos com acento/ponto variam; casamos pelo prefixo e pegamos o número
   // após os dois-pontos.
@@ -80,6 +143,8 @@ function parseLucratividade(texto) {
     const m = texto.match(/Total Viagens:\s*(\d+)/i);
     return m ? Number.parseInt(m[1], 10) : null;
   })();
+
+  const viagens = extrairViagens(texto);
 
   const receitas = {
     frete_empresa: capturar("\\(\\+\\)Frete Empresa"),
@@ -106,6 +171,17 @@ function parseLucratividade(texto) {
     // total_receitas — ver validar().
     total_rotas_detalhadas: (texto.match(/Total da Rota:/g) || []).length,
     total_clientes: (texto.match(/Total do Cliente:/g) || []).length,
+    // Corte mensal e por cliente, vindos das linhas de viagem. Só confie
+    // depois de checar avisos_validacao — ver validar().
+    por_mes: agregar(viagens, "mes").sort((a, b) => a.mes.localeCompare(b.mes)),
+    por_cliente: agregar(viagens, "cliente").sort(
+      (a, b) => b.frete_empresa - a.frete_empresa,
+    ),
+    viagens_detalhadas: viagens.length,
+    frete_empresa_detalhado: Number(
+      viagens.reduce((a, v) => a + v.frete_empresa, 0).toFixed(2),
+    ),
+    margem_detalhada: Number(viagens.reduce((a, v) => a + v.margem, 0).toFixed(2)),
   };
 }
 
@@ -185,6 +261,19 @@ function validar(bloco) {
     if (!perto(margemCalc, bloco.margem_frete)) {
       avisos.push(
         `Receitas - Despesas (${margemCalc.toFixed(2)}) difere da Margem Frete impressa (${bloco.margem_frete}).`,
+      );
+    }
+
+    // Portão do corte mensal/por cliente: as linhas de viagem só podem ser
+    // usadas se reproduzirem os totais que o ERP imprime.
+    if (bloco.viagens_detalhadas !== bloco.total_viagens) {
+      avisos.push(
+        `Linhas de viagem lidas (${bloco.viagens_detalhadas}) diferem do Total Viagens impresso (${bloco.total_viagens}) — corte mensal e por cliente não confiáveis.`,
+      );
+    }
+    if (!perto(bloco.margem_detalhada, bloco.margem_frete, 1.0)) {
+      avisos.push(
+        `Soma das margens por viagem (${bloco.margem_detalhada}) difere da Margem Frete impressa (${bloco.margem_frete}) — corte mensal e por cliente não confiáveis.`,
       );
     }
   }
