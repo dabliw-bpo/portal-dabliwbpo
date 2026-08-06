@@ -43,8 +43,10 @@ const CLASSIFICACAO = {
   sobrepoe_frete: [41, 42, 10, 441, 104, 507, 342],
   socios: [462],
   // 59 = licenciamento veicular, mesma natureza do 295 (documentação de veículos).
+  // 389 = limpeza de caminhões, mesma natureza do 383 (lavagem de veículo).
   frota: [
     1, 8, 3, 213, 110, 2, 163, 93, 398, 440, 529, 383, 295, 469, 504, 74, 59,
+    389,
   ],
   // 261 = comissão (genérica), junto das comissões 262/263.
   comercial: [263, 262, 261],
