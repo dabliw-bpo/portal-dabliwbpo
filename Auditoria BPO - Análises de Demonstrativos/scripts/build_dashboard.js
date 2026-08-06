@@ -59,13 +59,22 @@ function colunas(passos, { largura = 560, altura = 300 } = {}) {
       const cx = padL + lb * i + lb / 2;
       const bh = Math.max(2, (Math.abs(p.valor) / max) * h);
       const y = padT + h - bh;
+      // Um subtotal negativo (prejuízo) tem de LER como negativo: sinal no
+      // rótulo e cor de baixa. Sem isso a barra cinza de "-90.682" passa por
+      // lucro, que foi exatamente o erro que este código já cometeu.
+      const negativo = p.valor < 0;
       const cor =
-        p.tipo === "baixa" ? "var(--neg)" : p.tipo === "subtotal" ? "var(--sub)" : "var(--pos)";
+        p.tipo === "baixa" || negativo
+          ? "var(--neg)"
+          : p.tipo === "subtotal"
+            ? "var(--sub)"
+            : "var(--pos)";
+      const sinal = p.tipo === "baixa" || negativo ? "−" : "";
       return `
       <g class="col" tabindex="0" aria-label="${esc(p.rotulo)}: ${brlExato(p.valor)}">
         <rect class="hit" x="${(cx - lb / 2).toFixed(1)}" y="${padT}" width="${lb.toFixed(1)}" height="${h}"></rect>
         <rect x="${(cx - bw / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="${cor}"></rect>
-        <text class="vlabel" x="${cx.toFixed(1)}" y="${(y - 8).toFixed(1)}">${p.tipo === "baixa" ? "−" : ""}${brl(Math.abs(p.valor))}</text>
+        <text class="vlabel" x="${cx.toFixed(1)}" y="${(y - 8).toFixed(1)}">${sinal}${brl(Math.abs(p.valor))}</text>
         <text class="xlabel" x="${cx.toFixed(1)}" y="${altura - padB + 18}">${esc(p.rotulo)}</text>
         <title>${esc(p.rotulo)}: ${brlExato(p.valor)}</title>
       </g>`;

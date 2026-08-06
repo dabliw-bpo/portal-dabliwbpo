@@ -32,19 +32,35 @@ const pct = (v) =>
 //                       somar de novo seria dupla contagem.
 //   demais grupos    -> despesa de resultado, aditiva à margem de frete.
 const CLASSIFICACAO = {
-  nao_despesa: [183, 309, 585, 580, 586, 184, 431],
-  sobrepoe_frete: [41, 42, 10, 441, 104, 507],
+  // 559 (título de capitalização) é compra de aplicação, não despesa.
+  // 477 (recuperação de despesas) é dinheiro que volta — ver AJUSTES_A_CONFIRMAR.
+  nao_despesa: [183, 309, 585, 580, 586, 184, 431, 559, 477],
+  // 342 (fretes acertos devolução) é acerto de frete, mesma natureza do 104.
+  sobrepoe_frete: [41, 42, 10, 441, 104, 507, 342],
   socios: [462],
-  frota: [1, 8, 3, 213, 110, 2, 163, 93, 398, 440, 529, 383, 295, 469, 504, 74],
-  comercial: [11, 263, 262],
+  // 59 = licenciamento veicular, mesma natureza do 295 (documentação de veículos).
+  frota: [
+    1, 8, 3, 213, 110, 2, 163, 93, 398, 440, 529, 383, 295, 469, 504, 74, 59,
+  ],
+  // 261 = comissão (genérica), junto das comissões 262/263.
+  comercial: [11, 263, 262, 261],
+  // 536 acompanha 535 (sistema); 488 acompanha 197 (alimentação); 566 uniformes
+  // e 291 supermercado são custo de estrutura.
   administrativo: [
     81, 358, 535, 272, 365, 311, 300, 247, 271, 37, 294, 197, 404, 4, 248, 298,
-    460,
+    460, 536, 488, 566, 291,
   ],
   pessoal: [499, 55],
-  financeiro: [12, 544, 509],
+  // 548 = tarifa de TED, mesma natureza do 544 (tarifa de cobrança).
+  financeiro: [12, 544, 509, 548],
   perdas: [443],
   tributos_nao_frete: [39],
+};
+
+// Classificações que merecem confirmação do contador antes de virar rotina.
+// O valor é imaterial hoje, mas a natureza do lançamento é ambígua no extrato.
+const AJUSTES_A_CONFIRMAR = {
+  477: 'RECUPERACAO DE DESPESAS tratada como "não é despesa" (dinheiro recuperado). Se no ERP ela representa um pagamento de fato, mova para administrativo.',
 };
 
 const ROTULOS = {
@@ -134,6 +150,21 @@ if (naoDespesa / desp.total_geral > 0.15) {
     `${pct((naoDespesa / desp.total_geral) * 100)} do relatório de "despesas pagas" (${brl(naoDespesa)}) são adiantamentos, empréstimos e estornos — saída de caixa, não despesa de resultado.`,
   );
 }
+// Um único item dominando o período costuma ser evento pontual, não rotina —
+// vale destacar em vez de deixar diluído no grupo.
+for (const item of desp.itens) {
+  if (item.valor / desp.total_geral > 0.25) {
+    alertas.push(
+      `Concentração: "${item.item}" sozinho é ${pct((item.valor / desp.total_geral) * 100)} de tudo que foi pago no período (${brl(item.valor)}).`,
+    );
+  }
+}
+
+for (const item of desp.itens) {
+  const nota = AJUSTES_A_CONFIRMAR[item.codigo];
+  if (nota) alertas.push(`A confirmar com a contabilidade: ${nota}`);
+}
+
 const perdas = totalGrupo("perdas");
 if (perdas > 0) {
   const qtd = grupos.perdas.itens.reduce((a, i) => a + (i.quantidade ?? 0), 0);
