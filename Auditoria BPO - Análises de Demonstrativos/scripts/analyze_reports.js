@@ -97,6 +97,10 @@ if (arquivos.length < 2) {
 const blocos = await parsearRelatorios(arquivos);
 const lucr = blocos.find((b) => b.relatorio === "lucratividade_viagens");
 const desp = blocos.find((b) => b.relatorio === "despesas_gerais");
+// Opcional: relatório de receitas gerais. Quando presente, entra no resultado
+// já sem o grupo RECEITA OPERACIONAL (que é o frete, já contado na
+// lucratividade) — ver GRUPOS_RECEITA_EXCLUIDOS em parse_pdf_reports.js.
+const rec = blocos.find((b) => b.relatorio === "receitas_gerais");
 
 const alertas = [];
 for (const b of blocos) {
@@ -140,9 +144,14 @@ const excluidoDecisao = totalGrupo("excluido_decisao");
 const despesasEstrutura =
   desp.total_geral - naoDespesa - sobrepoeFrete - excluidoDecisao;
 
-// Resultado consolidado: margem de frete (competência) menos as despesas de
-// estrutura efetivamente pagas, excluindo dupla contagem e não-despesas.
-const resultadoConsolidado = lucr.margem_frete - despesasEstrutura;
+// Receitas não-frete do período (0 quando o relatório não foi informado).
+const outrasReceitas = rec?.outras_receitas ?? 0;
+
+// Resultado consolidado: margem de frete (competência) mais as outras
+// receitas, menos as despesas de estrutura efetivamente pagas, excluindo
+// dupla contagem e não-despesas.
+const resultadoConsolidado =
+  lucr.margem_frete + outrasReceitas - despesasEstrutura;
 
 const margemPctSobreReceita = (lucr.margem_frete / lucr.total_receitas) * 100;
 
@@ -222,6 +231,7 @@ const metricas = {
     // em parse_pdf_reports.js). Alimentam a série mensal e a curva ABC.
     por_mes: lucr.por_mes,
     por_cliente: lucr.por_cliente,
+    por_mes_cliente: lucr.por_mes_cliente,
   },
 
   despesas_pagas: {
@@ -241,8 +251,18 @@ const metricas = {
       .sort((a, b) => b.total - a.total),
   },
 
+  outras_receitas: rec
+    ? {
+        total: outrasReceitas,
+        excluido_receita_operacional: rec.total_excluido,
+        total_relatorio: rec.total_geral,
+        grupos: rec.grupos,
+      }
+    : null,
+
   consolidado: {
     margem_frete: lucr.margem_frete,
+    outras_receitas: outrasReceitas,
     despesas_estrutura: Number(despesasEstrutura.toFixed(2)),
     resultado: Number(resultadoConsolidado.toFixed(2)),
     margem_liquida_pct: Number(

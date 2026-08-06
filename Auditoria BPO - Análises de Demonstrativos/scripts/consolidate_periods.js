@@ -18,7 +18,16 @@
 
 import fs from "node:fs";
 
-const arquivos = process.argv.slice(2);
+// Decisão do cliente (ago/2026): clientes cuja margem acumulada no período é
+// negativa saem inteiramente do relatório — receita, margem e viagens.
+//
+// CONSEQUÊNCIA, e por isso o relatório declara isso em destaque: os totais
+// deixam de reconciliar com os totais impressos pelo ERP. A margem publicada
+// passa a ser a margem dos clientes lucrativos, não a margem da empresa. Use
+// --incluir-margem-negativa para voltar ao número que fecha com o ERP.
+const EXCLUIR_MARGEM_NEGATIVA = !process.argv.includes("--incluir-margem-negativa");
+
+const arquivos = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 if (arquivos.length === 0) {
   console.error("uso: node consolidate_periods.js <metrics.json> [...]");
   process.exit(1);
@@ -62,43 +71,69 @@ function resumoABC(curva) {
 // --- União dos períodos ---------------------------------------------------
 const soma = (f) => periodos.reduce((a, p) => a + f(p), 0);
 
-// Série mensal de receita/margem: vem das linhas de viagem já validadas.
-const mensal = [];
-for (const p of periodos) {
-  for (const m of p.operacao_frete.por_mes ?? []) {
-    mensal.push({
-      mes: m.mes,
-      viagens: m.viagens,
-      receita: m.frete_empresa,
-      margem: m.margem,
-      margem_pct: m.margem_pct,
-    });
-  }
-}
-mensal.sort((a, b) => a.mes.localeCompare(b.mes));
+// Tudo abaixo é derivado do cruzamento mês × cliente, e não dos agregados
+// prontos: assim uma exclusão de cliente propaga para a série mensal também.
+const cruzado = periodos.flatMap((p) => p.operacao_frete.por_mes_cliente ?? []);
 
-// Faturamento por cliente: soma entre períodos pelo nome.
-const clientes = new Map();
-for (const p of periodos) {
-  for (const c of p.operacao_frete.por_cliente ?? []) {
-    const acc = clientes.get(c.cliente) ?? {
-      nome: c.cliente,
-      valor: 0,
-      margem: 0,
-      viagens: 0,
-    };
-    acc.valor += c.frete_empresa;
-    acc.margem += c.margem;
-    acc.viagens += c.viagens;
-    clientes.set(c.cliente, acc);
-  }
+// Margem acumulada por cliente no período inteiro decide a exclusão. Fosse
+// mês a mês, um mesmo cliente entraria e sairia conforme o mês, e a série
+// mensal deixaria de ser comparável.
+const acumuladoCliente = new Map();
+for (const r of cruzado) {
+  const acc = acumuladoCliente.get(r.cliente) ?? {
+    nome: r.cliente,
+    valor: 0,
+    margem: 0,
+    viagens: 0,
+  };
+  acc.valor += r.frete_empresa;
+  acc.margem += r.margem;
+  acc.viagens += r.viagens;
+  acumuladoCliente.set(r.cliente, acc);
 }
-const clientesArr = [...clientes.values()].map((c) => ({
-  ...c,
-  valor: Number(c.valor.toFixed(2)),
-  margem: Number(c.margem.toFixed(2)),
-  margem_pct: Number(((c.margem / c.valor) * 100).toFixed(2)),
-}));
+
+const excluidos = EXCLUIR_MARGEM_NEGATIVA
+  ? [...acumuladoCliente.values()]
+      .filter((c) => c.margem < 0)
+      .map((c) => ({
+        nome: c.nome,
+        valor: Number(c.valor.toFixed(2)),
+        margem: Number(c.margem.toFixed(2)),
+        viagens: c.viagens,
+        margem_pct: Number(((c.margem / c.valor) * 100).toFixed(2)),
+      }))
+      .sort((a, b) => a.margem - b.margem)
+  : [];
+const nomesExcluidos = new Set(excluidos.map((c) => c.nome));
+
+const cruzadoFiltrado = cruzado.filter((r) => !nomesExcluidos.has(r.cliente));
+
+// Série mensal, recomposta a partir do cruzamento já filtrado.
+const mensalMap = new Map();
+for (const r of cruzadoFiltrado) {
+  const acc = mensalMap.get(r.mes) ?? { mes: r.mes, viagens: 0, receita: 0, margem: 0 };
+  acc.viagens += r.viagens;
+  acc.receita += r.frete_empresa;
+  acc.margem += r.margem;
+  mensalMap.set(r.mes, acc);
+}
+const mensal = [...mensalMap.values()]
+  .map((m) => ({
+    ...m,
+    receita: Number(m.receita.toFixed(2)),
+    margem: Number(m.margem.toFixed(2)),
+    margem_pct: Number(((m.margem / m.receita) * 100).toFixed(2)),
+  }))
+  .sort((a, b) => a.mes.localeCompare(b.mes));
+
+const clientesArr = [...acumuladoCliente.values()]
+  .filter((c) => !nomesExcluidos.has(c.nome))
+  .map((c) => ({
+    ...c,
+    valor: Number(c.valor.toFixed(2)),
+    margem: Number(c.margem.toFixed(2)),
+    margem_pct: Number(((c.margem / c.valor) * 100).toFixed(2)),
+  }));
 
 // Despesas por item: soma entre períodos pelo código.
 const itensDesp = new Map();
@@ -145,10 +180,15 @@ const itensEstrutura = itensDespArr.filter(
   (i) => !["excluido_decisao", "nao_despesa", "sobrepoe_frete"].includes(i.grupo),
 );
 
+// Totais vêm do conjunto FILTRADO, não dos totais impressos pelo ERP — é
+// exatamente isso que a exclusão de clientes implica.
 const receitaTotal = mensal.reduce((a, m) => a + m.receita, 0);
-const margemTotal = soma((p) => p.operacao_frete.margem_frete);
+const margemTotal = mensal.reduce((a, m) => a + m.margem, 0);
+const viagensTotal = mensal.reduce((a, m) => a + m.viagens, 0);
+const margemErp = soma((p) => p.operacao_frete.margem_frete);
 const estruturaTotal = soma((p) => p.despesas_pagas.despesas_estrutura);
-const resultado = margemTotal - estruturaTotal;
+const outrasReceitasTotal = soma((p) => p.consolidado.outras_receitas ?? 0);
+const resultado = margemTotal + outrasReceitasTotal - estruturaTotal;
 
 // Melhor e pior mês por margem % — o que o descritivo mensal precisa dizer.
 const porMargemPct = [...mensal].sort((a, b) => b.margem_pct - a.margem_pct);
@@ -167,8 +207,19 @@ const consolidado = {
   })),
   arquivos_fonte: periodos.flatMap((p) => p.arquivos_fonte),
 
+  clientes_excluidos: {
+    ativo: EXCLUIR_MARGEM_NEGATIVA,
+    criterio: "margem acumulada negativa no período",
+    quantidade: excluidos.length,
+    receita_removida: Number(excluidos.reduce((a, c) => a + c.valor, 0).toFixed(2)),
+    margem_removida: Number(excluidos.reduce((a, c) => a + c.margem, 0).toFixed(2)),
+    viagens_removidas: excluidos.reduce((a, c) => a + c.viagens, 0),
+    margem_erp: Number(margemErp.toFixed(2)),
+    clientes: excluidos,
+  },
+
   operacao_frete: {
-    total_viagens: soma((p) => p.operacao_frete.total_viagens),
+    total_viagens: viagensTotal,
     receita_frete: Number(receitaTotal.toFixed(2)),
     margem_frete: Number(margemTotal.toFixed(2)),
     margem_pct: Number(((margemTotal / receitaTotal) * 100).toFixed(2)),
@@ -205,8 +256,17 @@ const consolidado = {
     }),
   },
 
+  outras_receitas: {
+    total: Number(outrasReceitasTotal.toFixed(2)),
+    nota: "Receitas gerais sem o grupo RECEITA OPERACIONAL, que é o frete já apurado na lucratividade.",
+    excluido_receita_operacional: Number(
+      soma((p) => p.outras_receitas?.excluido_receita_operacional ?? 0).toFixed(2),
+    ),
+  },
+
   consolidado: {
     margem_frete: Number(margemTotal.toFixed(2)),
+    outras_receitas: Number(outrasReceitasTotal.toFixed(2)),
     despesas_estrutura: Number(estruturaTotal.toFixed(2)),
     resultado: Number(resultado.toFixed(2)),
     margem_liquida_pct: Number(((resultado / receitaTotal) * 100).toFixed(2)),
@@ -247,10 +307,9 @@ function montarAlertas() {
     );
   }
 
-  const negativos = clientesArr.filter((c) => c.margem < 0);
-  if (negativos.length > 0) {
+  if (excluidos.length > 0) {
     a.push(
-      `${negativos.length} clientes deram margem negativa, somando ${brl(negativos.reduce((s, c) => s + c.margem, 0))} de prejuízo.`,
+      `ATENÇÃO — este relatório NÃO reconcilia com o ERP: ${excluidos.length} clientes de margem negativa foram removidos, tirando ${brl(excluidos.reduce((s, c) => s + c.valor, 0))} de receita e ${brl(Math.abs(excluidos.reduce((s, c) => s + c.margem, 0)))} de prejuízo dos totais. A margem de ${pctFmt((margemTotal / receitaTotal) * 100)} aqui é a dos clientes lucrativos; a margem da empresa segundo o ERP é ${brl(margemErp)}.`,
     );
   }
 

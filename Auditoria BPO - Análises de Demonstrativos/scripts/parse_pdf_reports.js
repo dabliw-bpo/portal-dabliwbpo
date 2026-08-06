@@ -127,6 +127,39 @@ function agregar(viagens, chave) {
   }));
 }
 
+// Cruzamento mês × cliente. Necessário para recompor a série mensal quando
+// algum cliente é excluído do relatório: sem ele a exclusão mexeria nos
+// totais mas não nos meses, e o dashboard não fecharia consigo mesmo.
+//
+// Usa Map aninhado em vez de chave de texto concatenada — nome de cliente
+// contém espaços, e qualquer separador escolhido vira uma aposta.
+function cruzarMesCliente(viagens) {
+  const porMes = new Map();
+  for (const v of viagens) {
+    const porCliente = porMes.get(v.mes) ?? new Map();
+    const acc = porCliente.get(v.cliente) ?? { viagens: 0, frete_empresa: 0, margem: 0 };
+    acc.viagens += 1;
+    acc.frete_empresa += v.frete_empresa;
+    acc.margem += v.margem;
+    porCliente.set(v.cliente, acc);
+    porMes.set(v.mes, porCliente);
+  }
+
+  const saida = [];
+  for (const [mes, porCliente] of porMes) {
+    for (const [cliente, a] of porCliente) {
+      saida.push({
+        mes,
+        cliente,
+        viagens: a.viagens,
+        frete_empresa: Number(a.frete_empresa.toFixed(2)),
+        margem: Number(a.margem.toFixed(2)),
+      });
+    }
+  }
+  return saida.sort((a, b) => a.mes.localeCompare(b.mes) || b.frete_empresa - a.frete_empresa);
+}
+
 function parseLucratividade(texto) {
   // Rótulos com acento/ponto variam; casamos pelo prefixo e pegamos o número
   // após os dois-pontos.
@@ -177,6 +210,11 @@ function parseLucratividade(texto) {
     por_cliente: agregar(viagens, "cliente").sort(
       (a, b) => b.frete_empresa - a.frete_empresa,
     ),
+    // Cruzamento mês × cliente: necessário para recompor a série mensal
+    // quando algum cliente é excluído do relatório. Sem ele a exclusão
+    // mexeria nos totais mas não nos meses, e o dashboard não fecharia
+    // consigo mesmo.
+    por_mes_cliente: cruzarMesCliente(viagens),
     viagens_detalhadas: viagens.length,
     frete_empresa_detalhado: Number(
       viagens.reduce((a, v) => a + v.frete_empresa, 0).toFixed(2),
@@ -222,7 +260,55 @@ function parseDespesas(texto) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Receitas gerais ("RECEITAS DIVERSAS")
+// ---------------------------------------------------------------------------
+// Layout: grupos fecham com
+//   "<qtd>\tTotais Grupo - <NOME> - <id>: R$ <valor>"
+// e o relatório encerra com
+//   "<qtd> R$ <valor>\tTotal Geral:"
+//
+// O grupo RECEITA OPERACIONAL é EXCLUÍDO por decisão do cliente (ago/2026):
+// ele contém RECEITA COM FRETES, que é a mesma receita já apurada no
+// relatório de lucratividade. Somar os dois contaria o frete duas vezes.
+const GRUPOS_RECEITA_EXCLUIDOS = ["RECEITA OPERACIONAL"];
+
+function parseReceitas(texto) {
+  const grupos = [];
+  const re = /(\d+)\s*\tTotais Grupo - (.+?) - (\d+):\s*R\$\s*(-?[\d.]+,\d{2})/g;
+  let m;
+  while ((m = re.exec(texto)) !== null) {
+    const nome = m[2].trim();
+    grupos.push({
+      grupo: nome,
+      codigo: Number.parseInt(m[3], 10),
+      lancamentos: Number.parseInt(m[1], 10),
+      valor: valorBR(m[4]),
+      excluido: GRUPOS_RECEITA_EXCLUIDOS.some((g) => nome.toUpperCase().includes(g)),
+    });
+  }
+
+  const mGeral = texto.match(/(\d+)\s+R\$\s*(-?[\d.]+,\d{2})\s*\tTotal Geral:/);
+  const considerados = grupos.filter((g) => !g.excluido);
+
+  return {
+    relatorio: "receitas_gerais",
+    periodo: periodoDoCabecalho(texto),
+    empresa: empresaDoCabecalho(texto),
+    grupos: grupos.sort((a, b) => b.valor - a.valor),
+    total_geral: mGeral ? valorBR(mGeral[2]) : null,
+    total_excluido: Number(
+      grupos.filter((g) => g.excluido).reduce((a, g) => a + g.valor, 0).toFixed(2),
+    ),
+    // O número que entra na análise: tudo menos a receita de frete.
+    outras_receitas: Number(considerados.reduce((a, g) => a + g.valor, 0).toFixed(2)),
+  };
+}
+
 function detectarEParsear(texto) {
+  if (/Relat[óo]rio de Receitas Gerais/i.test(texto)) {
+    return parseReceitas(texto);
+  }
   if (/Relat[óo]rio de Lucratividade de Viagens/i.test(texto)) {
     return parseLucratividade(texto);
   }
@@ -275,6 +361,18 @@ function validar(bloco) {
       avisos.push(
         `Soma das margens por viagem (${bloco.margem_detalhada}) difere da Margem Frete impressa (${bloco.margem_frete}) — corte mensal e por cliente não confiáveis.`,
       );
+    }
+  }
+
+  if (bloco.relatorio === "receitas_gerais") {
+    const soma = bloco.grupos.reduce((a, g) => a + (g.valor ?? 0), 0);
+    if (!perto(soma, bloco.total_geral, 1.0)) {
+      avisos.push(
+        `Soma dos ${bloco.grupos.length} grupos de receita (${soma.toFixed(2)}) difere do Total Geral impresso (${bloco.total_geral}).`,
+      );
+    }
+    if (bloco.grupos.length === 0) {
+      avisos.push("Nenhum grupo de receita reconhecido no relatório.");
     }
   }
 
