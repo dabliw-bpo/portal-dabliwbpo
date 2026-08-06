@@ -262,6 +262,10 @@ const consolidado = {
     excluido_receita_operacional: Number(
       soma((p) => p.outras_receitas?.excluido_receita_operacional ?? 0).toFixed(2),
     ),
+    excluido_itens: Number(
+      soma((p) => p.outras_receitas?.excluido_itens ?? 0).toFixed(2),
+    ),
+    itens_excluidos: periodos.flatMap((p) => p.outras_receitas?.itens_excluidos ?? []),
   },
 
   consolidado: {
@@ -328,6 +332,15 @@ function montarAlertas() {
         a.push(`${p.periodo.inicio}–${p.periodo.fim}: ${al}`);
       }
     }
+  }
+
+  const itensRecExcl = periodos.flatMap((p) => p.outras_receitas?.itens_excluidos ?? []);
+  if (itensRecExcl.length > 0) {
+    const tot = itensRecExcl.reduce((s, i) => s + i.valor, 0);
+    const nomes = [...new Set(itensRecExcl.map((i) => i.item))].join(", ");
+    a.push(
+      `${brl(tot)} de receita foram excluídos por decisão (${nomes}) em ${itensRecExcl.length} ocorrências do período — reembolso é recomposição de caixa, não receita ganha.`,
+    );
   }
 
   a.push(

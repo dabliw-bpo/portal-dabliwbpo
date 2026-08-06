@@ -273,7 +273,33 @@ function parseDespesas(texto) {
 // relatório de lucratividade. Somar os dois contaria o frete duas vezes.
 const GRUPOS_RECEITA_EXCLUIDOS = ["RECEITA OPERACIONAL"];
 
+// Itens de receita excluídos por decisão do cliente (ago/2026), por código.
+//   484 REEMBOLSOS DIVERSOS — reembolso é dinheiro que volta, não receita
+//       ganha; mesma lógica dos adiantamentos do lado da despesa.
+const ITENS_RECEITA_EXCLUIDOS = {
+  484: "REEMBOLSOS DIVERSOS — reembolso não é receita ganha",
+};
+
 function parseReceitas(texto) {
+  // Itens fecham com "R$ <valor>\t<qtd>\tTotais Item - <NOME> - <id>:"
+  // (repare que aqui o R$ vem ANTES do valor, ao contrário do relatório de
+  // despesas — os dois layouts não compartilham formatação).
+  const itens = [];
+  const reItem =
+    /R\$\s*(-?[\d.]+,\d{2})\s*\t(\d+)\s*\tTotais Item - (.+?) - (\d+):/g;
+  let mi;
+  while ((mi = reItem.exec(texto)) !== null) {
+    const codigo = Number.parseInt(mi[4], 10);
+    itens.push({
+      item: mi[3].trim(),
+      codigo,
+      lancamentos: Number.parseInt(mi[2], 10),
+      valor: valorBR(mi[1]),
+      excluido: Object.hasOwn(ITENS_RECEITA_EXCLUIDOS, codigo),
+      motivo_exclusao: ITENS_RECEITA_EXCLUIDOS[codigo] ?? null,
+    });
+  }
+
   const grupos = [];
   const re = /(\d+)\s*\tTotais Grupo - (.+?) - (\d+):\s*R\$\s*(-?[\d.]+,\d{2})/g;
   let m;
@@ -290,18 +316,47 @@ function parseReceitas(texto) {
 
   const mGeral = texto.match(/(\d+)\s+R\$\s*(-?[\d.]+,\d{2})\s*\tTotal Geral:/);
   const considerados = grupos.filter((g) => !g.excluido);
+  const receitaDeGrupos = considerados.reduce((a, g) => a + g.valor, 0);
+
+  // Mapa item -> grupo, lido das linhas de declaração
+  // "Item: <NOME> - <id> Grupo: <GRUPO> - <gid>". Necessário para não
+  // subtrair duas vezes um item excluído que já esteja dentro de um grupo
+  // excluído.
+  const grupoDoItem = new Map();
+  const reDecl = /Item:\s*.+? - (\d+)\s+Grupo:\s*(.+?) - \d+/g;
+  let md;
+  while ((md = reDecl.exec(texto)) !== null) {
+    grupoDoItem.set(Number.parseInt(md[1], 10), md[2].trim().toUpperCase());
+  }
+
+  const itensExcluidos = itens.filter((i) => {
+    if (!i.excluido) return false;
+    const g = grupoDoItem.get(i.codigo);
+    // Já dentro de grupo excluído? Então não subtrai de novo.
+    return !(g && GRUPOS_RECEITA_EXCLUIDOS.some((ge) => g.includes(ge)));
+  });
+  const totalItensExcluidos = itensExcluidos.reduce((a, i) => a + i.valor, 0);
 
   return {
     relatorio: "receitas_gerais",
     periodo: periodoDoCabecalho(texto),
     empresa: empresaDoCabecalho(texto),
     grupos: grupos.sort((a, b) => b.valor - a.valor),
+    itens: itens.sort((a, b) => b.valor - a.valor),
     total_geral: mGeral ? valorBR(mGeral[2]) : null,
     total_excluido: Number(
       grupos.filter((g) => g.excluido).reduce((a, g) => a + g.valor, 0).toFixed(2),
     ),
-    // O número que entra na análise: tudo menos a receita de frete.
-    outras_receitas: Number(considerados.reduce((a, g) => a + g.valor, 0).toFixed(2)),
+    itens_excluidos: itensExcluidos.map((i) => ({
+      item: i.item,
+      codigo: i.codigo,
+      valor: i.valor,
+      motivo: i.motivo_exclusao,
+    })),
+    total_itens_excluidos: Number(totalItensExcluidos.toFixed(2)),
+    // O que entra na análise: tudo menos a receita de frete e menos os itens
+    // vetados individualmente.
+    outras_receitas: Number((receitaDeGrupos - totalItensExcluidos).toFixed(2)),
   };
 }
 

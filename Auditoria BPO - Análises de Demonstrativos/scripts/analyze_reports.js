@@ -257,6 +257,8 @@ const metricas = {
     ? {
         total: outrasReceitas,
         excluido_receita_operacional: rec.total_excluido,
+        excluido_itens: rec.total_itens_excluidos ?? 0,
+        itens_excluidos: rec.itens_excluidos ?? [],
         total_relatorio: rec.total_geral,
         grupos: rec.grupos,
       }
