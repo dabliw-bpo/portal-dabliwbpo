@@ -256,6 +256,27 @@ const consolidado = {
     }),
   },
 
+  // Série mensal de despesas. Só é honesta porque cada período de entrada é
+  // um mês fechado: o relatório filtra por data de pagamento, então o mês do
+  // relatório É o mês do pagamento. Num relatório semestral isso não existe
+  // (a data impressa por lançamento é a de emissão da nota).
+  mensal_despesas: periodos
+    .map((p) => {
+      const mes = (() => {
+        const [dd, mm, aaaa] = p.periodo.inicio.split("/");
+        return `${aaaa}-${mm}`;
+      })();
+      const grupos = {};
+      for (const g of p.despesas_pagas.grupos) grupos[g.grupo] = g.total;
+      return {
+        mes,
+        estrutura: p.despesas_pagas.despesas_estrutura,
+        total_relatorio: p.despesas_pagas.total_relatorio,
+        grupos,
+      };
+    })
+    .sort((a, b) => a.mes.localeCompare(b.mes)),
+
   outras_receitas: {
     total: Number(outrasReceitasTotal.toFixed(2)),
     nota: "Receitas gerais sem o grupo RECEITA OPERACIONAL, que é o frete já apurado na lucratividade.",

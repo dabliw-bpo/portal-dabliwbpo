@@ -75,3 +75,6 @@ next-env.d.ts
 !/Auditoria BPO - Análises de Demonstrativos/outputs/*/
 /Auditoria BPO - Análises de Demonstrativos/outputs/*/*
 !/Auditoria BPO - Análises de Demonstrativos/outputs/*/.gitkeep
+
+# Auditoria BPO squad: client-dropped source reports, real client financial data
+/Auditoria BPO - Análises de Demonstrativos/EGM TRANSPORTES/
