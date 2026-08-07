@@ -81,6 +81,98 @@ function serieMensal(mensal) {
   </svg>`;
 }
 
+// --- Evolução mensal de despesas -------------------------------------------
+// Rótulos dos grupos reais de despesa (exclui nao_despesa, sobrepoe_frete e
+// excluido_decisao — que por definição não compõem "despesas de estrutura",
+// ver analyze_reports.js). Ordem fixa por relevância típica, não por valor de
+// um mês específico, para a pilha não trocar de ordem entre meses.
+const ROTULO_GRUPO = {
+  frota: "Frota e manutenção",
+  administrativo: "Administrativo e estrutura",
+  socios: "Sócios (pró-labore)",
+  comercial: "Comercial (descontos e comissões)",
+  financeiro: "Financeiro (juros e tarifas)",
+  pessoal: "Pessoal (salários e encargos)",
+  perdas: "Perdas operacionais",
+  tributos_nao_frete: "Tributos não ligados ao frete",
+};
+const ORDEM_GRUPOS = Object.keys(ROTULO_GRUPO);
+
+// Barras empilhadas por mês. Pilha usa a MESMA rampa tonal única da marca —
+// os segmentos são categorias, não uma escala ordenada, então isso é a
+// exceção deliberada: com 8 categorias não dá para diferenciá-las só por
+// tom sem ambiguidade, mas aqui o gap de 2px entre segmentos (regra de marca
+// dos specs) já basta para a pilha ler certo, e o detalhe por categoria vive
+// no heatmap logo abaixo, que é onde essa leitura realmente importa.
+function pilhaMensal(mensalDespesas) {
+  const L = 800, H = 260, pL = 12, pR = 12, pT = 18, pB = 30;
+  const w = L - pL - pR, h = H - pT - pB;
+  const totais = mensalDespesas.map((m) => m.estrutura);
+  const max = Math.max(...totais);
+  const passo = w / mensalDespesas.length, bw = Math.min(64, passo * 0.6);
+  const GAP = 2; // regra de marca: 2px de respiro entre segmentos empilhados
+
+  const grupos = mensalDespesas.map((m, i) => {
+    const cx = pL + passo * (i + 0.5);
+    let yAcum = pT + h - (m.estrutura / max) * h;
+    const alturaTotal = (m.estrutura / max) * h;
+    let y = pT + h;
+    const segs = ORDEM_GRUPOS.filter((g) => m.grupos[g] > 0)
+      .map((g, si, arr) => {
+        const valor = m.grupos[g];
+        const segH = Math.max(1, (valor / max) * h - (arr.length > 1 ? GAP : 0));
+        y -= segH + (si > 0 ? GAP : 0);
+        const alpha = 0.35 + (0.55 * (ORDEM_GRUPOS.indexOf(g) / (ORDEM_GRUPOS.length - 1)));
+        return `<rect x="${(cx - bw / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${segH.toFixed(1)}" rx="2"
+          fill="${RAMPA[1]}" fill-opacity="${alpha.toFixed(2)}">
+          <title>${esc(ROTULO_GRUPO[g])} — ${mesLb(m.mes)}: ${brlEx(valor)}</title></rect>`;
+      }).join("");
+    return `<g class="it" tabindex="0" aria-label="${mesLb(m.mes)}: despesas de estrutura ${brlEx(m.estrutura)}">
+      <rect class="hit" x="${(cx - passo / 2).toFixed(1)}" y="${pT}" width="${passo.toFixed(1)}" height="${h}"/>
+      ${segs}
+      <text class="v sm" x="${cx.toFixed(1)}" y="${(pT + h - alturaTotal - 7).toFixed(1)}">${brl(m.estrutura)}</text>
+      <text class="x" x="${cx.toFixed(1)}" y="${H - 10}">${mesLb(m.mes)}</text>
+      <title>${mesLb(m.mes)} — total ${brlEx(m.estrutura)}</title></g>`;
+  }).join("");
+
+  return `<svg viewBox="0 0 ${L} ${H}" role="img" class="ch">
+    <line class="bl" x1="${pL}" y1="${pT + h}" x2="${L - pR}" y2="${pT + h}"/>${grupos}</svg>`;
+}
+
+// Heatmap grupo × mês: intensidade em opacidade de um tom só (sequencial de
+// verdade — a rampa da marca já foi validada como ordinal, e magnitude por
+// célula é exatamente esse caso de uso, mais legível que 8 tons de pilha).
+function heatmapGrupos(mensalDespesas) {
+  // Só entre os grupos REALMENTE exibidos (ORDEM_GRUPOS) — m.grupos também
+  // carrega excluido_decisao/sobrepoe_frete/nao_despesa, que não aparecem
+  // nesta tabela. Calibrar a escala contra um valor invisível deixaria as
+  // células visíveis sub-saturadas, sem relação com o que se vê na tela.
+  const maxCelula = Math.max(
+    ...mensalDespesas.flatMap((m) =>
+      ORDEM_GRUPOS.map((g) => m.grupos[g] ?? 0),
+    ),
+  );
+  const linhas = ORDEM_GRUPOS.map((g) => {
+    const total = mensalDespesas.reduce((a, m) => a + (m.grupos[g] ?? 0), 0);
+    if (total <= 0) return "";
+    const celulas = mensalDespesas.map((m) => {
+      const v = m.grupos[g] ?? 0;
+      // Teto em 0.55: acima disso o texto claro perde contraste (checado
+      // contra --tx sobre a superfície do card — 0.55 ainda fecha 4.6:1,
+      // 0.6 já cai pra 4.1). Sem o teto, exatamente as células mais
+      // relevantes — as de maior valor — ficariam as mais difíceis de ler.
+      const alpha = v > 0 ? 0.14 + 0.41 * (v / maxCelula) : 0;
+      return `<td class="hm n" style="background:${v > 0 ? `${RAMPA[1]}${Math.round(alpha * 255).toString(16).padStart(2, "0")}` : "transparent"}">${v > 0 ? brl(v) : "—"}</td>`;
+    }).join("");
+    return `<tr><td>${esc(ROTULO_GRUPO[g])}</td>${celulas}<td class="n" style="font-weight:600">${brlEx(total)}</td></tr>`;
+  }).join("");
+
+  return `<div class="scroll"><table>
+    <thead><tr><th>Grupo</th>${mensalDespesas.map((m) => `<th class="n">${mesLb(m.mes)}</th>`).join("")}<th class="n">Total</th></tr></thead>
+    <tbody>${linhas}</tbody>
+  </table></div>`;
+}
+
 // --- Curva ABC ------------------------------------------------------------
 const COR_ABC = { A: RAMPA[0], B: RAMPA[1], C: RAMPA[3] };
 function abc(itens, limite = 12) {
@@ -172,6 +264,7 @@ const html = `<title>DABLIW · Auditoria de Demonstrativos — ${esc(d.empresa)}
   td{color:var(--tx2)}
   td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   td.neg{color:var(--neg)}
+  td.hm{color:var(--tx);font-variant-numeric:tabular-nums}
   .scroll{overflow-x:auto}
   details{margin-top:12px}
   summary{cursor:pointer;font-size:.79rem;color:var(--tx3)}
@@ -208,6 +301,14 @@ const html = `<title>DABLIW · Auditoria de Demonstrativos — ${esc(d.empresa)}
         <tbody>${d.mensal.map((m) => `<tr><td>${mesLb(m.mes)}</td><td class="n">${m.viagens}</td><td class="n">${brlEx(m.receita)}</td><td class="n">${brlEx(m.margem)}</td><td class="n">${pc(m.margem_pct)}</td><td class="n">${brlEx(m.receita / m.viagens)}</td></tr>`).join("")}</tbody>
       </table></div>
     </div>
+
+    ${d.mensal_despesas?.length ? `<div class="card">
+      <h2>Evolução mensal de despesas</h2>
+      <p class="note">Despesas de estrutura por mês pago — só é honesto porque cada relatório de origem já é um mês fechado (o ERP filtra por data de pagamento; num relatório semestral cada lançamento só traz a data de emissão da nota, que responde outra pergunta). Exclui desconto concedido, itens que já entram na margem de frete e o que não é despesa de resultado.</p>
+      ${pilhaMensal(d.mensal_despesas)}
+      <p class="cl" style="margin-top:14px">Detalhe por grupo — intensidade proporcional ao valor da célula</p>
+      ${heatmapGrupos(d.mensal_despesas)}
+    </div>` : ""}
 
     <div class="card">
       <h2>Curva ABC — faturamento por cliente</h2>
