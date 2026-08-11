@@ -20,15 +20,88 @@ function getTransporter() {
   return transporter;
 }
 
-export async function sendDocumentUploadedEmail({
-  to,
-  recipientName,
-  documentTitle,
-}: {
+/**
+ * Attachments ride along inside the upload request, so a large one delays the
+ * response and risks the serverless time limit. Past this size the document
+ * goes out as a link only, which the body explains.
+ */
+export const MAX_EMAIL_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export type DocumentEmailInput = {
   to: string;
   recipientName: string;
   documentTitle: string;
-}): Promise<void> {
+  documentUrl?: string;
+  attachment?: { filename: string; content: Buffer; contentType: string };
+};
+
+/**
+ * Builds the message. Kept separate from sending so the attachment cap, the
+ * link and the escaping can be exercised without a network round trip.
+ */
+export function buildDocumentUploadedEmail(input: DocumentEmailInput) {
+  const { to, recipientName, documentTitle, documentUrl, attachment } = input;
+
+  const attach =
+    attachment && attachment.content.byteLength <= MAX_EMAIL_ATTACHMENT_BYTES
+      ? attachment
+      : undefined;
+
+  if (attachment && !attach) {
+    console.warn(
+      `[email] Anexo de ${attachment.content.byteLength} bytes acima do limite; enviando apenas o link.`
+    );
+  }
+
+  const safeName = escapeHtml(recipientName);
+  const safeTitle = escapeHtml(documentTitle);
+
+  const copyLine = attach
+    ? "Uma cópia está anexada a este e-mail."
+    : "O documento está disponível no portal.";
+
+  const signLine = documentUrl
+    ? "Para concluir, você ainda precisa assiná-lo no portal."
+    : "Acesse o portal para visualizar e assinar.";
+
+  const textParts = [
+    `Olá, ${recipientName}.`,
+    `Um novo documento ("${documentTitle}") foi disponibilizado para você no Portal de Documentos.`,
+    copyLine,
+    signLine,
+  ];
+  if (documentUrl) {
+    textParts.push(documentUrl);
+  }
+
+  return {
+    from: `"Portal de Documentos" <${process.env.GMAIL_USER}>`,
+    to,
+    encoding: "base64" as const,
+    subject: `Novo documento disponível: ${documentTitle}`,
+    text: textParts.join("\n\n"),
+    html: [
+      `<p>Olá, ${safeName}.</p>`,
+      `<p>Um novo documento (<strong>${safeTitle}</strong>) foi disponibilizado para você no Portal de Documentos.</p>`,
+      `<p>${copyLine}</p>`,
+      `<p>${signLine}</p>`,
+      documentUrl
+        ? `<p><a href="${escapeHtml(documentUrl)}" style="display:inline-block;background:#0f172a;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none">Abrir e assinar no portal</a></p>`
+        : "",
+    ].join(""),
+    attachments: attach ? [attach] : undefined,
+  };
+}
+
+export async function sendDocumentUploadedEmail(input: DocumentEmailInput): Promise<void> {
   const client = getTransporter();
   if (!client) {
     console.warn(
@@ -38,14 +111,7 @@ export async function sendDocumentUploadedEmail({
   }
 
   try {
-    await client.sendMail({
-      from: `"Portal de Documentos" <${process.env.GMAIL_USER}>`,
-      to,
-      encoding: "base64",
-      subject: `Novo documento disponível: ${documentTitle}`,
-      text: `Olá, ${recipientName}.\n\nUm novo documento ("${documentTitle}") foi disponibilizado para você no Portal de Documentos.\n\nAcesse o portal para visualizar.`,
-      html: `<p>Olá, ${recipientName}.</p><p>Um novo documento (<strong>${documentTitle}</strong>) foi disponibilizado para você no Portal de Documentos.</p><p>Acesse o portal para visualizar.</p>`,
-    });
+    await client.sendMail(buildDocumentUploadedEmail(input));
   } catch (error) {
     console.error("[email] Falha ao enviar notificação de documento:", error);
   }

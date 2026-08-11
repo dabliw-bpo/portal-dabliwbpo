@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createId } from "@/lib/id";
 import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/authz";
+import { documentPathForRole } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
 import { saveFile } from "@/lib/storage";
 import { sendDocumentUploadedEmail } from "@/lib/email";
@@ -76,10 +77,14 @@ export async function uploadDocumentAction(
     },
   });
 
+  const appUrl = process.env.APP_URL;
+  const documentPath = documentPathForRole(owner.role, id);
   await sendDocumentUploadedEmail({
     to: owner.email,
     recipientName: owner.name,
     documentTitle: parsed.data.title,
+    documentUrl: appUrl && documentPath ? `${appUrl}${documentPath}` : undefined,
+    attachment: { filename: file.name, content: buffer, contentType: file.type },
   });
 
   const requestedRedirect = formData.get("redirectTo");

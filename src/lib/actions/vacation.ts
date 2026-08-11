@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/authz";
 import { createId } from "@/lib/id";
 import { formatDateOnly } from "@/lib/format";
-import { isAdminPath } from "@/lib/paths";
+import { documentPathForRole, isAdminPath } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
 import { saveFile } from "@/lib/storage";
 import { sendDocumentUploadedEmail } from "@/lib/email";
@@ -135,10 +135,14 @@ export async function reviewVacationRequestAction(
     }),
   ]);
 
+  const appUrl = process.env.APP_URL;
+  const documentPath = documentPathForRole(vacationRequest.collaborator.role, documentId);
   await sendDocumentUploadedEmail({
     to: vacationRequest.collaborator.email,
     recipientName: vacationRequest.collaborator.name,
     documentTitle,
+    documentUrl: appUrl && documentPath ? `${appUrl}${documentPath}` : undefined,
+    attachment: { filename: file.name, content: buffer, contentType: file.type },
   });
 
   revalidatePath(listPath);
