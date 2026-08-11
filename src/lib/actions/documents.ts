@@ -8,7 +8,7 @@ import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/authz";
 import { documentPathForRole } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
-import { saveFile } from "@/lib/storage";
+import { readStoredFile, saveFile } from "@/lib/storage";
 import { sendDocumentUploadedEmail } from "@/lib/email";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES, uploadDocumentSchema } from "@/lib/validations/document";
 import { parseSignatureImage } from "@/lib/validations/signature";
@@ -96,6 +96,62 @@ export async function uploadDocumentAction(
       : defaultListPath;
   revalidatePath(listPath);
   redirect(listPath);
+}
+
+export type ResendDocumentEmailState = {
+  error?: string;
+  success?: string;
+};
+
+/**
+ * Re-sends the upload notification, with the stored file attached again. Used
+ * after fixing a recipient's address, so the document does not have to be
+ * uploaded a second time.
+ */
+export async function resendDocumentEmailAction(
+  _prevState: ResendDocumentEmailState,
+  formData: FormData
+): Promise<ResendDocumentEmailState> {
+  const session = await auth();
+  requireRole(session, ["ADMIN"]);
+
+  const documentId = String(formData.get("documentId") ?? "");
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+    include: { owner: true },
+  });
+
+  if (!document) {
+    return { error: "Documento não encontrado." };
+  }
+
+  let buffer: Buffer;
+  try {
+    buffer = await readStoredFile(document.filePath);
+  } catch {
+    return { error: "Não foi possível ler o arquivo armazenado." };
+  }
+
+  const appUrl = process.env.APP_URL;
+  const documentPath = documentPathForRole(document.owner.role, document.id);
+
+  const result = await sendDocumentUploadedEmail({
+    to: document.owner.email,
+    recipientName: document.owner.name,
+    documentTitle: document.title,
+    documentUrl: appUrl && documentPath ? `${appUrl}${documentPath}` : undefined,
+    attachment: {
+      filename: document.fileName,
+      content: buffer,
+      contentType: document.mimeType,
+    },
+  });
+
+  if (!result.ok) {
+    return { error: `Falha ao reenviar: ${result.error}` };
+  }
+
+  return { success: `E-mail reenviado para ${document.owner.email}.` };
 }
 
 export type SignDocumentState = {

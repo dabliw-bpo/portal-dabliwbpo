@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { DocumentViewer } from "@/components/documents/document-viewer";
 import { DocumentStatusBadge } from "@/components/documents/document-status-badge";
 import { SignatureProof } from "@/components/documents/signature-proof";
+import { ResendEmailButton } from "@/components/documents/resend-email-button";
 
 export default async function AdminDocumentoPage({
   params,
@@ -25,11 +26,14 @@ export default async function AdminDocumentoPage({
         <div>
           <h1 className="text-lg font-semibold text-slate-900">{document.title}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {document.fileName} · destinatário: {document.owner.name} · enviado por{" "}
-            {document.uploadedBy.name}
+            {document.fileName} · destinatário: {document.owner.name} ({document.owner.email}) ·
+            enviado por {document.uploadedBy.name}
           </p>
         </div>
-        <DocumentStatusBadge status={document.status} />
+        <div className="flex flex-col items-end gap-3">
+          <DocumentStatusBadge status={document.status} />
+          <ResendEmailButton documentId={document.id} recipientEmail={document.owner.email} />
+        </div>
       </div>
 
       <div className="mt-6">

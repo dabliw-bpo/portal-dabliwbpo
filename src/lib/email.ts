@@ -101,19 +101,28 @@ export function buildDocumentUploadedEmail(input: DocumentEmailInput) {
   };
 }
 
-export async function sendDocumentUploadedEmail(input: DocumentEmailInput): Promise<void> {
+export type SendResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Never throws: an upload must not fail because the mail server did. Callers
+ * that need to tell the user what happened (the resend button) read the
+ * result. Note that `ok` means the message was accepted by Gmail, not that it
+ * was delivered — bounces arrive separately.
+ */
+export async function sendDocumentUploadedEmail(input: DocumentEmailInput): Promise<SendResult> {
   const client = getTransporter();
   if (!client) {
-    console.warn(
-      "[email] GMAIL_USER/GMAIL_APP_PASSWORD não configurados; notificação de documento não enviada."
-    );
-    return;
+    const error = "GMAIL_USER/GMAIL_APP_PASSWORD não configurados.";
+    console.warn(`[email] ${error} Notificação de documento não enviada.`);
+    return { ok: false, error };
   }
 
   try {
     await client.sendMail(buildDocumentUploadedEmail(input));
+    return { ok: true };
   } catch (error) {
     console.error("[email] Falha ao enviar notificação de documento:", error);
+    return { ok: false, error: (error as Error).message };
   }
 }
 
