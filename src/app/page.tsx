@@ -7,7 +7,7 @@ import { LandingPage } from "@/components/marketing/landing-page";
 export const metadata: Metadata = {
   title: "DABLIW BPO: Financeiro e RH para empresas",
   description:
-    "BPO financeiro e de RH: análises, contas a pagar e a receber, folha de pagamento, admissões e um portal digital para acompanhar tudo.",
+    "Terceirize a gestão financeira da sua empresa e a burocracia com os documentos do RH. BPO financeiro e de RH, com portal digital para acompanhar cada etapa.",
 };
 
 export default async function Home() {
