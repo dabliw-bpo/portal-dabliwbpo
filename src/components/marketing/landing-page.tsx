@@ -152,8 +152,8 @@ export function LandingPage() {
 
             <Reveal delay={0.16}>
               <p className="mb-10 max-w-[440px] text-lg leading-[1.8] text-[#a8a295]">
-                Cuidamos de análises financeiras, folha de pagamento, admissões e
-                muito mais, com um portal digital para acompanhar cada etapa.
+                Gerenciamos o seu financeiro de forma terceirizada e cuidamos da
+                sua burocracia com os documentos do RH.
               </p>
             </Reveal>
 
