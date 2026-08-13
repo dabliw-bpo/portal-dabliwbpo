@@ -48,7 +48,7 @@ export default async function PortalRhDocumentoPage({
 
       {document.signature ? (
         <div className="mt-4">
-          <SignatureProof signature={document.signature} detailed />
+          <SignatureProof signature={document.signature} detailed auditUrl={document.auditFilePath ? `/api/documentos/${document.id}/arquivo?tipo=auditoria` : null} />
         </div>
       ) : (
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">

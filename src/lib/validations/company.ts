@@ -57,6 +57,12 @@ export const companyRegistrationSchema = z.object({
   ),
   phone: optionalString,
 
+  partnerName: optionalString,
+  partnerEmail: z.preprocess(
+    (value) => (value === null || value === "" ? undefined : value),
+    z.string().trim().email("Email do sócio inválido.").max(300).optional()
+  ),
+
   federalEntity: optionalString,
   registrationStatus: optionalEnum(REGISTRATION_STATUSES),
   registrationStatusDate: optionalDate,

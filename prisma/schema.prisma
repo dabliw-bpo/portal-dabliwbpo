@@ -74,6 +74,10 @@ model Company {
   email String?
   phone String?
 
+  /// Sócio administrador: recebe o comprovante a cada assinatura concluída.
+  partnerName  String?
+  partnerEmail String?
+
   federalEntity            String?
   registrationStatus       String?
   registrationStatusDate   DateTime?
@@ -183,6 +187,10 @@ model Document {
   uploadedByUserId String
   /// Competência (YYYY-MM) — usada pelos holerites mensais.
   referenceMonth   String?
+  /// Relatório de auditoria gerado no momento da assinatura.
+  auditFilePath    String?
+  /// SHA-256 do arquivo original, impresso no relatório para conferência.
+  fileHash         String?
   /// Preenchido quando o documento é a evidência de entrega de uma atividade.
   /// Um documento pertence a no máximo uma tarefa, então basta a FK direta —
   /// não há necessidade de tabela de junção.

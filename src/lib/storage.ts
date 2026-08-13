@@ -42,6 +42,15 @@ export async function readStoredFile(relativePath: string): Promise<Buffer> {
   return Buffer.from(await data.arrayBuffer());
 }
 
+/** Reads from the public `avatars` bucket — user photos and company logos. */
+export async function readPublicAsset(relativePath: string): Promise<Uint8Array> {
+  const { data, error } = await getClient().storage.from("avatars").download(relativePath);
+  if (error || !data) {
+    throw new Error(`Falha ao ler imagem: ${error?.message ?? "não encontrada"}`);
+  }
+  return new Uint8Array(await data.arrayBuffer());
+}
+
 export async function deleteStoredFile(relativePath: string): Promise<void> {
   await getClient().storage.from(BUCKET).remove([relativePath]);
 }

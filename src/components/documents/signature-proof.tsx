@@ -7,9 +7,12 @@ import type { Signature } from "@prisma/client";
 export function SignatureProof({
   signature,
   detailed = false,
+  auditUrl = null,
 }: {
   signature: Signature;
   detailed?: boolean;
+  /** Link para o relatório de auditoria, quando já emitido. */
+  auditUrl?: string | null;
 }) {
   return (
     <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
@@ -39,6 +42,19 @@ export function SignatureProof({
           </>
         )}
       </div>
+
+      {auditUrl && (
+        <p className="mt-3">
+          <a
+            href={auditUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium underline hover:text-emerald-700"
+          >
+            Abrir relatório de auditoria (PDF)
+          </a>
+        </p>
+      )}
     </div>
   );
 }

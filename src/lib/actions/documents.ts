@@ -3,15 +3,17 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import type { Prisma } from "@prisma/client";
 import { createId } from "@/lib/id";
 import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/authz";
 import { documentPathForRole } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
-import { readStoredFile, saveFile } from "@/lib/storage";
-import { sendDocumentUploadedEmail } from "@/lib/email";
+import { readPublicAsset, readStoredFile, saveFile } from "@/lib/storage";
+import { sendDocumentUploadedEmail, sendSignatureReceiptEmail } from "@/lib/email";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES, uploadDocumentSchema } from "@/lib/validations/document";
 import { parseSignatureImage } from "@/lib/validations/signature";
+import { buildSignatureReport, sha256 } from "@/lib/signature-report";
 
 export type UploadDocumentState = {
   error?: string;
@@ -154,6 +156,95 @@ export async function resendDocumentEmailAction(
   return { success: `E-mail reenviado para ${document.owner.email}.` };
 }
 
+/** The document shape `signDocumentAction` loads, reused by the receipt. */
+type SignedDocument = Prisma.DocumentGetPayload<{
+  include: {
+    uploadedBy: { select: { name: true } };
+    owner: { select: { name: true; email: true; cpf: true; company: true } };
+  };
+}>;
+
+/**
+ * Builds the audit report for a freshly signed document, files it next to the
+ * original, and sends both to the company's managing partner.
+ */
+async function issueSignatureReceipt({
+  document,
+  signedAt,
+  ipAddress,
+  userAgent,
+  imageData,
+}: {
+  document: SignedDocument;
+  signedAt: Date;
+  ipAddress: string;
+  userAgent: string;
+  imageData: string;
+}): Promise<void> {
+  const company = document.owner.company;
+  const original = await readStoredFile(document.filePath);
+  const fileHash = sha256(original);
+
+  let companyLogo: { bytes: Uint8Array; type: "png" | "jpg" } | null = null;
+  if (company?.logoPath) {
+    try {
+      const bytes = await readPublicAsset(company.logoPath);
+      companyLogo = {
+        bytes,
+        type: company.logoPath.toLowerCase().endsWith(".png") ? "png" : "jpg",
+      };
+    } catch {
+      // Sem logo o relatório sai com o nome da empresa.
+    }
+  }
+
+  const report = await buildSignatureReport({
+    documentId: document.id,
+    documentTitle: document.title,
+    fileName: document.fileName,
+    fileHash,
+    uploadedByName: document.uploadedBy.name,
+    uploadedAt: document.createdAt,
+    companyName: company?.name ?? "DABLIW BPO",
+    companyLogo,
+    signer: {
+      name: document.owner.name,
+      cpf: document.owner.cpf,
+      email: document.owner.email,
+      signedAt,
+      ipAddress,
+      userAgent,
+      signatureImage: imageData,
+    },
+  });
+
+  const auditFilePath = await saveFile(report, "auditoria.pdf", `${document.id}-auditoria`);
+  await prisma.document.update({
+    where: { id: document.id },
+    data: { auditFilePath, fileHash },
+  });
+
+  if (!company?.partnerEmail) {
+    return;
+  }
+
+  await sendSignatureReceiptEmail({
+    to: company.partnerEmail,
+    partnerName: company.partnerName,
+    signerName: document.owner.name,
+    documentTitle: document.title,
+    signedAt,
+    attachments: [
+      { filename: document.fileName, content: original, contentType: document.mimeType },
+      {
+        filename: `auditoria-${document.id}.pdf`,
+        content: report,
+        contentType: "application/pdf",
+      },
+    ],
+  });
+}
+
 export type SignDocumentState = {
   error?: string;
 };
@@ -169,7 +260,13 @@ export async function signDocumentAction(
   }
 
   const documentId = String(formData.get("documentId") ?? "");
-  const document = await prisma.document.findUnique({ where: { id: documentId } });
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+    include: {
+      uploadedBy: { select: { name: true } },
+      owner: { select: { name: true, email: true, cpf: true, company: true } },
+    },
+  });
 
   if (!document || document.ownerUserId !== session.user.id) {
     return { error: "Documento não encontrado." };
@@ -207,6 +304,20 @@ export async function signDocumentAction(
       data: { status: "SIGNED" },
     }),
   ]);
+
+  // O comprovante é um efeito posterior: se ele falhar, a assinatura já está
+  // registrada e não pode ser desfeita por causa de um PDF ou de um e-mail.
+  try {
+    await issueSignatureReceipt({
+      document,
+      signedAt: new Date(),
+      ipAddress,
+      userAgent,
+      imageData,
+    });
+  } catch (error) {
+    console.error("[assinatura] Falha ao emitir o comprovante:", error);
+  }
 
   revalidatePath(`${basePath}/documentos/${document.id}`);
   revalidatePath(`${basePath}/documentos`);

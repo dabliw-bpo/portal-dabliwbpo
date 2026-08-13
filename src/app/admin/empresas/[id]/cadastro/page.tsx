@@ -42,6 +42,8 @@ export default async function EmpresaCadastroPage({
     zipCode: company.zipCode ?? "",
     email: company.email ?? "",
     phone: company.phone ?? "",
+    partnerName: company.partnerName ?? "",
+    partnerEmail: company.partnerEmail ?? "",
     federalEntity: company.federalEntity ?? "",
     registrationStatus: company.registrationStatus ?? "",
     registrationStatusDate: toDateInput(company.registrationStatusDate),

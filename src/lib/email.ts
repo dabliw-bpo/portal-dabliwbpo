@@ -126,6 +126,61 @@ export async function sendDocumentUploadedEmail(input: DocumentEmailInput): Prom
   }
 }
 
+export async function sendSignatureReceiptEmail({
+  to,
+  partnerName,
+  signerName,
+  documentTitle,
+  signedAt,
+  attachments,
+}: {
+  to: string;
+  partnerName: string | null;
+  signerName: string;
+  documentTitle: string;
+  signedAt: Date;
+  attachments: { filename: string; content: Buffer; contentType: string }[];
+}): Promise<SendResult> {
+  const client = getTransporter();
+  if (!client) {
+    const error = "GMAIL_USER/GMAIL_APP_PASSWORD não configurados.";
+    console.warn(`[email] ${error} Comprovante de assinatura não enviado.`);
+    return { ok: false, error };
+  }
+
+  const when = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Cuiaba",
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(signedAt);
+
+  const greeting = partnerName ? `Olá, ${escapeHtml(partnerName)}.` : "Olá.";
+
+  try {
+    await client.sendMail({
+      from: `"Portal de Documentos" <${process.env.GMAIL_USER}>`,
+      to,
+      encoding: "base64",
+      subject: `Assinatura concluída: ${documentTitle} — ${signerName}`,
+      text: [
+        partnerName ? `Olá, ${partnerName}.` : "Olá.",
+        `${signerName} assinou o documento "${documentTitle}" em ${when}.`,
+        "Seguem em anexo o documento assinado e o relatório de auditoria com os dados da assinatura.",
+      ].join("\n\n"),
+      html: [
+        `<p>${greeting}</p>`,
+        `<p><strong>${escapeHtml(signerName)}</strong> assinou o documento <strong>${escapeHtml(documentTitle)}</strong> em ${when}.</p>`,
+        `<p>Seguem em anexo o documento assinado e o relatório de auditoria com os dados da assinatura.</p>`,
+      ].join(""),
+      attachments,
+    });
+    return { ok: true };
+  } catch (error) {
+    console.error("[email] Falha ao enviar comprovante de assinatura:", error);
+    return { ok: false, error: (error as Error).message };
+  }
+}
+
 export async function sendBirthdayEmail({
   to,
   recipientName,

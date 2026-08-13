@@ -20,6 +20,8 @@ export type CompanyRegistrationValues = {
   zipCode: string;
   email: string;
   phone: string;
+  partnerName: string;
+  partnerEmail: string;
   federalEntity: string;
   registrationStatus: string;
   registrationStatusDate: string;
@@ -47,6 +49,8 @@ export const emptyRegistrationValues: CompanyRegistrationValues = {
   zipCode: "",
   email: "",
   phone: "",
+  partnerName: "",
+  partnerEmail: "",
   federalEntity: "",
   registrationStatus: "",
   registrationStatusDate: "",
@@ -317,6 +321,34 @@ export function CompanyRegistrationFields({
             className={fieldClass}
           />
         </Field>
+      </Section>
+
+      <Section title="Responsável pela empresa">
+        <Field name="partnerName" label="Sócio administrador" span={3}>
+          <input
+            id="partnerName"
+            name="partnerName"
+            defaultValue={values.partnerName}
+            disabled={disabled}
+            className={fieldClass}
+          />
+        </Field>
+        <Field name="partnerEmail" label="Email do sócio" span={3}>
+          <input
+            id="partnerEmail"
+            name="partnerEmail"
+            type="email"
+            defaultValue={values.partnerEmail}
+            disabled={disabled}
+            className={fieldClass}
+          />
+        </Field>
+        <div className="sm:col-span-6">
+          <p className="text-xs text-slate-500">
+            Recebe por e-mail o documento assinado e o relatório de auditoria sempre que um
+            colaborador desta empresa conclui uma assinatura.
+          </p>
+        </div>
       </Section>
 
       <Section title="Situação cadastral">

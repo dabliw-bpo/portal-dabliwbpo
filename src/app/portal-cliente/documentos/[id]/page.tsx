@@ -46,7 +46,7 @@ export default async function ClienteDocumentoPage({
 
       {document.signature ? (
         <div className="mt-4">
-          <SignatureProof signature={document.signature} />
+          <SignatureProof signature={document.signature} auditUrl={document.auditFilePath ? `/api/documentos/${document.id}/arquivo?tipo=auditoria` : null} />
         </div>
       ) : (
         <div className="mt-4">
