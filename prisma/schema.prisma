@@ -130,6 +130,12 @@ model User {
   companyId          String?
   avatarPath         String?
   whatsapp           String?
+  /// Dado pessoal sensível (LGPD): visível apenas para admin e RH da empresa.
+  cpf                String?
+  admissionDate      DateTime?
+  birthDate          DateTime?
+  /// Ano do último parabéns enviado, para o envio diário não repetir.
+  birthdayGreetedYear Int?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

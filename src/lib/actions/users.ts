@@ -102,6 +102,9 @@ export async function updateUserAction(
     role: formData.get("role"),
     companyId: formData.get("companyId"),
     whatsapp: formData.get("whatsapp"),
+    cpf: formData.get("cpf"),
+    admissionDate: formData.get("admissionDate"),
+    birthDate: formData.get("birthDate"),
   });
 
   if (!parsed.success) {
@@ -137,6 +140,9 @@ export async function updateUserAction(
       companyId,
       active,
       whatsapp: parsed.data.whatsapp ?? null,
+      cpf: parsed.data.cpf ?? null,
+      admissionDate: parsed.data.admissionDate ? new Date(parsed.data.admissionDate) : null,
+      birthDate: parsed.data.birthDate ? new Date(parsed.data.birthDate) : null,
       ...(passwordHash ? { passwordHash } : {}),
     },
   });

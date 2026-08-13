@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { listPendingWork } from "@/lib/pending";
+import { listMonthBirthdays, todayInBrazil } from "@/lib/birthdays";
 import { formatVacationPeriod } from "@/lib/format";
 
 function SectionCard({
@@ -33,9 +34,26 @@ function SectionCard({
   );
 }
 
+const MONTH_NAMES = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
+
 export default async function AdminPage() {
   const session = await auth();
   const { vacations, documents } = await listPendingWork();
+  const birthdays = await listMonthBirthdays();
+  const { month, day } = todayInBrazil();
 
   return (
     <div>
@@ -98,6 +116,44 @@ export default async function AdminPage() {
               </Link>
             </li>
           ))}
+        </SectionCard>
+
+        <SectionCard
+          title={`Aniversariantes de ${MONTH_NAMES[month - 1]}`}
+          count={birthdays.length}
+          emptyMessage="Ninguém faz aniversário neste mês."
+        >
+          {birthdays.map((person) => {
+            const isToday = person.day === day;
+            return (
+              <li
+                key={person.id}
+                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+              >
+                <div className="flex items-center gap-3 text-sm">
+                  <span
+                    className={`w-9 shrink-0 rounded-md py-1 text-center text-xs font-semibold ${
+                      isToday ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {String(person.day).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <p className="font-medium text-slate-900">
+                      {person.name}
+                      {isToday && (
+                        <span className="ml-2 text-xs font-normal text-amber-800">é hoje 🎉</span>
+                      )}
+                    </p>
+                    <p className="text-slate-600">
+                      {person.companyName ?? "Sem empresa"}
+                      {person.turningAge !== null && ` · faz ${person.turningAge} anos`}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
         </SectionCard>
       </div>
     </div>

@@ -126,6 +126,46 @@ export async function sendDocumentUploadedEmail(input: DocumentEmailInput): Prom
   }
 }
 
+export async function sendBirthdayEmail({
+  to,
+  recipientName,
+  companyName,
+}: {
+  to: string;
+  recipientName: string;
+  companyName: string | null;
+}): Promise<SendResult> {
+  const client = getTransporter();
+  if (!client) {
+    const error = "GMAIL_USER/GMAIL_APP_PASSWORD não configurados.";
+    console.warn(`[email] ${error} Parabéns não enviado.`);
+    return { ok: false, error };
+  }
+
+  const firstName = recipientName.trim().split(/\s+/)[0] ?? recipientName;
+  const from = companyName ? `A equipe da ${companyName}` : "A equipe";
+  const safeFrom = escapeHtml(from);
+
+  try {
+    await client.sendMail({
+      from: `"Portal de Documentos" <${process.env.GMAIL_USER}>`,
+      to,
+      encoding: "base64",
+      subject: `Feliz aniversário, ${firstName}! 🎉`,
+      text: `Feliz aniversário, ${firstName}!\n\n${from} deseja um dia muito feliz e um ano novo de vida cheio de conquistas.\n\nUm abraço!`,
+      html: [
+        `<p style="font-size:18px"><strong>Feliz aniversário, ${escapeHtml(firstName)}! 🎉</strong></p>`,
+        `<p>${safeFrom} deseja um dia muito feliz e um ano novo de vida cheio de conquistas.</p>`,
+        `<p>Um abraço!</p>`,
+      ].join(""),
+    });
+    return { ok: true };
+  } catch (error) {
+    console.error("[email] Falha ao enviar parabéns:", error);
+    return { ok: false, error: (error as Error).message };
+  }
+}
+
 export async function sendPasswordResetEmail({
   to,
   recipientName,

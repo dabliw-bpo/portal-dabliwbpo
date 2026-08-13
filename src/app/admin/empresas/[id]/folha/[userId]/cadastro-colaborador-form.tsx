@@ -26,6 +26,9 @@ export function CadastroColaboradorForm({
     whatsapp: string;
     role: string;
     active: boolean;
+    cpf: string;
+    admissionDate: string;
+    birthDate: string;
   };
 }) {
   const [state, formAction, pending] = useActionState(
@@ -140,6 +143,45 @@ export function CadastroColaboradorForm({
               defaultValue={values.whatsapp}
               disabled={!editing}
               placeholder="(65) 99999-9999"
+              className={inputToggleable}
+            />
+          </div>
+          <div className="flex flex-col gap-1 sm:col-span-2">
+            <label htmlFor="cpf" className="text-sm font-medium text-slate-700">
+              CPF
+            </label>
+            <input
+              id="cpf"
+              name="cpf"
+              defaultValue={values.cpf}
+              disabled={!editing}
+              placeholder="000.000.000-00"
+              className={inputToggleable}
+            />
+          </div>
+          <div className="flex flex-col gap-1 sm:col-span-2">
+            <label htmlFor="birthDate" className="text-sm font-medium text-slate-700">
+              Nascimento
+            </label>
+            <input
+              id="birthDate"
+              name="birthDate"
+              type="date"
+              defaultValue={values.birthDate}
+              disabled={!editing}
+              className={inputToggleable}
+            />
+          </div>
+          <div className="flex flex-col gap-1 sm:col-span-2">
+            <label htmlFor="admissionDate" className="text-sm font-medium text-slate-700">
+              Admissão
+            </label>
+            <input
+              id="admissionDate"
+              name="admissionDate"
+              type="date"
+              defaultValue={values.admissionDate}
+              disabled={!editing}
               className={inputToggleable}
             />
           </div>
