@@ -1,3 +1,4 @@
+import { APP_TIME_ZONE } from "@/lib/format";
 import nodemailer from "nodemailer";
 
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
@@ -149,7 +150,7 @@ export async function sendSignatureReceiptEmail({
   }
 
   const when = new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "America/Cuiaba",
+    timeZone: APP_TIME_ZONE,
     dateStyle: "short",
     timeStyle: "short",
   }).format(signedAt);

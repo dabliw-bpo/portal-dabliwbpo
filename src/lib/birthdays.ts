@@ -1,3 +1,4 @@
+import { APP_TIME_ZONE } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
 export type Birthday = {
@@ -10,7 +11,7 @@ export type Birthday = {
 };
 
 /**
- * Today in Mato Grosso, where the client companies are. The server runs in
+ * Today in Brasília, the app's official time. The server runs in
  * UTC, so asking it for "the current month" would roll over a few hours early.
  */
 export function todayInBrazil(now: Date = new Date()): {
@@ -19,7 +20,7 @@ export function todayInBrazil(now: Date = new Date()): {
   day: number;
 } {
   const [year, month, day] = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Cuiaba",
+    timeZone: APP_TIME_ZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

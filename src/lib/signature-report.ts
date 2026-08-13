@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { APP_TIME_ZONE, gmtOffsetLabel } from "@/lib/format";
 
 const A4: [number, number] = [595.28, 841.89];
 const MARGIN = 48;
@@ -33,10 +34,10 @@ export function sha256(buffer: Buffer): string {
   return createHash("sha256").update(buffer).digest("hex");
 }
 
-/** Datas do relatório saem no fuso de Cuiabá, onde as empresas operam. */
+/** Datas do relatório saem no horário oficial de Brasília. */
 function stamp(date: Date): string {
   return new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "America/Cuiaba",
+    timeZone: APP_TIME_ZONE,
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -104,7 +105,7 @@ export async function buildSignatureReport(input: SignatureReportInput): Promise
 
   const headerLines = [
     `Identificador: ${input.documentId}`,
-    `Data/Hora em GMT -4:00 (Cuiabá)`,
+    `Data/Hora em ${gmtOffsetLabel(input.signer.signedAt)} (Brasília)`,
     `Autenticação eletrônica por ${input.companyName}`,
   ];
   headerLines.forEach((line, i) => {
