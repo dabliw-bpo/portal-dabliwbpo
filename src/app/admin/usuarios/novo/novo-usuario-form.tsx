@@ -48,7 +48,7 @@ export function NovoUsuarioForm({
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="role" className="text-sm font-medium text-slate-700">
-          Papel
+          Perfil de acesso
         </label>
         <select id="role" name="role" defaultValue={lockedCompany ? "COLLABORATOR" : "CLIENT"} className={inputBase}>
           {!lockedCompany && <option value="CLIENT">Cliente</option>}

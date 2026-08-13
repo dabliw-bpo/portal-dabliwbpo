@@ -9,6 +9,8 @@ import { Avatar } from "@/components/ui/avatar";
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Admin",
+  GESTOR: "Gestor de departamento",
+  OPERADOR: "Operador",
   COMPANY_HR: "RH da empresa",
   COLLABORATOR: "Colaborador",
   CLIENT: "Cliente",
@@ -176,7 +178,7 @@ export function UsuariosTable({
                 WhatsApp
               </th>
               <th scope="col" className="px-4 py-2 font-medium">
-                Papel
+                Perfil
               </th>
               {showCompanyColumn && (
                 <th scope="col" className="px-4 py-2 font-medium">

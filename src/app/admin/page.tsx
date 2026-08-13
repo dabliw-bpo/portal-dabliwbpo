@@ -1,32 +1,72 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { listPendingWork } from "@/lib/pending";
+import { listPendingWork, loadDashboardStats } from "@/lib/pending";
 import { listMonthBirthdays, todayInBrazil } from "@/lib/birthdays";
-import { formatVacationPeriod } from "@/lib/format";
+import { APP_TIME_ZONE, formatVacationPeriod } from "@/lib/format";
 
+function StatTile({ label, value, href }: { label: string; value: number; href?: string }) {
+  const body = (
+    <>
+      <span className="text-2xl font-semibold tabular-nums text-slate-900">{value}</span>
+      <span className="mt-0.5 text-sm text-slate-500">{label}</span>
+    </>
+  );
+
+  const shell = "flex flex-col rounded-lg border border-slate-200 bg-white px-4 py-3";
+
+  return href ? (
+    <Link href={href} className={`${shell} transition-colors hover:border-slate-300 hover:bg-slate-50`}>
+      {body}
+    </Link>
+  ) : (
+    <div className={shell}>{body}</div>
+  );
+}
+
+/**
+ * `needsAction` separates work waiting on someone from what is merely good to
+ * know: without it a quiet month of birthdays looks as urgent as a signature
+ * nobody has given.
+ */
 function SectionCard({
   title,
   count,
   emptyMessage,
+  needsAction = false,
   children,
 }: {
   title: string;
   count: number;
   emptyMessage: string;
+  needsAction?: boolean;
   children: React.ReactNode;
 }) {
+  const flagged = needsAction && count > 0;
+
   return (
-    <section className="rounded-lg border border-slate-200 bg-white">
-      <header className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
+    <section
+      className={`overflow-hidden rounded-lg border bg-white ${
+        flagged ? "border-amber-300" : "border-slate-200"
+      }`}
+    >
+      <header
+        className={`flex items-center gap-2 border-b px-4 py-3 ${
+          flagged ? "border-amber-200 bg-amber-50" : "border-slate-100"
+        }`}
+      >
         <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
         {count > 0 && (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs font-medium tabular-nums ${
+              flagged ? "bg-amber-200 text-amber-900" : "bg-slate-100 text-slate-700"
+            }`}
+          >
             {count}
           </span>
         )}
       </header>
       {count === 0 ? (
-        <p className="px-4 py-6 text-center text-sm text-slate-600">{emptyMessage}</p>
+        <p className="px-4 py-6 text-center text-sm text-slate-500">{emptyMessage}</p>
       ) : (
         <ul className="divide-y divide-slate-100">{children}</ul>
       )}
@@ -52,20 +92,34 @@ const MONTH_NAMES = [
 export default async function AdminPage() {
   const session = await auth();
   const { vacations, documents } = await listPendingWork();
-  const birthdays = await listMonthBirthdays();
+  const [birthdays, stats] = await Promise.all([listMonthBirthdays(), loadDashboardStats()]);
   const { month, day } = todayInBrazil();
+
+  const firstName = session?.user?.name?.trim().split(/\s+/)[0] ?? "";
+  const today = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: APP_TIME_ZONE,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
 
   return (
     <div>
-      <h1 className="text-lg font-semibold text-slate-900">
-        Bem-vindo, {session?.user?.name}
-      </h1>
-      <p className="mt-1 text-sm text-slate-500">Papel: {session?.user?.role}</p>
+      <h1 className="text-lg font-semibold text-slate-900">Olá, {firstName}</h1>
+      <p className="mt-1 text-sm text-slate-500 first-letter:uppercase">{today}</p>
+
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <StatTile label="Empresas" value={stats.companies} href="/admin/empresas" />
+        <StatTile label="Pessoas ativas" value={stats.activePeople} />
+        <StatTile label="Aguardando ação" value={stats.pending} />
+      </div>
 
       <div className="mt-6 flex flex-col gap-6">
         <SectionCard
           title="Férias aguardando revisão"
           count={vacations.length}
+          needsAction
           emptyMessage="Nenhuma solicitação de férias pendente."
         >
           {vacations.map((request) => (
@@ -93,6 +147,7 @@ export default async function AdminPage() {
         <SectionCard
           title="Documentos aguardando assinatura"
           count={documents.length}
+          needsAction
           emptyMessage="Nenhum documento pendente de assinatura."
         >
           {documents.map((document) => (

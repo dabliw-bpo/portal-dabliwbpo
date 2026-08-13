@@ -187,7 +187,7 @@ export function CadastroColaboradorForm({
           </div>
           <div className="flex flex-col gap-1 sm:col-span-3">
             <label htmlFor="role" className="text-sm font-medium text-slate-700">
-              Papel
+              Perfil de acesso
             </label>
             <select
               id="role"

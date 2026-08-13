@@ -18,6 +18,18 @@ export async function countCompanyPending(companyId: string): Promise<number> {
   return vacations + documents;
 }
 
+/** Números do topo do painel: o tamanho da operação de relance. */
+export async function loadDashboardStats() {
+  const [companies, activePeople, vacations, documents] = await Promise.all([
+    prisma.company.count(),
+    prisma.user.count({ where: { active: true, companyId: { not: null } } }),
+    prisma.vacationRequest.count({ where: { status: "REQUESTED" } }),
+    prisma.document.count({ where: { status: "PENDING_SIGNATURE" } }),
+  ]);
+
+  return { companies, activePeople, pending: vacations + documents };
+}
+
 export async function listPendingWork() {
   const [vacations, documents] = await Promise.all([
     prisma.vacationRequest.findMany({
