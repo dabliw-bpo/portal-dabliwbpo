@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { homePathForRole } from "@/lib/authz";
+import { loadCompanyBrand } from "@/lib/brand";
 import { PortalNav } from "@/components/layout/portal-nav";
 
 export default async function PortalRhLayout({
@@ -16,11 +17,14 @@ export default async function PortalRhLayout({
     redirect(homePathForRole(session.user.role));
   }
 
+  const brand = await loadCompanyBrand(session.user.companyId);
+
   return (
     <div className="flex flex-1 flex-col">
       <PortalNav
         title="Portal do RH"
         userName={session?.user?.name ?? ""}
+        brand={brand}
         links={[
           { href: "/portal-rh/colaboradores", label: "Colaboradores", exact: true },
           { href: "/portal-rh/documentos", label: "Documentos" },

@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { CompanyRegistrationValues } from "@/components/companies/company-registration-fields";
+import { CompanyLogoForm } from "@/components/companies/company-logo-form";
+import { getCompanyLogoUrl } from "@/lib/avatar";
 import { CompanyTabs } from "../company-tabs";
 import { CadastroForm } from "./cadastro-form";
 
@@ -54,6 +56,12 @@ export default async function EmpresaCadastroPage({
       {company.cnpj && <p className="mt-1 text-sm text-slate-500">CNPJ: {company.cnpj}</p>}
 
       <CompanyTabs companyId={id} active="cadastro" />
+
+      <CompanyLogoForm
+        companyId={id}
+        companyName={company.name}
+        logoUrl={getCompanyLogoUrl(company.logoPath)}
+      />
 
       <CadastroForm companyId={id} values={values} />
     </div>

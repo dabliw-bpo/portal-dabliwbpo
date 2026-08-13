@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
 import { auth } from "@/lib/auth";
+import { createId } from "@/lib/id";
 import { requireRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { bankAccountSchema, companyRegistrationSchema } from "@/lib/validations/company";
@@ -16,6 +18,79 @@ export type BankAccountFormState = {
   error?: string;
   success?: boolean;
 };
+
+export type CompanyLogoState = {
+  error?: string;
+  success?: boolean;
+};
+
+const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
+const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
+
+function getSupabaseClient() {
+  const url = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) {
+    throw new Error("SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY não configurados.");
+  }
+  return createClient(url, serviceRoleKey);
+}
+
+export async function updateCompanyLogoAction(
+  companyId: string,
+  _prevState: CompanyLogoState,
+  formData: FormData
+): Promise<CompanyLogoState> {
+  const session = await auth();
+  requireRole(session, ["ADMIN"]);
+
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { logoPath: true },
+  });
+  if (!company) {
+    return { error: "Empresa não encontrada." };
+  }
+
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Selecione uma imagem." };
+  }
+
+  if (!ALLOWED_LOGO_TYPES.includes(file.type as (typeof ALLOWED_LOGO_TYPES)[number])) {
+    return { error: "Tipo de arquivo não permitido. Use PNG, JPG ou WEBP." };
+  }
+
+  if (file.size > MAX_LOGO_SIZE_BYTES) {
+    return { error: "Imagem maior que 5MB." };
+  }
+
+  const ext = file.type === "image/png" ? ".png" : file.type === "image/webp" ? ".webp" : ".jpg";
+  const path = `empresas/${companyId}-${createId()}${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const supabase = getSupabaseClient();
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(path, buffer, { contentType: file.type, upsert: false });
+
+  if (uploadError) {
+    return { error: "Falha ao enviar a imagem. Tente novamente." };
+  }
+
+  await prisma.company.update({ where: { id: companyId }, data: { logoPath: path } });
+
+  // Only drop the old file once the new one is safely recorded.
+  if (company.logoPath) {
+    await supabase.storage.from("avatars").remove([company.logoPath]);
+  }
+
+  revalidatePath(`/admin/empresas/${companyId}/cadastro`);
+  revalidatePath("/portal-colaborador");
+  revalidatePath("/portal-rh");
+  revalidatePath("/portal-cliente");
+  return { success: true };
+}
 
 /** Date inputs submit `yyyy-mm-dd`, which parses to UTC midnight. */
 function toDate(value: string | undefined): Date | null {

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { homePathForRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { getAvatarUrl } from "@/lib/avatar";
+import { loadCompanyBrand } from "@/lib/brand";
 import { PortalNav } from "@/components/layout/portal-nav";
 
 export default async function PortalColaboradorLayout({
@@ -23,11 +24,14 @@ export default async function PortalColaboradorLayout({
     select: { avatarPath: true },
   });
 
+  const brand = await loadCompanyBrand(session.user.companyId);
+
   return (
     <div className="flex flex-1 flex-col">
       <PortalNav
         title="Portal do Colaborador"
         userName={session?.user?.name ?? ""}
+        brand={brand}
         avatarUrl={getAvatarUrl(user?.avatarPath ?? null)}
         links={[
           { href: "/portal-colaborador", label: "Meu perfil", exact: true },

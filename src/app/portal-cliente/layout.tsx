@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { homePathForRole } from "@/lib/authz";
+import { loadCompanyBrand } from "@/lib/brand";
 import { PortalNav } from "@/components/layout/portal-nav";
 
 export default async function PortalClienteLayout({
@@ -16,11 +17,14 @@ export default async function PortalClienteLayout({
     redirect(homePathForRole(session.user.role));
   }
 
+  const brand = await loadCompanyBrand(session.user.companyId);
+
   return (
     <div className="flex flex-1 flex-col">
       <PortalNav
         title="Portal do Cliente"
         userName={session?.user?.name ?? ""}
+        brand={brand}
         links={[{ href: "/portal-cliente", label: "Meus documentos" }]}
       />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>

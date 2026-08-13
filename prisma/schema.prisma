@@ -9,7 +9,12 @@ datasource db {
 }
 
 enum Role {
+  /// Equipe do BPO — visão total.
   ADMIN
+  /// Equipe do BPO — enxerga os departamentos que gerencia, em todos os clientes.
+  GESTOR
+  /// Equipe do BPO — enxerga as próprias atividades.
+  OPERADOR
   COMPANY_HR
   COLLABORATOR
   CLIENT
@@ -44,6 +49,9 @@ model Company {
   id        String   @id @default(cuid())
   name      String
   cnpj      String?
+  /// Logo da empresa no bucket público `avatars`, exibida no cabeçalho do
+  /// portal para quem pertence a ela.
+  logoPath  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -76,6 +84,8 @@ model Company {
   users                User[]
   bankAccounts         BankAccount[]
   contaAzulIntegration ContaAzulIntegration?
+  serviceContracts     ServiceContract[]
+  tasks                Task[]
 }
 
 model BankAccount {
@@ -90,7 +100,9 @@ model BankAccount {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  serviceContracts ServiceContract[]
+  tasks            Task[]
 
   @@index([companyId])
 }
@@ -130,6 +142,13 @@ model User {
   reviewedVacations   VacationRequest[]    @relation("VacationReviewer")
   passwordResetTokens PasswordResetToken[]
 
+  departmentMemberships DepartmentMember[]
+  contractAssignments   ServiceContract[]   @relation("ContractAssignee")
+  assignedTasks         Task[]              @relation("TaskAssignee")
+  completedTasks        Task[]              @relation("TaskCompleter")
+  checkedChecklistItems TaskChecklistItem[]
+  taskHistoryEntries    TaskHistory[]
+
   @@index([companyId])
 }
 
@@ -158,6 +177,10 @@ model Document {
   uploadedByUserId String
   /// Competência (YYYY-MM) — usada pelos holerites mensais.
   referenceMonth   String?
+  /// Preenchido quando o documento é a evidência de entrega de uma atividade.
+  /// Um documento pertence a no máximo uma tarefa, então basta a FK direta —
+  /// não há necessidade de tabela de junção.
+  taskId           String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
@@ -165,8 +188,10 @@ model Document {
   uploadedBy      User             @relation("DocumentUploader", fields: [uploadedByUserId], references: [id])
   signature       Signature?
   vacationRequest VacationRequest?
+  task            Task?            @relation(fields: [taskId], references: [id])
 
   @@index([ownerUserId])
+  @@index([taskId])
 }
 
 model Signature {
@@ -204,4 +229,239 @@ model VacationRequest {
   document     Document? @relation(fields: [documentId], references: [id])
 
   @@index([collaboratorUserId])
+}
+
+// ---------------------------------------------------------------------------
+// Atividades recorrentes
+//
+// O eixo é: Service (o que sabemos fazer) → ServiceContract (o que o cliente
+// contratou, e com que periodicidade) → Task (a ocorrência de um período).
+// O gerador em `src/lib/atividades/gerar.ts` é quem materializa as tarefas.
+// ---------------------------------------------------------------------------
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  services Service[]
+  members  DepartmentMember[]
+  tasks    Task[]
+}
+
+model DepartmentMember {
+  id           String  @id @default(cuid())
+  departmentId String
+  userId       String
+  /// Um GESTOR só enxerga os departamentos onde este campo é verdadeiro.
+  manager      Boolean @default(false)
+
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([departmentId, userId])
+  @@index([userId])
+}
+
+enum ServiceNature {
+  RECORRENTE
+  SOB_DEMANDA
+}
+
+/// Granularidade da tarefa gerada. É propriedade do serviço, não do contrato:
+/// conciliação é sempre por conta, folha é sempre por empresa.
+enum ServiceScope {
+  EMPRESA
+  CONTA_BANCARIA
+  /// Reservado para as rotinas de RH (admissão, férias, rescisão).
+  COLABORADOR
+}
+
+model Service {
+  id               String        @id @default(cuid())
+  name             String
+  departmentId     String
+  nature           ServiceNature @default(RECORRENTE)
+  scope            ServiceScope  @default(EMPRESA)
+  /// Quando verdadeiro, a tarefa só conclui com documento anexado.
+  requiresDocument Boolean       @default(false)
+  estimatedMinutes Int?
+  description      String?
+  active           Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  department        Department              @relation(fields: [departmentId], references: [id])
+  checklistTemplate ChecklistTemplateItem[]
+  contracts         ServiceContract[]
+  tasks             Task[]
+
+  @@index([departmentId])
+}
+
+model ChecklistTemplateItem {
+  id        String  @id @default(cuid())
+  serviceId String
+  order     Int
+  text      String
+  required  Boolean @default(false)
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, order])
+}
+
+enum RecurrenceType {
+  DIARIA
+  SEMANAL
+  QUINZENAL
+  MENSAL
+  TRIMESTRAL
+  ANUAL
+}
+
+enum NonBusinessDayAdjustment {
+  ANTECIPAR
+  POSTERGAR
+  MANTER
+}
+
+model ServiceContract {
+  id            String  @id @default(cuid())
+  companyId     String
+  serviceId     String
+  /// Obrigatório quando service.scope = CONTA_BANCARIA. A condicional é
+  /// validada em Zod — o Prisma não consegue expressá-la entre tabelas.
+  bankAccountId String?
+
+  recurrenceType RecurrenceType
+  /// MENSAL/TRIMESTRAL/ANUAL — 1 a 31, com clamp no último dia do mês.
+  dayOfMonth     Int?
+  /// SEMANAL/QUINZENAL — 0=domingo … 6=sábado.
+  weekday        Int?
+  /// TRIMESTRAL/ANUAL — meses aplicáveis (1 a 12).
+  months         Int[]
+  /// Hora limite legal, "HH:mm". O corte bancário mora aqui.
+  deadlineTime   String  @default("18:00")
+
+  adjustment       NonBusinessDayAdjustment @default(POSTERGAR)
+  /// Prazo meta = prazo legal menos N dias úteis.
+  targetOffsetDays Int                      @default(1)
+
+  assigneeId String?
+  startsOn   DateTime
+  endsOn     DateTime?
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  service     Service      @relation(fields: [serviceId], references: [id])
+  bankAccount BankAccount? @relation(fields: [bankAccountId], references: [id])
+  assignee    User?        @relation("ContractAssignee", fields: [assigneeId], references: [id])
+  tasks       Task[]
+
+  @@unique([companyId, serviceId, bankAccountId])
+  @@index([active])
+}
+
+enum TaskStatus {
+  PENDENTE
+  EM_ANDAMENTO
+  AGUARDANDO_CLIENTE
+  CONCLUIDA
+  CANCELADA
+}
+
+enum TaskOrigin {
+  RECORRENTE
+  ORDEM_SERVICO
+  SOLICITACAO_CLIENTE
+  EVENTO
+}
+
+model Task {
+  id                String  @id @default(cuid())
+  companyId         String
+  serviceId         String
+  serviceContractId String?
+  bankAccountId     String?
+  departmentId      String
+
+  periodStart   DateTime
+  periodEnd     DateTime
+  dueDateLegal  DateTime
+  dueDateTarget DateTime
+
+  assigneeId String?
+  status     TaskStatus @default(PENDENTE)
+  origin     TaskOrigin @default(RECORRENTE)
+
+  completedAt   DateTime?
+  completedById String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  company     Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  service     Service             @relation(fields: [serviceId], references: [id])
+  contract    ServiceContract?    @relation(fields: [serviceContractId], references: [id])
+  bankAccount BankAccount?        @relation(fields: [bankAccountId], references: [id])
+  department  Department          @relation(fields: [departmentId], references: [id])
+  assignee    User?               @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  completedBy User?               @relation("TaskCompleter", fields: [completedById], references: [id])
+  checklist   TaskChecklistItem[]
+  history     TaskHistory[]
+  documents   Document[]
+
+  /// Idempotência do gerador: um contrato produz no máximo uma tarefa por
+  /// período. Sem isso, rodar o gerador duas vezes duplica obrigação.
+  @@unique([serviceContractId, periodStart])
+  @@index([status, dueDateLegal])
+  @@index([assigneeId, status])
+  @@index([companyId, status])
+  @@index([departmentId, status])
+}
+
+model TaskChecklistItem {
+  id          String    @id @default(cuid())
+  taskId      String
+  order       Int
+  text        String
+  required    Boolean   @default(false)
+  checkedAt   DateTime?
+  checkedById String?
+
+  task      Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  checkedBy User? @relation(fields: [checkedById], references: [id])
+
+  @@unique([taskId, order])
+}
+
+model TaskHistory {
+  id         String      @id @default(cuid())
+  taskId     String
+  fromStatus TaskStatus?
+  toStatus   TaskStatus
+  authorId   String
+  note       String?
+  createdAt  DateTime    @default(now())
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([taskId])
+}
+
+model GenerationRun {
+  id            String    @id @default(cuid())
+  startedAt     DateTime  @default(now())
+  finishedAt    DateTime?
+  horizonEnd    DateTime
+  tasksCreated  Int       @default(0)
+  tasksSkipped  Int       @default(0)
+  errors        String?
+  triggeredById String?
 }

@@ -1,3 +1,8 @@
+/** Company logos live in the same public bucket as user avatars. */
+export function getCompanyLogoUrl(logoPath: string | null): string | null {
+  return getAvatarUrl(logoPath);
+}
+
 export function getAvatarUrl(avatarPath: string | null): string | null {
   if (!avatarPath) {
     return null;
