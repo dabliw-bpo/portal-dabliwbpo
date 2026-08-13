@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/authz";
 import { createId } from "@/lib/id";
-import { formatDateOnly } from "@/lib/format";
+import { formatVacationPeriod } from "@/lib/format";
 import { documentPathForRole, isAdminPath } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
 import { saveFile } from "@/lib/storage";
@@ -26,7 +26,7 @@ export async function createVacationRequestAction(
 
   const parsed = createVacationRequestSchema.safeParse({
     startDate: formData.get("startDate"),
-    endDate: formData.get("endDate"),
+    option: formData.get("option"),
     notes: formData.get("notes") || undefined,
   });
 
@@ -38,7 +38,7 @@ export async function createVacationRequestAction(
     data: {
       collaboratorUserId: authSession.user.id,
       startDate: new Date(parsed.data.startDate),
-      endDate: new Date(parsed.data.endDate),
+      option: parsed.data.option,
       notes: parsed.data.notes,
     },
   });
@@ -107,7 +107,7 @@ export async function reviewVacationRequestAction(
   const documentId = createId();
   const buffer = Buffer.from(await file.arrayBuffer());
   const filePath = await saveFile(buffer, file.name, documentId);
-  const documentTitle = `Acordo de férias - ${formatDateOnly(vacationRequest.startDate)} a ${formatDateOnly(vacationRequest.endDate)}`;
+  const documentTitle = `Acordo de férias - ${formatVacationPeriod(vacationRequest)}`;
 
   await prisma.$transaction([
     prisma.document.create({

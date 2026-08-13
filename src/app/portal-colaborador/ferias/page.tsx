@@ -2,7 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { VacationStatusBadge } from "@/components/vacation/vacation-status-badge";
-import { formatDateOnly } from "@/lib/format";
+import { formatVacationPeriod } from "@/lib/format";
 import { buttonPrimary } from "@/components/ui/styles";
 
 export default async function PortalColaboradorFeriasPage() {
@@ -37,7 +37,7 @@ export default async function PortalColaboradorFeriasPage() {
             {requests.map((req) => (
               <tr key={req.id}>
                 <td className="px-4 py-2 text-slate-900">
-                  {formatDateOnly(req.startDate)} a {formatDateOnly(req.endDate)}
+                  {formatVacationPeriod(req)}
                 </td>
                 <td className="px-4 py-2">
                   <VacationStatusBadge status={req.status} />

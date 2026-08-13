@@ -214,7 +214,11 @@ model VacationRequest {
   id                 String         @id @default(cuid())
   collaboratorUserId String
   startDate          DateTime
-  endDate            DateTime
+  /// Nulo nas solicitações feitas pelo novo fluxo: o colaborador escolhe só o
+  /// primeiro dia e a contabilidade apura o restante.
+  endDate            DateTime?
+  /// Quantos dias, ou venda de dias. Nulo nos registros anteriores à opção.
+  option             String?
   notes              String?
   status             VacationStatus @default(REQUESTED)
   reviewedByUserId   String?

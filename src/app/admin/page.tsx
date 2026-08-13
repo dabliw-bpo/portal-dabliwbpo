@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { listPendingWork } from "@/lib/pending";
-import { formatDateOnly } from "@/lib/format";
+import { formatVacationPeriod } from "@/lib/format";
 
 function SectionCard({
   title,
@@ -59,7 +59,7 @@ export default async function AdminPage() {
                 <p className="font-medium text-slate-900">{request.collaborator.name}</p>
                 <p className="text-slate-600">
                   {request.collaborator.company?.name ?? "Sem empresa"} ·{" "}
-                  {formatDateOnly(request.startDate)} a {formatDateOnly(request.endDate)}
+                  {formatVacationPeriod(request)}
                 </p>
               </div>
               <Link

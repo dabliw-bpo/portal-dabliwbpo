@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { VacationStatusBadge } from "@/components/vacation/vacation-status-badge";
-import { formatDateOnly } from "@/lib/format";
+import { formatVacationPeriod } from "@/lib/format";
 import { CollaboratorHeader, CollaboratorTabs, loadCollaborator } from "../collaborator-tabs";
 
 export default async function ColaboradorFeriasPage({
@@ -46,7 +46,7 @@ export default async function ColaboradorFeriasPage({
             {requests.map((request) => (
               <tr key={request.id}>
                 <td className="px-4 py-2 text-slate-900">
-                  {formatDateOnly(request.startDate)} a {formatDateOnly(request.endDate)}
+                  {formatVacationPeriod(request)}
                 </td>
                 <td className="px-4 py-2 text-slate-600">
                   {request.createdAt.toLocaleDateString("pt-BR")}

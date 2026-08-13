@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { VacationStatusBadge } from "@/components/vacation/vacation-status-badge";
-import { formatDateOnly } from "@/lib/format";
+import { formatVacationPeriod } from "@/lib/format";
 
 export default async function AdminFeriasPage() {
   const requests = await prisma.vacationRequest.findMany({
@@ -30,7 +30,7 @@ export default async function AdminFeriasPage() {
               <tr key={req.id}>
                 <td className="px-4 py-2 text-slate-900">{req.collaborator.name}</td>
                 <td className="px-4 py-2 text-slate-600">
-                  {formatDateOnly(req.startDate)} a {formatDateOnly(req.endDate)}
+                  {formatVacationPeriod(req)}
                 </td>
                 <td className="px-4 py-2">
                   <VacationStatusBadge status={req.status} />

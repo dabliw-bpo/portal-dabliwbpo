@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { formatDateOnly } from "@/lib/format";
+import { formatVacationPeriod } from "@/lib/format";
 import { isAdminPath } from "@/lib/paths";
 import { ReviewForm } from "./review-form";
 
@@ -28,7 +28,7 @@ export default async function AdminRevisarFeriasPage({
         Revisar solicitação de {vacationRequest.collaborator.name}
       </h1>
       <p className="mt-1 text-sm text-slate-500">
-        {formatDateOnly(vacationRequest.startDate)} a {formatDateOnly(vacationRequest.endDate)}
+        {formatVacationPeriod(vacationRequest)}
       </p>
       {vacationRequest.notes && (
         <p className="mt-2 text-sm text-slate-600">Observações: {vacationRequest.notes}</p>
