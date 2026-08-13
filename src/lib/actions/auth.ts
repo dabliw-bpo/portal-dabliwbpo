@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { auth, signIn, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { MIN_PASSWORD_LENGTH, NEW_PASSWORD_TOO_SHORT } from "@/lib/validations/password";
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hora
 const RESET_REQUEST_COOLDOWN_MS = 60 * 1000; // 1 minuto
@@ -56,8 +57,8 @@ export async function changePasswordAction(
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
-  if (password.length < 10) {
-    return { error: "A nova senha deve ter ao menos 10 caracteres." };
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return { error: NEW_PASSWORD_TOO_SHORT };
   }
   if (password !== confirmPassword) {
     return { error: "As senhas não coincidem." };
@@ -138,8 +139,8 @@ export async function resetPasswordAction(
   if (!token) {
     return { error: "Link inválido." };
   }
-  if (password.length < 10) {
-    return { error: "A nova senha deve ter ao menos 10 caracteres." };
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return { error: NEW_PASSWORD_TOO_SHORT };
   }
   if (password !== confirmPassword) {
     return { error: "As senhas não coincidem." };

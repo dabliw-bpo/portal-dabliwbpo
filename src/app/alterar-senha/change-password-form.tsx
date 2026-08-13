@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { changePasswordAction, type ChangePasswordState } from "@/lib/actions/auth";
 import { buttonPrimary, inputBase } from "@/components/ui/styles";
+import { MIN_PASSWORD_LENGTH } from "@/lib/validations/password";
 
 const initialState: ChangePasswordState = {};
 
@@ -20,7 +21,7 @@ export function ChangePasswordForm() {
           name="password"
           type="password"
           required
-          minLength={10}
+          minLength={MIN_PASSWORD_LENGTH}
           autoComplete="new-password"
           className={inputBase}
         />
@@ -34,7 +35,7 @@ export function ChangePasswordForm() {
           name="confirmPassword"
           type="password"
           required
-          minLength={10}
+          minLength={MIN_PASSWORD_LENGTH}
           autoComplete="new-password"
           className={inputBase}
         />

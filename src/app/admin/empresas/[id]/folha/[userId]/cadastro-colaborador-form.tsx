@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from "react";
 import { updateUserAction, type UpdateUserState } from "@/lib/actions/users";
 import { buttonPrimary, buttonSecondary, inputToggleable } from "@/components/ui/styles";
+import { MIN_PASSWORD_LENGTH } from "@/lib/validations/password";
 
 const initialState: UpdateUserState = {};
 
@@ -168,7 +169,7 @@ export function CadastroColaboradorForm({
               id="password"
               name="password"
               type="password"
-              minLength={10}
+              minLength={MIN_PASSWORD_LENGTH}
               disabled={!editing}
               placeholder={editing ? "Deixe em branco para manter" : ""}
               className={inputToggleable}

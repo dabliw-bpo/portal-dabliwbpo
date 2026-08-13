@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { resetPasswordAction, type ResetPasswordState } from "@/lib/actions/auth";
 import { buttonPrimary, inputBase } from "@/components/ui/styles";
+import { MIN_PASSWORD_LENGTH } from "@/lib/validations/password";
 
 const initialState: ResetPasswordState = {};
 
@@ -22,7 +23,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           name="password"
           type="password"
           required
-          minLength={10}
+          minLength={MIN_PASSWORD_LENGTH}
           autoComplete="new-password"
           className={inputBase}
         />
@@ -36,7 +37,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           name="confirmPassword"
           type="password"
           required
-          minLength={10}
+          minLength={MIN_PASSWORD_LENGTH}
           autoComplete="new-password"
           className={inputBase}
         />

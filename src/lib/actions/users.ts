@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { createUserSchema, updateUserSchema } from "@/lib/validations/user";
+import { MIN_PASSWORD_LENGTH, NEW_PASSWORD_TOO_SHORT } from "@/lib/validations/password";
 
 function listPathForActor(role: string): string {
   return role === "COMPANY_HR" ? "/portal-rh/colaboradores" : "/admin/usuarios";
@@ -119,8 +120,8 @@ export async function updateUserAction(
   }
 
   const newPassword = String(formData.get("password") ?? "");
-  if (newPassword && newPassword.length < 10) {
-    return { error: "A nova senha deve ter ao menos 10 caracteres." };
+  if (newPassword && newPassword.length < MIN_PASSWORD_LENGTH) {
+    return { error: NEW_PASSWORD_TOO_SHORT };
   }
   const passwordHash = newPassword ? await bcrypt.hash(newPassword, 10) : undefined;
 

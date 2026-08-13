@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createUserAction, type CreateUserState } from "@/lib/actions/users";
 import { buttonPrimary, inputBase } from "@/components/ui/styles";
+import { MIN_PASSWORD_LENGTH } from "@/lib/validations/password";
 
 const initialState: CreateUserState = {};
 
@@ -34,7 +35,7 @@ export function NovoColaboradorForm() {
         <label htmlFor="password" className="text-sm font-medium text-slate-700">
           Senha inicial
         </label>
-        <input id="password" name="password" type="password" required minLength={10} className={inputBase} />
+        <input id="password" name="password" type="password" required minLength={MIN_PASSWORD_LENGTH} className={inputBase} />
       </div>
       {state.error && (
         <p className="text-sm text-red-600" role="alert">

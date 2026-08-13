@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import type { Company } from "@prisma/client";
 import { createUserAction, type CreateUserState } from "@/lib/actions/users";
 import { buttonPrimary, inputBase } from "@/components/ui/styles";
+import { MIN_PASSWORD_LENGTH } from "@/lib/validations/password";
 
 const initialState: CreateUserState = {};
 
@@ -43,7 +44,7 @@ export function NovoUsuarioForm({
         <label htmlFor="password" className="text-sm font-medium text-slate-700">
           Senha inicial
         </label>
-        <input id="password" name="password" type="password" required minLength={10} className={inputBase} />
+        <input id="password" name="password" type="password" required minLength={MIN_PASSWORD_LENGTH} className={inputBase} />
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="role" className="text-sm font-medium text-slate-700">
@@ -53,6 +54,8 @@ export function NovoUsuarioForm({
           {!lockedCompany && <option value="CLIENT">Cliente</option>}
           <option value="COLLABORATOR">Colaborador</option>
           <option value="COMPANY_HR">RH da empresa</option>
+          {!lockedCompany && <option value="OPERADOR">Operador</option>}
+          {!lockedCompany && <option value="GESTOR">Gestor de departamento</option>}
           {!lockedCompany && <option value="ADMIN">Admin</option>}
         </select>
       </div>

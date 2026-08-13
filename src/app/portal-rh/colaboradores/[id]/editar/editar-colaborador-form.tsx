@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { updateUserAction, type UpdateUserState } from "@/lib/actions/users";
 import { buttonPrimary, inputBase } from "@/components/ui/styles";
+import { MIN_PASSWORD_LENGTH } from "@/lib/validations/password";
 
 const initialState: UpdateUserState = {};
 
@@ -53,7 +54,7 @@ export function EditarColaboradorForm({
         <label htmlFor="password" className="text-sm font-medium text-slate-700">
           Nova senha (opcional)
         </label>
-        <input id="password" name="password" type="password" minLength={10} className={inputBase} />
+        <input id="password" name="password" type="password" minLength={MIN_PASSWORD_LENGTH} className={inputBase} />
         <p className="text-xs text-slate-500">Deixe em branco para manter a senha atual.</p>
       </div>
       <label className="flex items-center gap-2 text-sm text-slate-700">

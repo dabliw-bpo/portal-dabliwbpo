@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import type { Company, Role } from "@prisma/client";
 import { updateUserAction, type UpdateUserState } from "@/lib/actions/users";
 import { buttonPrimary, inputBase } from "@/components/ui/styles";
+import { MIN_PASSWORD_LENGTH } from "@/lib/validations/password";
 
 const initialState: UpdateUserState = {};
 
@@ -65,7 +66,7 @@ export function EditarUsuarioForm({
         <label htmlFor="password" className="text-sm font-medium text-slate-700">
           Nova senha (opcional)
         </label>
-        <input id="password" name="password" type="password" minLength={10} className={inputBase} />
+        <input id="password" name="password" type="password" minLength={MIN_PASSWORD_LENGTH} className={inputBase} />
         <p className="text-xs text-slate-500">Deixe em branco para manter a senha atual.</p>
       </div>
       <div className="flex flex-col gap-1">
@@ -76,6 +77,8 @@ export function EditarUsuarioForm({
           <option value="CLIENT">Cliente</option>
           <option value="COLLABORATOR">Colaborador</option>
           <option value="COMPANY_HR">RH da empresa</option>
+          <option value="OPERADOR">Operador</option>
+          <option value="GESTOR">Gestor de departamento</option>
           <option value="ADMIN">Admin</option>
         </select>
       </div>
