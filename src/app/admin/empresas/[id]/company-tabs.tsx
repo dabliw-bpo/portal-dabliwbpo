@@ -6,7 +6,12 @@ export async function CompanyTabs({
   active,
 }: {
   companyId: string;
-  active: "cadastro" | "bancos" | "pessoas" | "integracoes";
+  /**
+   * "servicos" continua aceito mesmo sem aba correspondente: a página existe e
+   * ainda passa esse valor, mas o processo será revisto antes de voltar à
+   * navegação.
+   */
+  active: "cadastro" | "bancos" | "servicos" | "pessoas" | "integracoes";
 }) {
   // Vacation reviews and unsigned documents are both reached through Folha,
   // so the badge lives there.
