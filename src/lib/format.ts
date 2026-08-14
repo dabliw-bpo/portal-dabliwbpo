@@ -19,8 +19,29 @@ export function gmtOffsetLabel(date: Date = new Date()): string {
   );
 }
 
+/** Centavos inteiros para "R$ 1.234,56" — dinheiro nunca vira float aqui. */
+export function formatCents(cents: number): string {
+  return (cents / 100).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+  });
+}
+
+/** O mesmo valor sem o símbolo, para preencher o campo de edição. */
+export function centsToInput(cents: number): string {
+  return (cents / 100).toFixed(2).replace(".", ",");
+}
+
 export function formatDateOnly(date: Date): string {
   return date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+}
+
+/** Centavos inteiros -> `R$ 1.234,56`, para valores monetários exibidos ou impressos. */
+export function formatCurrencyBRL(cents: number): string {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+    cents / 100
+  );
 }
 
 /**
