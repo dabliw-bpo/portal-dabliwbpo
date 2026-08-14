@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCompanyLogoUrl } from "@/lib/avatar";
 import { APP_TIME_ZONE, formatCents } from "@/lib/format";
+import { centsToWords } from "@/lib/valor-extenso";
 import { loadCollaborator } from "../../../collaborator-tabs";
 import { PrintButton } from "./print-button";
 
@@ -89,8 +90,9 @@ export default async function ImprimirReciboPage({
         <p className="mt-8 text-[15px] leading-8 text-slate-900">
           Recebi de <strong>{company.name}</strong>
           {company.cnpj && <>, inscrita no CNPJ sob o nº {company.cnpj}</>}, a importância de{" "}
-          <strong>{formatCents(receipt.amountCents)}</strong>, referente a{" "}
-          <strong>{receipt.description}</strong>, dando plena e geral quitação pelo valor recebido.
+          <strong>{formatCents(receipt.amountCents)}</strong> ({centsToWords(receipt.amountCents)}),
+          referente a <strong>{receipt.description}</strong>, dando plena e geral quitação pelo
+          valor recebido.
         </p>
 
         <dl className="mt-8 grid grid-cols-2 gap-x-8 gap-y-3 border-y border-slate-200 py-5 text-sm">
