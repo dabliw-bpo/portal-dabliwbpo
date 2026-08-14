@@ -25,7 +25,11 @@ export default async function EmpresaBancosPage({
 
       <CompanyTabs companyId={id} active="bancos" />
 
-      <BankAccountsPanel companyId={id} accounts={company.bankAccounts} />
+      <BankAccountsPanel
+        companyId={id}
+        companyName={company.name}
+        accounts={company.bankAccounts}
+      />
     </div>
   );
 }

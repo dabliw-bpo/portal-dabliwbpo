@@ -55,35 +55,41 @@ function Field({
   placeholder?: string;
   className: string;
 }) {
-  // Copiar só faz sentido no modo leitura: em edição o campo é para digitar,
-  // e um valor em branco não tem o que copiar.
-  const canCopy = disabled && value.trim().length > 0;
-
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
       <label htmlFor={id} className="text-sm font-medium text-slate-700">
         {label}
       </label>
-      <div className="relative">
-        <input
-          id={id}
-          name={name}
-          defaultValue={value}
-          disabled={disabled}
-          required={required}
-          placeholder={placeholder}
-          className={`${inputToggleable} w-full ${canCopy ? "pr-10" : ""}`}
-        />
-        {canCopy && (
-          <CopyButton
-            value={value}
-            label={label.toLowerCase()}
-            className="absolute right-1 top-1/2 -translate-y-1/2"
-          />
-        )}
-      </div>
+      <input
+        id={id}
+        name={name}
+        defaultValue={value}
+        disabled={disabled}
+        required={required}
+        placeholder={placeholder}
+        className={inputToggleable}
+      />
     </div>
   );
+}
+
+/**
+ * O bloco que se cola numa conversa para pedir um pagamento. Sai com a razão
+ * social no topo, e campos vazios não viram linhas em branco.
+ */
+function accountAsText(companyName: string, account: BankAccountRow): string {
+  const bank = account.bankCode ? `${account.bankCode} - ${account.bankName}` : account.bankName;
+
+  return [
+    companyName,
+    `Banco: ${bank}`,
+    `Agência: ${account.agency}`,
+    `Conta: ${account.accountNumber}`,
+    account.cnpj ? `CNPJ: ${account.cnpj}` : null,
+    account.pixKey ? `PIX: ${account.pixKey}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 /** The six bank-account fields, shared by the "add" form and each account card. */
@@ -199,7 +205,13 @@ function NewBankAccountForm({ companyId, onDone }: { companyId: string; onDone: 
   );
 }
 
-function BankAccountCard({ account }: { account: BankAccountRow }) {
+function BankAccountCard({
+  account,
+  companyName,
+}: {
+  account: BankAccountRow;
+  companyName: string;
+}) {
   const [state, formAction, pending] = useActionState(
     updateBankAccountAction.bind(null, account.id),
     initialState
@@ -259,13 +271,20 @@ function BankAccountCard({ account }: { account: BankAccountRow }) {
                 </button>
               </>
             ) : (
-              <button
-                type="button"
-                onClick={() => setEditing(true)}
-                className={buttonSecondary}
-              >
-                Editar
-              </button>
+              <>
+                <CopyButton
+                  value={accountAsText(companyName, account)}
+                  label="os dados desta conta"
+                  text="Copiar dados"
+                />
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  className={buttonSecondary}
+                >
+                  Editar
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -316,9 +335,12 @@ function BankAccountCard({ account }: { account: BankAccountRow }) {
 
 export function BankAccountsPanel({
   companyId,
+  companyName,
   accounts,
 }: {
   companyId: string;
+  /** Razão social, copiada junto com os dados da conta. */
+  companyName: string;
   accounts: BankAccountRow[];
 }) {
   const [adding, setAdding] = useState(false);
@@ -341,7 +363,7 @@ export function BankAccountsPanel({
       {adding && <NewBankAccountForm companyId={companyId} onDone={() => setAdding(false)} />}
 
       {accounts.map((account) => (
-        <BankAccountCard key={account.id} account={account} />
+        <BankAccountCard key={account.id} account={account} companyName={companyName} />
       ))}
     </div>
   );
