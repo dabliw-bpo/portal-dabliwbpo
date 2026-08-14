@@ -14,6 +14,7 @@ import {
   inputToggleable,
 } from "@/components/ui/styles";
 import { CopyButton } from "@/components/ui/copy-button";
+import { BankAccountImageButtons } from "./bank-account-image-buttons";
 
 export type BankAccountRow = {
   id: string;
@@ -207,9 +208,11 @@ function NewBankAccountForm({ companyId, onDone }: { companyId: string; onDone: 
 
 function BankAccountCard({
   account,
+  companyId,
   companyName,
 }: {
   account: BankAccountRow;
+  companyId: string;
   companyName: string;
 }) {
   const [state, formAction, pending] = useActionState(
@@ -301,7 +304,11 @@ function BankAccountCard({
       </form>
 
       {!editing && (
-        <div className="mt-4 flex justify-end border-t border-slate-100 pt-3">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+          <BankAccountImageButtons
+            imageUrl={`/api/empresas/${companyId}/contas/${account.id}/imagem`}
+            fileName={`dados-bancarios-${account.bankName.toLowerCase().replace(/\s+/g, "-")}.png`}
+          />
           {confirmingDelete ? (
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm text-slate-700">Excluir esta conta bancária?</span>
@@ -363,7 +370,12 @@ export function BankAccountsPanel({
       {adding && <NewBankAccountForm companyId={companyId} onDone={() => setAdding(false)} />}
 
       {accounts.map((account) => (
-        <BankAccountCard key={account.id} account={account} companyName={companyName} />
+        <BankAccountCard
+          key={account.id}
+          account={account}
+          companyId={companyId}
+          companyName={companyName}
+        />
       ))}
     </div>
   );

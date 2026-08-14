@@ -42,6 +42,7 @@ export default async function EmpresaCadastroPage({
     zipCode: company.zipCode ?? "",
     email: company.email ?? "",
     phone: company.phone ?? "",
+    brandColor: company.brandColor ?? "",
     partnerName: company.partnerName ?? "",
     partnerEmail: company.partnerEmail ?? "",
     federalEntity: company.federalEntity ?? "",

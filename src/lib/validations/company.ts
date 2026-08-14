@@ -57,6 +57,10 @@ export const companyRegistrationSchema = z.object({
   ),
   phone: optionalString,
 
+  brandColor: z.preprocess(
+    (value) => (value === null || value === "" ? undefined : value),
+    z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor no formato #RRGGBB.").optional()
+  ),
   partnerName: optionalString,
   partnerEmail: z.preprocess(
     (value) => (value === null || value === "" ? undefined : value),

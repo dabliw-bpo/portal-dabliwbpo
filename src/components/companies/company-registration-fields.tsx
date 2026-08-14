@@ -20,6 +20,7 @@ export type CompanyRegistrationValues = {
   zipCode: string;
   email: string;
   phone: string;
+  brandColor: string;
   partnerName: string;
   partnerEmail: string;
   federalEntity: string;
@@ -49,6 +50,7 @@ export const emptyRegistrationValues: CompanyRegistrationValues = {
   zipCode: "",
   email: "",
   phone: "",
+  brandColor: "",
   partnerName: "",
   partnerEmail: "",
   federalEntity: "",
@@ -320,6 +322,24 @@ export function CompanyRegistrationFields({
             disabled={disabled}
             className={fieldClass}
           />
+        </Field>
+      </Section>
+
+      <Section title="Identidade visual">
+        <Field name="brandColor" label="Cor da marca" span={3}>
+          <div className="flex items-center gap-2">
+            <input
+              id="brandColor"
+              name="brandColor"
+              type="color"
+              defaultValue={values.brandColor || "#0f172a"}
+              disabled={disabled}
+              className="h-9 w-14 shrink-0 cursor-pointer rounded-md border border-slate-300 bg-white p-1 disabled:cursor-default"
+            />
+            <span className="text-xs text-slate-500">
+              Usada na imagem dos dados bancários, junto com a logo.
+            </span>
+          </div>
         </Field>
       </Section>
 

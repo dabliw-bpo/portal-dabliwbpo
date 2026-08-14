@@ -78,6 +78,9 @@ model Company {
   partnerName  String?
   partnerEmail String?
 
+  /// Cor da marca (#RRGGBB), usada na imagem dos dados bancários.
+  brandColor String?
+
   federalEntity            String?
   registrationStatus       String?
   registrationStatusDate   DateTime?
