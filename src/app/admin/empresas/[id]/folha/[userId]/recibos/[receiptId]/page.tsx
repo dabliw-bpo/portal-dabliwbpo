@@ -57,8 +57,6 @@ export default async function ReciboPage({
           id: receipt.id,
           description: receipt.description,
           amountInput: centsToInput(receipt.amountCents),
-          companySignatureImage: receipt.companySignatureImage,
-          collaboratorSignatureImage: receipt.collaboratorSignatureImage,
           documentUrl: receipt.document ? `/admin/documentos/${receipt.document.id}` : null,
           collaboratorEmail: user.email,
           signedAt: receipt.document?.signature?.signedAt ?? null,

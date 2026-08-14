@@ -20,7 +20,6 @@ export type ReceiptPdfInput = {
   description: string;
   amountCents: number;
   issuedAt: Date;
-  companySignatureImage: string | null;
 };
 
 function wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
@@ -159,33 +158,8 @@ export async function buildReceiptPdf(input: ReceiptPdfInput): Promise<Buffer> {
   }).format(input.issuedAt);
   page.drawText(`${place}${issued}.`, { x: MARGIN, y, size: 10.5, font: regular, color: INK });
 
-  // Assinatura da empresa; a do colaborador é colhida no portal e fica
-  // registrada no relatório de auditoria do documento.
-  y -= 96;
-  if (input.companySignatureImage) {
-    try {
-      const base64 = input.companySignatureImage.split(",")[1] ?? "";
-      const image = await pdf.embedPng(Buffer.from(base64, "base64"));
-      const scaled = image.scaleToFit(180, 52);
-      page.drawImage(image, { x: MARGIN, y: y + 6, width: scaled.width, height: scaled.height });
-    } catch {
-      // segue sem o traço
-    }
-  }
-
-  page.drawLine({
-    start: { x: MARGIN, y },
-    end: { x: MARGIN + 220, y },
-    thickness: 0.8,
-    color: INK,
-  });
-  y -= 14;
-  page.drawText(input.companyName, { x: MARGIN, y, size: 10, font: bold, color: INK });
-  y -= 13;
-  page.drawText("Empresa pagadora", { x: MARGIN, y, size: 9, font: regular, color: MUTED });
-
   page.drawText(
-    "A assinatura do recebedor é colhida eletronicamente no portal e consta do relatório de auditoria.",
+    "Assinado eletronicamente pelo recebedor no portal. A trilha de auditoria acompanha este recibo.",
     { x: MARGIN, y: MARGIN, size: 8, font: regular, color: MUTED }
   );
 

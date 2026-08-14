@@ -6,7 +6,6 @@ import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { receiptSchema } from "@/lib/validations/receipt";
-import { parseSignatureImage } from "@/lib/validations/signature";
 import { buildReceiptPdf } from "@/lib/receipt-pdf";
 import { readPublicAsset, saveFile } from "@/lib/storage";
 import { sendDocumentUploadedEmail } from "@/lib/email";
@@ -84,8 +83,8 @@ export async function updateReceiptAction(
  * Congela o recibo num PDF, cria o documento correspondente e manda por e-mail
  * para o colaborador assinar. A partir daqui ele segue exatamente o caminho do
  * holerite: assinatura manuscrita no portal, relatório de auditoria e aviso ao
- * sócio. Valor e descrição deixam de ser editáveis, porque é este arquivo que
- * foi assinado.
+ * sócio — é ele quem assina, como manda um recibo. Valor e descrição deixam de
+ * ser editáveis, porque é este arquivo que foi assinado.
  */
 export async function sendReceiptForSignatureAction(
   _prevState: ReceiptFormState,
@@ -106,10 +105,6 @@ export async function sendReceiptForSignatureAction(
   if (receipt.documentId) {
     return { error: "Este recibo já foi enviado para assinatura." };
   }
-  if (!receipt.companySignatureImage) {
-    return { error: "Assine pela empresa antes de enviar para o colaborador." };
-  }
-
   let companyLogo: { bytes: Uint8Array; type: "png" | "jpg" } | null = null;
   if (receipt.company.logoPath) {
     try {
@@ -133,7 +128,6 @@ export async function sendReceiptForSignatureAction(
     description: receipt.description,
     amountCents: receipt.amountCents,
     issuedAt: receipt.issuedAt,
-    companySignatureImage: receipt.companySignatureImage,
   });
 
   const documentId = createId();
@@ -177,33 +171,4 @@ export async function sendReceiptForSignatureAction(
     : {
         error: `Recibo gerado, mas o e-mail falhou: ${sent.error}. Use o botão de reenviar no documento.`,
       };
-}
-
-export async function saveReceiptSignaturesAction(
-  receiptId: string,
-  _prevState: ReceiptFormState,
-  formData: FormData
-): Promise<ReceiptFormState> {
-  const session = await auth();
-  requireRole(session, ["ADMIN"]);
-
-  const companySignature = parseSignatureImage(formData.get("companySignatureImage"));
-  const collaboratorSignature = parseSignatureImage(formData.get("collaboratorSignatureImage"));
-
-  if (!companySignature && !collaboratorSignature) {
-    return { error: "Colete ao menos uma assinatura antes de salvar." };
-  }
-
-  const receipt = await prisma.paymentReceipt.update({
-    where: { id: receiptId },
-    data: {
-      ...(companySignature ? { companySignatureImage: companySignature } : {}),
-      ...(collaboratorSignature ? { collaboratorSignatureImage: collaboratorSignature } : {}),
-    },
-  });
-
-  revalidatePath(
-    `/admin/empresas/${receipt.companyId}/folha/${receipt.collaboratorUserId}/recibos/${receiptId}`
-  );
-  return { success: "Assinaturas salvas." };
 }
