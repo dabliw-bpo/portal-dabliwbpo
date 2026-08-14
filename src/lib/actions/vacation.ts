@@ -149,3 +149,47 @@ export async function reviewVacationRequestAction(
   revalidatePath("/portal-colaborador/ferias");
   redirect(listPath);
 }
+
+export type DeleteVacationState = {
+  error?: string;
+};
+
+/**
+ * Exclui uma solicitação de férias. Depois de aprovada há um acordo assinado
+ * atrás dela, e esse documento é a prova do período concedido.
+ */
+export async function deleteVacationRequestAction(
+  _prevState: DeleteVacationState,
+  formData: FormData
+): Promise<DeleteVacationState> {
+  const session = await auth();
+  requireRole(session, ["ADMIN"]);
+
+  const requestId = String(formData.get("requestId") ?? "");
+  const request = await prisma.vacationRequest.findUnique({
+    where: { id: requestId },
+    include: { document: { include: { signature: { select: { id: true } } } } },
+  });
+
+  if (!request) {
+    return { error: "Solicitação não encontrada." };
+  }
+  if (request.document?.signature) {
+    return {
+      error: "O acordo de férias já foi assinado e não pode ser excluído.",
+    };
+  }
+
+  const listPath = safeAdminRedirect(formData, "/admin/ferias");
+
+  await prisma.$transaction(async (tx) => {
+    await tx.vacationRequest.delete({ where: { id: requestId } });
+    if (request.documentId) {
+      await tx.document.delete({ where: { id: request.documentId } });
+    }
+  });
+
+  revalidatePath(listPath);
+  revalidatePath("/portal-colaborador/ferias");
+  redirect(listPath);
+}

@@ -4,6 +4,8 @@ import { DocumentViewer } from "@/components/documents/document-viewer";
 import { DocumentStatusBadge } from "@/components/documents/document-status-badge";
 import { SignatureProof } from "@/components/documents/signature-proof";
 import { ResendEmailButton } from "@/components/documents/resend-email-button";
+import { DeleteButton } from "@/components/ui/delete-button";
+import { deleteDocumentAction } from "@/lib/actions/documents";
 
 export default async function AdminDocumentoPage({
   params,
@@ -53,6 +55,14 @@ export default async function AdminDocumentoPage({
           Ainda não assinado pelo destinatário.
         </div>
       )}
+
+      <div className="mt-6 flex justify-end border-t border-slate-100 pt-4">
+        <DeleteButton
+          action={deleteDocumentAction}
+          hidden={{ documentId: document.id, redirectTo: "/admin/documentos" }}
+          question="Excluir este documento? O arquivo sai junto."
+        />
+      </div>
     </div>
   );
 }

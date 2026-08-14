@@ -7,7 +7,7 @@ import { requireRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { receiptSchema } from "@/lib/validations/receipt";
 import { buildReceiptPdf } from "@/lib/receipt-pdf";
-import { readPublicAsset, saveFile } from "@/lib/storage";
+import { deleteStoredFile, readPublicAsset, saveFile } from "@/lib/storage";
 import { sendDocumentUploadedEmail } from "@/lib/email";
 import { documentPathForRole } from "@/lib/paths";
 import { createId } from "@/lib/id";
@@ -171,4 +171,53 @@ export async function sendReceiptForSignatureAction(
     : {
         error: `Recibo gerado, mas o e-mail falhou: ${sent.error}. Use o botão de reenviar no documento.`,
       };
+}
+
+export type DeleteReceiptState = {
+  error?: string;
+};
+
+/** Exclui um recibo. Assinado, não sai: é a quitação do pagamento. */
+export async function deleteReceiptAction(
+  _prevState: DeleteReceiptState,
+  formData: FormData
+): Promise<DeleteReceiptState> {
+  const session = await auth();
+  requireRole(session, ["ADMIN"]);
+
+  const receiptId = String(formData.get("receiptId") ?? "");
+  const receipt = await prisma.paymentReceipt.findUnique({
+    where: { id: receiptId },
+    include: { document: { include: { signature: { select: { id: true } } } } },
+  });
+
+  if (!receipt) {
+    return { error: "Recibo não encontrado." };
+  }
+  if (receipt.document?.signature) {
+    return {
+      error: "Este recibo já foi assinado pelo colaborador e não pode ser excluído.",
+    };
+  }
+
+  const listPath = `/admin/empresas/${receipt.companyId}/folha/${receipt.collaboratorUserId}/recibos`;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.paymentReceipt.delete({ where: { id: receiptId } });
+    // O PDF enviado só existe por causa do recibo; sem ele, não tem dono.
+    if (receipt.documentId) {
+      await tx.document.delete({ where: { id: receipt.documentId } });
+    }
+  });
+
+  if (receipt.document) {
+    try {
+      await deleteStoredFile(receipt.document.filePath);
+    } catch (error) {
+      console.error("[recibo] Registro excluído, arquivo permaneceu:", error);
+    }
+  }
+
+  revalidatePath(listPath);
+  redirect(listPath);
 }

@@ -5,6 +5,8 @@ import { centsToInput, formatCents } from "@/lib/format";
 import { buttonSecondary } from "@/components/ui/styles";
 import { CollaboratorTabs, loadCollaborator } from "../../collaborator-tabs";
 import { ReciboEditor } from "./recibo-editor";
+import { DeleteButton } from "@/components/ui/delete-button";
+import { deleteReceiptAction } from "@/lib/actions/receipts";
 
 export default async function ReciboPage({
   params,
@@ -62,6 +64,14 @@ export default async function ReciboPage({
           signedAt: receipt.document?.signature?.signedAt ?? null,
         }}
       />
+
+      <div className="mt-6 flex justify-end border-t border-slate-100 pt-4">
+        <DeleteButton
+          action={deleteReceiptAction}
+          hidden={{ receiptId: receipt.id }}
+          question="Excluir este recibo?"
+        />
+      </div>
     </div>
   );
 }

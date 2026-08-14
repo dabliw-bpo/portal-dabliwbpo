@@ -9,7 +9,7 @@ import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/authz";
 import { documentPathForRole } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
-import { readPublicAsset, readStoredFile, saveFile } from "@/lib/storage";
+import { deleteStoredFile, readPublicAsset, readStoredFile, saveFile } from "@/lib/storage";
 import { sendDocumentUploadedEmail, sendSignatureReceiptEmail } from "@/lib/email";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES, uploadDocumentSchema } from "@/lib/validations/document";
 import { parseSignatureImage } from "@/lib/validations/signature";
@@ -405,4 +405,62 @@ export async function signDocumentAction(
   revalidatePath(`/admin/documentos/${document.id}`);
   revalidatePath(`/portal-rh/documentos/${document.id}`);
   return {};
+}
+
+export type DeleteDocumentState = {
+  error?: string;
+};
+
+/**
+ * Exclui um documento ainda não assinado. Um documento assinado é a prova de
+ * que a pessoa recebeu o que recebeu; apagá-lo tira da empresa a defesa numa
+ * reclamatória, então a assinatura tranca a exclusão.
+ */
+export async function deleteDocumentAction(
+  _prevState: DeleteDocumentState,
+  formData: FormData
+): Promise<DeleteDocumentState> {
+  const session = await auth();
+  requireRole(session, ["ADMIN"]);
+
+  const documentId = String(formData.get("documentId") ?? "");
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+    include: { signature: { select: { id: true } }, paymentReceipt: { select: { id: true } } },
+  });
+
+  if (!document) {
+    return { error: "Documento não encontrado." };
+  }
+  if (document.signature) {
+    return {
+      error:
+        "Este documento já foi assinado e não pode ser excluído — ele é a prova do que foi entregue.",
+    };
+  }
+
+  const redirectTo = String(formData.get("redirectTo") ?? "/admin/documentos");
+
+  await prisma.$transaction(async (tx) => {
+    // O recibo volta a ser rascunho: o documento que ele gerou deixou de existir.
+    if (document.paymentReceipt) {
+      await tx.paymentReceipt.update({
+        where: { id: document.paymentReceipt.id },
+        data: { documentId: null },
+      });
+    }
+    await tx.document.delete({ where: { id: documentId } });
+  });
+
+  // O arquivo sai depois do registro: um storage indisponível não deve impedir
+  // a exclusão, e um órfão no bucket é menos grave que um registro fantasma.
+  try {
+    await deleteStoredFile(document.filePath);
+    if (document.auditFilePath) await deleteStoredFile(document.auditFilePath);
+  } catch (error) {
+    console.error("[documento] Registro excluído, arquivo permaneceu:", error);
+  }
+
+  revalidatePath(redirectTo);
+  redirect(redirectTo);
 }

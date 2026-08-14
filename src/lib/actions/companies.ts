@@ -302,3 +302,77 @@ export async function deleteBankAccountAction(accountId: string): Promise<void> 
 
   revalidatePath(`/admin/empresas/${account.companyId}/bancos`);
 }
+
+export type DeleteCompanyState = {
+  error?: string;
+};
+
+/**
+ * Exclui a empresa com tudo que pende dela. Contas, contratos, tarefas e
+ * recibos já caem por cascata; pessoas e seus documentos não, e por isso vão
+ * numa ordem explícita — tudo dentro de uma transação, para uma falha no meio
+ * não deixar a empresa sem metade do histórico.
+ *
+ * O nome digitado precisa bater com a razão social: é uma exclusão que leva
+ * anos de holerites junto e não deve caber num clique distraído.
+ */
+export async function deleteCompanyAction(
+  _prevState: DeleteCompanyState,
+  formData: FormData
+): Promise<DeleteCompanyState> {
+  const session = await auth();
+  requireRole(session, ["ADMIN"]);
+
+  const companyId = String(formData.get("companyId") ?? "");
+  const typed = String(formData.get("confirmName") ?? "").trim();
+
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    include: { users: { select: { id: true } } },
+  });
+  if (!company) {
+    return { error: "Empresa não encontrada." };
+  }
+  if (typed !== company.name) {
+    return { error: "O nome digitado não confere com a razão social." };
+  }
+
+  const userIds = company.users.map((user) => user.id);
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      if (userIds.length > 0) {
+        const documents = await tx.document.findMany({
+          where: { OR: [{ ownerUserId: { in: userIds } }, { uploadedByUserId: { in: userIds } }] },
+          select: { id: true },
+        });
+        const documentIds = documents.map((doc) => doc.id);
+
+        await tx.signature.deleteMany({ where: { documentId: { in: documentIds } } });
+        await tx.vacationRequest.deleteMany({
+          where: {
+            OR: [
+              { collaboratorUserId: { in: userIds } },
+              { reviewedByUserId: { in: userIds } },
+            ],
+          },
+        });
+        await tx.paymentReceipt.deleteMany({ where: { collaboratorUserId: { in: userIds } } });
+        await tx.document.deleteMany({ where: { id: { in: documentIds } } });
+        await tx.passwordResetToken.deleteMany({ where: { userId: { in: userIds } } });
+        await tx.user.deleteMany({ where: { id: { in: userIds } } });
+      }
+
+      await tx.company.delete({ where: { id: companyId } });
+    });
+  } catch (error) {
+    console.error("[empresa] Falha ao excluir:", error);
+    return {
+      error:
+        "Não foi possível excluir: há registros vinculados fora do alcance da exclusão. Nada foi apagado.",
+    };
+  }
+
+  revalidatePath("/admin/empresas");
+  redirect("/admin/empresas");
+}

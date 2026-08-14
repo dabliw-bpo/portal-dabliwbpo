@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { CompanyRegistrationValues } from "@/components/companies/company-registration-fields";
 import { CompanyLogoForm } from "@/components/companies/company-logo-form";
+import { DeleteCompanyForm } from "@/components/companies/delete-company-form";
 import { getCompanyLogoUrl } from "@/lib/avatar";
 import { CompanyTabs } from "../company-tabs";
 import { CadastroForm } from "./cadastro-form";
@@ -17,7 +18,16 @@ export default async function EmpresaCadastroPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const company = await prisma.company.findUnique({ where: { id } });
+  const company = await prisma.company.findUnique({
+    where: { id },
+    include: {
+      _count: { select: { users: true, bankAccounts: true, paymentReceipts: true } },
+    },
+  });
+
+  const documentCount = company
+    ? await prisma.document.count({ where: { owner: { companyId: id } } })
+    : 0;
 
   if (!company) {
     notFound();
@@ -67,6 +77,17 @@ export default async function EmpresaCadastroPage({
       />
 
       <CadastroForm companyId={id} values={values} />
+
+      <DeleteCompanyForm
+        companyId={id}
+        companyName={company.name}
+        counts={{
+          people: company._count.users,
+          documents: documentCount,
+          receipts: company._count.paymentReceipts,
+          bankAccounts: company._count.bankAccounts,
+        }}
+      />
     </div>
   );
 }
