@@ -207,6 +207,7 @@ model Document {
   uploadedBy      User             @relation("DocumentUploader", fields: [uploadedByUserId], references: [id])
   signature       Signature?
   vacationRequest VacationRequest?
+  paymentReceipt  PaymentReceipt?
   task            Task?            @relation(fields: [taskId], references: [id])
 
   @@index([ownerUserId])
@@ -264,14 +265,21 @@ model PaymentReceipt {
   description                String
   amountCents                Int
   issuedAt                   DateTime @default(now())
-  /// Assinaturas manuscritas capturadas no ato, como data URL PNG.
+  /// Assinatura da empresa, coletada pelo admin antes do envio.
   companySignatureImage      String?
+  /// Mantida para os recibos assinados presencialmente, antes do envio ao
+  /// portal. Nos novos, a assinatura do colaborador vive no `Signature` do
+  /// documento gerado, com a mesma trilha de auditoria do holerite.
   collaboratorSignatureImage String?
+  /// Documento gerado ao enviar para assinatura; nulo enquanto o recibo é
+  /// rascunho e ainda pode ter valor e descrição editados.
+  documentId                 String?  @unique
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
 
-  company      Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  collaborator User    @relation("ReceiptCollaborator", fields: [collaboratorUserId], references: [id])
+  company      Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  collaborator User      @relation("ReceiptCollaborator", fields: [collaboratorUserId], references: [id])
+  document     Document? @relation(fields: [documentId], references: [id])
 
   @@index([companyId])
   @@index([collaboratorUserId])

@@ -16,6 +16,7 @@ export default async function ReciboPage({
 
   const receipt = await prisma.paymentReceipt.findFirst({
     where: { id: receiptId, companyId: id, collaboratorUserId: userId },
+    include: { document: { include: { signature: { select: { signedAt: true } } } } },
   });
 
   if (!receipt) {
@@ -58,6 +59,9 @@ export default async function ReciboPage({
           amountInput: centsToInput(receipt.amountCents),
           companySignatureImage: receipt.companySignatureImage,
           collaboratorSignatureImage: receipt.collaboratorSignatureImage,
+          documentUrl: receipt.document ? `/admin/documentos/${receipt.document.id}` : null,
+          collaboratorEmail: user.email,
+          signedAt: receipt.document?.signature?.signedAt ?? null,
         }}
       />
     </div>
