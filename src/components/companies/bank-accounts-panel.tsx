@@ -13,6 +13,7 @@ import {
   buttonSecondary,
   inputToggleable,
 } from "@/components/ui/styles";
+import { CopyButton } from "@/components/ui/copy-button";
 
 export type BankAccountRow = {
   id: string;
@@ -54,20 +55,33 @@ function Field({
   placeholder?: string;
   className: string;
 }) {
+  // Copiar só faz sentido no modo leitura: em edição o campo é para digitar,
+  // e um valor em branco não tem o que copiar.
+  const canCopy = disabled && value.trim().length > 0;
+
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
       <label htmlFor={id} className="text-sm font-medium text-slate-700">
         {label}
       </label>
-      <input
-        id={id}
-        name={name}
-        defaultValue={value}
-        disabled={disabled}
-        required={required}
-        placeholder={placeholder}
-        className={inputToggleable}
-      />
+      <div className="relative">
+        <input
+          id={id}
+          name={name}
+          defaultValue={value}
+          disabled={disabled}
+          required={required}
+          placeholder={placeholder}
+          className={`${inputToggleable} w-full ${canCopy ? "pr-10" : ""}`}
+        />
+        {canCopy && (
+          <CopyButton
+            value={value}
+            label={label.toLowerCase()}
+            className="absolute right-1 top-1/2 -translate-y-1/2"
+          />
+        )}
+      </div>
     </div>
   );
 }
