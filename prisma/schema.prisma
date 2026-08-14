@@ -93,6 +93,7 @@ model Company {
   contaAzulIntegration ContaAzulIntegration?
   serviceContracts     ServiceContract[]
   tasks                Task[]
+  paymentReceipts      PaymentReceipt[]
 }
 
 model BankAccount {
@@ -127,24 +128,24 @@ model ContaAzulIntegration {
 }
 
 model User {
-  id                 String   @id @default(cuid())
-  name               String
-  email              String   @unique
-  passwordHash       String
-  role               Role
-  active             Boolean  @default(true)
-  mustChangePassword Boolean  @default(false)
-  companyId          String?
-  avatarPath         String?
-  whatsapp           String?
+  id                  String    @id @default(cuid())
+  name                String
+  email               String    @unique
+  passwordHash        String
+  role                Role
+  active              Boolean   @default(true)
+  mustChangePassword  Boolean   @default(false)
+  companyId           String?
+  avatarPath          String?
+  whatsapp            String?
   /// Dado pessoal sensível (LGPD): visível apenas para admin e RH da empresa.
-  cpf                String?
-  admissionDate      DateTime?
-  birthDate          DateTime?
+  cpf                 String?
+  admissionDate       DateTime?
+  birthDate           DateTime?
   /// Ano do último parabéns enviado, para o envio diário não repetir.
   birthdayGreetedYear Int?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   company Company? @relation(fields: [companyId], references: [id])
 
@@ -161,6 +162,7 @@ model User {
   completedTasks        Task[]              @relation("TaskCompleter")
   checkedChecklistItems TaskChecklistItem[]
   taskHistoryEntries    TaskHistory[]
+  paymentReceipts       PaymentReceipt[]    @relation("ReceiptCollaborator")
 
   @@index([companyId])
 }
@@ -249,6 +251,29 @@ model VacationRequest {
   reviewedBy   User?     @relation("VacationReviewer", fields: [reviewedByUserId], references: [id])
   document     Document? @relation(fields: [documentId], references: [id])
 
+  @@index([collaboratorUserId])
+}
+
+/// Recibo de pagamento avulso emitido para um colaborador. Nome completo e
+/// CPF vêm sempre do `User` no momento da impressão, nunca copiados aqui, para
+/// que uma correção cadastral valha também para recibos já emitidos.
+model PaymentReceipt {
+  id                         String   @id @default(cuid())
+  companyId                  String
+  collaboratorUserId         String
+  description                String
+  amountCents                Int
+  issuedAt                   DateTime @default(now())
+  /// Assinaturas manuscritas capturadas no ato, como data URL PNG.
+  companySignatureImage      String?
+  collaboratorSignatureImage String?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  company      Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  collaborator User    @relation("ReceiptCollaborator", fields: [collaboratorUserId], references: [id])
+
+  @@index([companyId])
   @@index([collaboratorUserId])
 }
 
@@ -366,7 +391,6 @@ model ServiceContract {
   /// TRIMESTRAL/ANUAL — meses aplicáveis (1 a 12).
   months         Int[]
   /// Hora limite legal, "HH:mm". O corte bancário mora aqui.
-  deadlineTime   String  @default("18:00")
 
   adjustment       NonBusinessDayAdjustment @default(POSTERGAR)
   /// Prazo meta = prazo legal menos N dias úteis.
