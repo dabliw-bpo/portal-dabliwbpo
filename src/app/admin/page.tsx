@@ -3,6 +3,10 @@ import { auth } from "@/lib/auth";
 import { listPendingWork, loadDashboardStats } from "@/lib/pending";
 import { listMonthBirthdays, todayInBrazil } from "@/lib/birthdays";
 import { APP_TIME_ZONE, formatVacationPeriod } from "@/lib/format";
+import { ResendAllButton } from "@/components/documents/resend-all-button";
+
+// O reenvio em lote lê arquivos e envia anexos; precisa de mais que o padrão.
+export const maxDuration = 60;
 
 function StatTile({ label, value, href }: { label: string; value: number; href?: string }) {
   const body = (
@@ -33,12 +37,15 @@ function SectionCard({
   count,
   emptyMessage,
   needsAction = false,
+  action,
   children,
 }: {
   title: string;
   count: number;
   emptyMessage: string;
   needsAction?: boolean;
+  /** Ação do cartão inteiro, à direita do título. */
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const flagged = needsAction && count > 0;
@@ -64,6 +71,7 @@ function SectionCard({
             {count}
           </span>
         )}
+        {action && <div className="ml-auto">{action}</div>}
       </header>
       {count === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-slate-500">{emptyMessage}</p>
@@ -148,6 +156,7 @@ export default async function AdminPage() {
           title="Documentos aguardando assinatura"
           count={documents.length}
           needsAction
+          action={documents.length > 0 ? <ResendAllButton /> : null}
           emptyMessage="Nenhum documento pendente de assinatura."
         >
           {documents.map((document) => (

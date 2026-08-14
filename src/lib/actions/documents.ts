@@ -245,6 +245,84 @@ async function issueSignatureReceipt({
   });
 }
 
+/**
+ * Quantos reenvios cabem numa invocação. Cada um lê o arquivo do storage e
+ * abre uma conexão SMTP com anexo, o que leva alguns segundos; mandar as 21
+ * pendências de uma vez estouraria o tempo limite da função e deixaria o
+ * usuário sem saber quais saíram.
+ */
+const RESEND_BATCH_SIZE = 10;
+
+export type ResendAllState = {
+  error?: string;
+  success?: string;
+};
+
+/** Reenvia a notificação de todos os documentos pendentes, em lotes. */
+export async function resendAllPendingEmailsAction(
+  _prevState: ResendAllState,
+  formData: FormData
+): Promise<ResendAllState> {
+  const session = await auth();
+  requireRole(session, ["ADMIN"]);
+
+  // Sem filtro, reenvia de todas as empresas; com ele, só de uma.
+  const companyId = formData.get("companyId");
+  const scope = typeof companyId === "string" && companyId ? { owner: { companyId } } : {};
+
+  const pending = await prisma.document.findMany({
+    where: { status: "PENDING_SIGNATURE", ...scope },
+    orderBy: { createdAt: "asc" },
+    include: { owner: true },
+  });
+
+  if (pending.length === 0) {
+    return { success: "Não há documentos pendentes." };
+  }
+
+  const batch = pending.slice(0, RESEND_BATCH_SIZE);
+  const appUrl = process.env.APP_URL;
+
+  let sent = 0;
+  const failed: string[] = [];
+
+  for (const document of batch) {
+    try {
+      const buffer = await readStoredFile(document.filePath);
+      const documentPath = documentPathForRole(document.owner.role, document.id);
+      const result = await sendDocumentUploadedEmail({
+        to: document.owner.email,
+        recipientName: document.owner.name,
+        documentTitle: document.title,
+        documentUrl: appUrl && documentPath ? `${appUrl}${documentPath}` : undefined,
+        attachment: {
+          filename: document.fileName,
+          content: buffer,
+          contentType: document.mimeType,
+        },
+      });
+      if (result.ok) {
+        sent += 1;
+      } else {
+        failed.push(document.owner.name);
+      }
+    } catch {
+      failed.push(document.owner.name);
+    }
+  }
+
+  revalidatePath("/admin");
+
+  const remaining = pending.length - batch.length;
+  const parts = [`${sent} e-mail(s) reenviado(s).`];
+  if (failed.length > 0) parts.push(`Falharam: ${failed.join(", ")}.`);
+  if (remaining > 0) parts.push(`Faltam ${remaining} — clique novamente para continuar.`);
+
+  return failed.length > 0 && sent === 0
+    ? { error: parts.join(" ") }
+    : { success: parts.join(" ") };
+}
+
 export type SignDocumentState = {
   error?: string;
 };
