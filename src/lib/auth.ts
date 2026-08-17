@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { parseLoginIdentifier } from "@/lib/validations/identifier";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -12,17 +13,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Email ou CPF", type: "text" },
         password: { label: "Senha", type: "password" },
       },
       authorize: async (credentials) => {
-        const email = credentials?.email;
         const password = credentials?.password;
-        if (typeof email !== "string" || typeof password !== "string") {
+        const identifier = parseLoginIdentifier(credentials?.email);
+        if (typeof password !== "string" || identifier.kind === "invalid") {
           return null;
         }
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user =
+          identifier.kind === "email"
+            ? await prisma.user.findUnique({ where: { email: identifier.value } })
+            : await prisma.user.findFirst({
+                where: { OR: [{ cpf: identifier.digits }, { cpf: identifier.masked }] },
+              });
+
         if (!user || !user.active) {
           return null;
         }

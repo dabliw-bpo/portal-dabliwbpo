@@ -15,14 +15,16 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
       <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-sm font-medium text-slate-700">
-          Email
+          Email ou CPF
         </label>
+        {/* type="text": um CPF não passa pela validação nativa de e-mail. */}
         <input
           id="email"
           name="email"
-          type="email"
+          type="text"
           required
-          autoComplete="email"
+          autoComplete="username"
+          placeholder="voce@empresa.com.br ou 000.000.000-00"
           className={inputBase}
         />
       </div>
