@@ -1,6 +1,6 @@
 import { signOut } from "@/lib/auth";
 import { Avatar } from "@/components/ui/avatar";
-import { NavLink } from "./nav-link";
+import { NavDrawer } from "./nav-drawer";
 
 type NavLinkItem = { href: string; label: string; exact?: boolean };
 
@@ -21,7 +21,15 @@ export function PortalNav({
   return (
     <header className="border-b border-slate-200 bg-white print:hidden">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <NavDrawer
+            title={title}
+            links={links}
+            signOutAction={async () => {
+              "use server";
+              await signOut({ redirectTo: "/login" });
+            }}
+          />
           {brand?.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- Supabase public bucket, no loader configured
             <img
@@ -36,11 +44,6 @@ export function PortalNav({
           )}
           <span className="hidden h-4 w-px bg-slate-200 sm:block" aria-hidden />
           <span className="hidden text-sm text-slate-500 sm:block">{title}</span>
-          <nav className="flex gap-5">
-            {links.map((link) => (
-              <NavLink key={link.href} href={link.href} label={link.label} exact={link.exact} />
-            ))}
-          </nav>
         </div>
         <div className="flex items-center gap-3">
           <Avatar name={userName || "?"} src={avatarUrl} size={24} />
