@@ -70,6 +70,6 @@ export async function updateAvatarAction(
     await supabase.storage.from("avatars").remove([previousUser.avatarPath]);
   }
 
-  revalidatePath("/portal-colaborador");
+  revalidatePath("/portal-colaborador/perfil");
   return {};
 }

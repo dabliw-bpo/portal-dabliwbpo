@@ -34,7 +34,8 @@ export default async function PortalColaboradorLayout({
         brand={brand}
         avatarUrl={getAvatarUrl(user?.avatarPath ?? null)}
         links={[
-          { href: "/portal-colaborador", label: "Meu perfil", exact: true },
+          { href: "/portal-colaborador", label: "Início", exact: true },
+          { href: "/portal-colaborador/perfil", label: "Meu perfil" },
           { href: "/portal-colaborador/documentos", label: "Meus documentos" },
           { href: "/portal-colaborador/ferias", label: "Férias" },
         ]}
