@@ -9,27 +9,6 @@ export function isAdminPath(value: unknown): value is string {
 }
 
 /**
- * Whether a request should be bounced to the forced password change.
- *
- * Only navigations are gated. Server Actions POST to the URL of the page they
- * live on, and redirecting one returns a 307, which the browser replays as a
- * POST against the redirect target: the action never runs and the user sees
- * nothing happen. Actions re-check authorization themselves, so letting them
- * through is safe.
- */
-export function shouldForcePasswordChange({
-  method,
-  mustChangePassword,
-  pathname,
-}: {
-  method: string;
-  mustChangePassword: boolean;
-  pathname: string;
-}): boolean {
-  return method === "GET" && mustChangePassword && pathname !== "/alterar-senha";
-}
-
-/**
  * Where a given user reads one of their own documents, or null when the role
  * has no document view — so an email can omit the link rather than point at a
  * page the recipient would be bounced out of.

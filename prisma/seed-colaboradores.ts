@@ -51,7 +51,6 @@ async function main() {
         passwordHash,
         role: "COLLABORATOR",
         active: true,
-        mustChangePassword: true,
       },
     });
     console.log(`criado: ${colaborador.name} <${colaborador.email}>`);

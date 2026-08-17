@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { homePathForRole } from "@/lib/authz";
-import { shouldForcePasswordChange } from "@/lib/paths";
 
 const SECTION_ROLES = {
   "/admin": ["ADMIN"],
@@ -32,16 +31,6 @@ export default auth((req) => {
   const allowedRoles: readonly string[] = SECTION_ROLES[section];
   if (!allowedRoles.includes(session.user.role)) {
     return NextResponse.redirect(new URL(homePathForRole(session.user.role), req.nextUrl.origin));
-  }
-
-  if (
-    shouldForcePasswordChange({
-      method: req.method,
-      mustChangePassword: session.user.mustChangePassword,
-      pathname,
-    })
-  ) {
-    return NextResponse.redirect(new URL("/alterar-senha", req.nextUrl.origin));
   }
 
   return NextResponse.next();
