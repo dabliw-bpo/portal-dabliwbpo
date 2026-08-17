@@ -15,15 +15,6 @@ const optionalString = z.preprocess(
   z.string().trim().optional()
 );
 
-export const createUserSchema = z.object({
-  name: z.string().trim().min(1, "Informe o nome.").max(200),
-  email: z.string().trim().email("Email inválido."),
-  password: z.string().min(MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT),
-  role: z.enum(ROLE_VALUES),
-  companyId: optionalString,
-  whatsapp: optionalString,
-});
-
 const optionalDate = z.preprocess(
   (value) => (value === null || value === "" ? undefined : value),
   z
@@ -41,6 +32,20 @@ const optionalCpf = z.preprocess(
     .refine((v) => v.replace(/\D/g, "").length === 11, "CPF deve ter 11 dígitos.")
     .optional()
 );
+
+export const createUserSchema = z.object({
+  name: z.string().trim().min(1, "Informe o nome.").max(200),
+  email: z.string().trim().email("Email inválido."),
+  password: z.string().min(MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT),
+  role: z.enum(ROLE_VALUES),
+  companyId: optionalString,
+  whatsapp: optionalString,
+  cpf: optionalCpf,
+  admissionDate: optionalDate,
+  birthDate: optionalDate,
+});
+
+
 
 export const updateUserSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome.").max(200),

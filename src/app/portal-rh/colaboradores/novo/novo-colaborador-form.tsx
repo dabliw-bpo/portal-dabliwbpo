@@ -32,6 +32,24 @@ export function NovoColaboradorForm() {
         <input id="whatsapp" name="whatsapp" placeholder="(65) 99999-9999" className={inputBase} />
       </div>
       <div className="flex flex-col gap-1">
+        <label htmlFor="cpf" className="text-sm font-medium text-slate-700">
+          CPF (opcional)
+        </label>
+        <input id="cpf" name="cpf" placeholder="000.000.000-00" className={inputBase} />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="birthDate" className="text-sm font-medium text-slate-700">
+          Nascimento (opcional)
+        </label>
+        <input id="birthDate" name="birthDate" type="date" className={inputBase} />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="admissionDate" className="text-sm font-medium text-slate-700">
+          Admissão (opcional)
+        </label>
+        <input id="admissionDate" name="admissionDate" type="date" className={inputBase} />
+      </div>
+      <div className="flex flex-col gap-1">
         <label htmlFor="password" className="text-sm font-medium text-slate-700">
           Senha inicial
         </label>
