@@ -39,7 +39,7 @@ export function MobileNav() {
               </a>
             ))}
             <a
-              href="/login"
+              href="/portal"
               onClick={() => setOpen(false)}
               className="mt-2 inline-flex w-fit items-center border border-[#8a7548] px-5 py-2.5 text-sm font-medium uppercase tracking-[0.12em] text-[#c9a96e]"
             >

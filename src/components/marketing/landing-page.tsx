@@ -117,7 +117,7 @@ export function LandingPage() {
               </a>
             ))}
             <Link
-              href="/login"
+              href="/portal"
               className="border border-[#8a7548] px-5 py-2.5 text-[13px] font-medium uppercase tracking-[0.12em] text-[#c9a96e] transition-colors hover:bg-[#c9a96e] hover:text-[#0f0e0b]"
             >
               Acessar Portal
@@ -169,7 +169,7 @@ export function LandingPage() {
                   <ArrowRight size={16} />
                 </a>
                 <Link
-                  href="/login"
+                  href="/portal"
                   className="inline-flex items-center gap-2 text-[14px] font-normal uppercase tracking-[0.1em] text-[#a8a295] transition-colors hover:text-[#c9a96e]"
                 >
                   Acessar Portal
