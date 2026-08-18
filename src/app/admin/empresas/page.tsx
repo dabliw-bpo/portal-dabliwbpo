@@ -4,7 +4,7 @@ import { buttonPrimary } from "@/components/ui/styles";
 
 export default async function AdminEmpresasPage() {
   const companies = await prisma.company.findMany({
-    orderBy: { name: "asc" },
+    orderBy: [{ isHeadquarters: "desc" }, { name: "asc" }],
     include: { _count: { select: { users: true } } },
   });
 
@@ -42,6 +42,11 @@ export default async function AdminEmpresasPage() {
                   >
                     {company.name}
                   </Link>
+                  {company.isHeadquarters && (
+                    <span className="ml-2 rounded-full bg-slate-900 px-2 py-0.5 text-xs font-medium text-white">
+                      Matriz
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-2 text-slate-600">{company.cnpj ?? "-"}</td>
                 <td className="px-4 py-2 text-slate-600">{company._count.users}</td>

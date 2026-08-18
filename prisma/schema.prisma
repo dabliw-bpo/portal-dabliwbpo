@@ -81,6 +81,10 @@ model Company {
   /// Cor da marca (#RRGGBB), usada na imagem dos dados bancários.
   brandColor String?
 
+  /// A matriz é o próprio BPO: a equipe dela atende a carteira de clientes,
+  /// em vez de ser colaboradora de um cliente. Só uma empresa é matriz.
+  isHeadquarters Boolean @default(false)
+
   federalEntity            String?
   registrationStatus       String?
   registrationStatusDate   DateTime?
