@@ -80,6 +80,8 @@ model Company {
 
   /// Cor da marca (#RRGGBB), usada na imagem dos dados bancários.
   brandColor String?
+  /// Layout da imagem de dados bancários: cada cliente recebe a sua arte.
+  cardStyle  String?
 
   /// A matriz é o próprio BPO: a equipe dela atende a carteira de clientes,
   /// em vez de ser colaboradora de um cliente. Só uma empresa é matriz.

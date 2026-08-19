@@ -1,5 +1,11 @@
 import { inputToggleable } from "@/components/ui/styles";
-import { BRANCH_TYPES, COMPANY_SIZES, REGISTRATION_STATUSES } from "@/lib/validations/company";
+import {
+  BRANCH_TYPES,
+  CARD_STYLES,
+  CARD_STYLE_LABELS,
+  COMPANY_SIZES,
+  REGISTRATION_STATUSES,
+} from "@/lib/validations/company";
 
 export type CompanyRegistrationValues = {
   name: string;
@@ -21,6 +27,7 @@ export type CompanyRegistrationValues = {
   email: string;
   phone: string;
   brandColor: string;
+  cardStyle: string;
   partnerName: string;
   partnerEmail: string;
   federalEntity: string;
@@ -51,6 +58,7 @@ export const emptyRegistrationValues: CompanyRegistrationValues = {
   email: "",
   phone: "",
   brandColor: "",
+  cardStyle: "",
   partnerName: "",
   partnerEmail: "",
   federalEntity: "",
@@ -340,6 +348,21 @@ export function CompanyRegistrationFields({
               Usada na imagem dos dados bancários, junto com a logo.
             </span>
           </div>
+        </Field>
+        <Field name="cardStyle" label="Arte da imagem bancária" span={3}>
+          <select
+            id="cardStyle"
+            name="cardStyle"
+            defaultValue={values.cardStyle}
+            disabled={disabled}
+            className={fieldClass}
+          >
+            {CARD_STYLES.map((style) => (
+              <option key={style} value={style}>
+                {CARD_STYLE_LABELS[style]}
+              </option>
+            ))}
+          </select>
         </Field>
       </Section>
 

@@ -25,6 +25,18 @@ function optionalEnum<T extends readonly [string, ...string[]]>(values: T) {
   );
 }
 
+/** Artes disponíveis para a imagem de dados bancários de cada empresa. */
+export const CARD_STYLES = ["faixa", "cartao", "lateral", "minimalista"] as const;
+
+export type CardStyle = (typeof CARD_STYLES)[number];
+
+export const CARD_STYLE_LABELS: Record<CardStyle, string> = {
+  faixa: "Faixa colorida no topo",
+  cartao: "Fundo colorido com cartão branco",
+  lateral: "Faixa colorida na lateral",
+  minimalista: "Fundo branco com filete colorido",
+};
+
 export const BRANCH_TYPES = ["MATRIZ", "FILIAL"] as const;
 
 export const COMPANY_SIZES = ["ME", "EPP", "DEMAIS"] as const;
@@ -61,6 +73,7 @@ export const companyRegistrationSchema = z.object({
     (value) => (value === null || value === "" ? undefined : value),
     z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor no formato #RRGGBB.").optional()
   ),
+  cardStyle: optionalEnum(CARD_STYLES),
   partnerName: optionalString,
   partnerEmail: z.preprocess(
     (value) => (value === null || value === "" ? undefined : value),

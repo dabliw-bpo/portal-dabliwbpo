@@ -53,6 +53,7 @@ export default async function EmpresaCadastroPage({
     email: company.email ?? "",
     phone: company.phone ?? "",
     brandColor: company.brandColor ?? "",
+    cardStyle: company.cardStyle ?? "",
     partnerName: company.partnerName ?? "",
     partnerEmail: company.partnerEmail ?? "",
     federalEntity: company.federalEntity ?? "",
