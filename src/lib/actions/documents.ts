@@ -14,7 +14,7 @@ import { sendDocumentUploadedEmail, sendSignatureReceiptEmail } from "@/lib/emai
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES, uploadDocumentSchema } from "@/lib/validations/document";
 import { parseSignatureImage } from "@/lib/validations/signature";
 import { buildSignatureReport, sha256 } from "@/lib/signature-report";
-import { stampSignatureOnReceipt } from "@/lib/signature-stamp";
+import { appendSignaturePage, stampSignatureOnReceipt } from "@/lib/signature-stamp";
 
 export type UploadDocumentState = {
   error?: string;
@@ -225,16 +225,29 @@ async function issueSignatureReceipt({
   // A via assinada é um arquivo novo, nunca uma reescrita do original: o
   // original é o que o fileHash acima atesta.
   let signedFilePath: string | null = null;
-  if (document.paymentReceipt) {
+  if (document.mimeType === "application/pdf") {
     try {
-      const stamped = await stampSignatureOnReceipt(original, {
-        imageData,
-        signerName: document.owner.name,
-        signedAt,
-      });
+      // O recibo é gerado aqui dentro, então sabemos onde fica o campo. O
+      // holerite vem pronto de fora e ganha uma página no fim.
+      const stamped = document.paymentReceipt
+        ? await stampSignatureOnReceipt(original, {
+            imageData,
+            signerName: document.owner.name,
+            signedAt,
+          })
+        : await appendSignaturePage(original, {
+            imageData,
+            signerName: document.owner.name,
+            signerCpf: document.owner.cpf,
+            signedAt,
+            documentTitle: document.title,
+            fileName: document.fileName,
+            companyName: company?.name ?? "DABLIW BPO",
+            companyLogo,
+          });
       signedFilePath = await saveFile(stamped, document.fileName, `${document.id}-assinado`);
     } catch (error) {
-      console.error("[assinatura] Falha ao carimbar a via assinada:", error);
+      console.error("[assinatura] Falha ao gerar a via assinada:", error);
     }
   }
 

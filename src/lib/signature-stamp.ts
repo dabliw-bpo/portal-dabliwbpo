@@ -104,3 +104,131 @@ export async function stampSignatureOnReceipt(
 
   return Buffer.from(await pdf.save());
 }
+
+const A4: [number, number] = [595.28, 841.89];
+const MARGIN = 56;
+
+export type SignaturePageInput = SignatureStamp & {
+  documentTitle: string;
+  fileName: string;
+  signerCpf: string | null;
+  companyName: string;
+  companyLogo: { bytes: Uint8Array; type: "png" | "jpg" } | null;
+};
+
+/**
+ * Acrescenta uma página de assinatura ao final do documento.
+ *
+ * Para holerite e afins não dá para carimbar a rubrica no corpo: o arquivo vem
+ * pronto de fora e não há como saber onde sobra espaço — desenhar às cegas
+ * pode cair em cima de um valor. Uma página no fim resolve sem tocar em nada
+ * do que já estava lá.
+ *
+ * Como no recibo, o retorno é um arquivo novo. O original continua sendo o que
+ * o `fileHash` do relatório de auditoria atesta.
+ */
+export async function appendSignaturePage(
+  original: Uint8Array,
+  input: SignaturePageInput
+): Promise<Buffer> {
+  const pdf = await PDFDocument.load(original);
+  const page = pdf.addPage(A4);
+  const regular = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+
+  const { width, height } = page.getSize();
+  let y = height - MARGIN;
+
+  if (input.companyLogo) {
+    try {
+      const image =
+        input.companyLogo.type === "png"
+          ? await pdf.embedPng(input.companyLogo.bytes)
+          : await pdf.embedJpg(input.companyLogo.bytes);
+      const scaled = image.scaleToFit(120, 42);
+      page.drawImage(image, {
+        x: MARGIN,
+        y: y - scaled.height,
+        width: scaled.width,
+        height: scaled.height,
+      });
+    } catch {
+      // segue sem a logo
+    }
+  }
+
+  const titulo = "ASSINATURA ELETRÔNICA";
+  page.drawText(titulo, {
+    x: width - MARGIN - bold.widthOfTextAtSize(titulo, 11),
+    y: y - 12,
+    size: 11,
+    font: bold,
+    color: MUTED,
+  });
+
+  y -= 58;
+  page.drawLine({
+    start: { x: MARGIN, y },
+    end: { x: width - MARGIN, y },
+    thickness: 1,
+    color: RULE,
+  });
+
+  y -= 20;
+  page.drawText(input.companyName, { x: MARGIN, y, size: 10, font: bold, color: INK });
+
+  y -= 34;
+  page.drawText("DOCUMENTO ASSINADO", { x: MARGIN, y, size: 8, font: bold, color: MUTED });
+  y -= 15;
+  page.drawText(input.documentTitle, { x: MARGIN, y, size: 11.5, font: bold, color: INK });
+  y -= 15;
+  page.drawText(input.fileName, { x: MARGIN, y, size: 9, font: regular, color: MUTED });
+
+  // O campo, na mesma proporção do que existe no recibo.
+  const lineY = 430;
+  const base64 = input.imageData.split(",")[1] ?? "";
+  if (base64) {
+    const image = await pdf.embedPng(Buffer.from(base64, "base64"));
+    const scaled = image.scaleToFit(
+      RECEIPT_SIGNATURE_FIELD.imageMaxWidth,
+      RECEIPT_SIGNATURE_FIELD.imageMaxHeight
+    );
+    page.drawImage(image, {
+      x: MARGIN,
+      y: lineY + 5,
+      width: scaled.width,
+      height: scaled.height,
+    });
+  }
+
+  page.drawLine({
+    start: { x: MARGIN, y: lineY },
+    end: { x: MARGIN + RECEIPT_SIGNATURE_FIELD.lineWidth, y: lineY },
+    thickness: 0.8,
+    color: RULE,
+  });
+
+  let sy = lineY - 14;
+  page.drawText("ASSINATURA DO TITULAR", { x: MARGIN, y: sy, size: 8, font: bold, color: MUTED });
+  sy -= 15;
+  page.drawText(input.signerName, { x: MARGIN, y: sy, size: 11, font: bold, color: INK });
+  if (input.signerCpf) {
+    sy -= 14;
+    page.drawText(`CPF ${input.signerCpf}`, { x: MARGIN, y: sy, size: 9.5, font: regular, color: MUTED });
+  }
+  sy -= 18;
+  page.drawText(`Assinado eletronicamente em ${formatSignedAt(input.signedAt)}.`, {
+    x: MARGIN,
+    y: sy,
+    size: 9,
+    font: regular,
+    color: INK,
+  });
+
+  page.drawText(
+    "Esta página integra o documento assinado. O relatório de auditoria, com IP, dispositivo e hash do arquivo, acompanha este arquivo no portal.",
+    { x: MARGIN, y: MARGIN, size: 8, font: regular, color: MUTED }
+  );
+
+  return Buffer.from(await pdf.save());
+}
