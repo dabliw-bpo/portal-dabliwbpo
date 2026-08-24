@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   // rastreador não enxerga um caminho montado em tempo de execução.
   outputFileTracingIncludes: {
     "/api/empresas/**": ["src/assets/fonts/**/*"],
+    "/propostas/**": ["src/content/propostas/**/*"],
   },
 };
 
