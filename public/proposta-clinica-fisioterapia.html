@@ -1,0 +1,769 @@
+<title>Proposta DABLIW BPO — Clínica de Fisioterapia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    /* dark-first: bare :root = full dark palette */
+    --bg: #0e0d0a;
+    --surface: #161409;
+    --surface-2: #201c12;
+    --ink: #f2ede1;
+    --ink-muted: #a89e89;
+    --ink-faint: #776e5c;
+    --line: rgba(242,237,225,0.14);
+    --line-strong: rgba(242,237,225,0.28);
+    --accent: #c9a96e;
+    --accent-soft: rgba(201,169,110,0.16);
+    --accent-ink: #191506;
+    --shadow: 0 30px 60px -20px rgba(0,0,0,0.55);
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg: #faf6ec;
+      --surface: #ffffff;
+      --surface-2: #f1e9d3;
+      --ink: #1c1810;
+      --ink-muted: #6d6350;
+      --ink-faint: #948a74;
+      --line: rgba(28,24,16,0.12);
+      --line-strong: rgba(28,24,16,0.22);
+      --accent: #92703a;
+      --accent-soft: rgba(146,112,58,0.12);
+      --accent-ink: #fbf7ee;
+      --shadow: 0 30px 60px -25px rgba(28,24,16,0.18);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg: #faf6ec;
+    --surface: #ffffff;
+    --surface-2: #f1e9d3;
+    --ink: #1c1810;
+    --ink-muted: #6d6350;
+    --ink-faint: #948a74;
+    --line: rgba(28,24,16,0.12);
+    --line-strong: rgba(28,24,16,0.22);
+    --accent: #92703a;
+    --accent-soft: rgba(146,112,58,0.12);
+    --accent-ink: #fbf7ee;
+    --shadow: 0 30px 60px -25px rgba(28,24,16,0.18);
+  }
+
+  *{box-sizing:border-box;}
+  ::selection{ background: var(--accent); color: var(--accent-ink); }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Geist','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  h1,h2,h3{
+    font-family:'Cormorant Garamond',Georgia,serif;
+    font-weight:600;
+    line-height:1.08;
+    text-wrap: balance;
+    margin: 0;
+    color: var(--ink);
+  }
+  a{ color: inherit; }
+
+  .eyebrow{
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .wrap{ max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+  .prose{ max-width: 700px; }
+  section{ position:relative; }
+
+  /* ============ TOPBAR ============ */
+  .topbar{
+    position: sticky; top:0; z-index: 40;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 16px 28px;
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .mark{
+    display:flex; align-items:baseline; gap:8px;
+    font-family:'Anton',sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.01em;
+  }
+  .mark .dot{ color: var(--accent); }
+  .mark .bpo{
+    font-family:'Geist','Inter',sans-serif;
+    font-size:0.6rem; font-weight:600; letter-spacing:0.08em;
+    color: var(--ink-muted);
+    border:1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 3px 8px;
+  }
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:0.82rem; font-weight:600;
+    letter-spacing:0.02em;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  .btn.ghost{
+    background:transparent; color: var(--ink); border:1px solid var(--line-strong);
+  }
+
+  /* ============ HERO ============ */
+  .hero{
+    padding: 96px 0 84px;
+    border-bottom: 1px solid var(--line);
+  }
+  .hero .eyebrow{ margin-bottom: 22px; }
+  .hero h1{
+    font-size: clamp(2.4rem, 5.4vw, 4.1rem);
+    max-width: 15ch;
+  }
+  .hero .lede{
+    margin-top: 24px;
+    max-width: 56ch;
+    font-size: 1.08rem;
+    color: var(--ink-muted);
+  }
+  .fillrow{
+    margin-top: 48px;
+    display:flex; flex-wrap:wrap; gap: 36px 48px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .fillrow .field .label{
+    display:block; font-size:0.68rem; letter-spacing:0.1em; text-transform:uppercase;
+    color: var(--ink-faint); margin-bottom:6px;
+  }
+  .fillin{
+    font-family:'Cormorant Garamond',serif;
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--ink-muted);
+    border-bottom: 1px dashed var(--line-strong);
+    padding-bottom: 4px;
+    min-width: 190px;
+    display:inline-block;
+  }
+  .fixedval{
+    font-family:'Cormorant Garamond',serif;
+    font-style: normal;
+    font-size: 1.15rem;
+    color: var(--ink);
+  }
+  .filled{
+    font-family:'Cormorant Garamond',serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 1.15rem;
+    color: var(--ink);
+    border-bottom: 1px solid var(--accent);
+    padding-bottom: 4px;
+    display:inline-block;
+  }
+  td.filled, .invest-range .filled{
+    font-family:'Geist','Inter',sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    border-bottom: none;
+    padding-bottom: 0;
+    color: var(--ink);
+  }
+
+  /* ============ SECTION RHYTHM ============ */
+  .section{ padding: 84px 0; }
+  .section.alt{ background: var(--surface); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .section-head{ margin-bottom: 44px; }
+  .section-head h2{ font-size: clamp(1.7rem, 3vw, 2.3rem); }
+  .section-head .eyebrow{ margin-bottom: 12px; display:block; }
+  .section-head p{ margin-top:14px; color: var(--ink-muted); max-width: 62ch; }
+
+  p{ margin: 0 0 1em; }
+  .prose p:last-child{ margin-bottom:0; }
+
+  blockquote{
+    margin: 0;
+    font-family:'Cormorant Garamond',serif;
+    font-style: italic;
+    font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+    color: var(--ink);
+    border-left: 2px solid var(--accent);
+    padding-left: 24px;
+  }
+
+  .pain-list{ list-style:none; margin: 28px 0 0; padding:0; display:grid; gap: 14px; }
+  .pain-list li{
+    display:flex; gap:14px; align-items:flex-start;
+    color: var(--ink-muted); font-size: 0.98rem;
+  }
+  .pain-list li::before{
+    content:"—"; color: var(--accent); flex:none; font-weight:600;
+  }
+
+  /* ---- stat row ---- */
+  .stat-row{
+    display:grid; grid-template-columns: repeat(3,1fr); gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-top: 40px;
+  }
+  .stat{
+    background: var(--bg);
+    padding: 30px 26px;
+  }
+  .section.alt .stat{ background: var(--surface); }
+  .stat .num{
+    font-family:'Cormorant Garamond',serif;
+    font-weight:600;
+    font-size: clamp(2.4rem,4vw,3.2rem);
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    line-height:1;
+  }
+  .stat .cap{ margin-top:10px; font-size:0.9rem; color: var(--ink-muted); }
+  .stat-source{ margin-top: 14px; font-size: 0.76rem; color: var(--ink-faint); }
+  .stat-source a{ color: var(--ink-faint); text-decoration: underline; }
+
+  .reason-grid{
+    display:grid; grid-template-columns: repeat(2,1fr); gap: 1px;
+    background: var(--line); border:1px solid var(--line);
+    margin-top: 40px;
+  }
+  .reason{ background: var(--bg); padding: 26px 26px 28px; }
+  .section.alt .reason{ background: var(--surface); }
+  .reason h3{
+    font-family:'Geist','Inter',sans-serif;
+    font-weight:600; font-size: 1rem; color: var(--ink); margin-bottom:8px;
+  }
+  .reason p{ color: var(--ink-muted); font-size: 0.94rem; margin:0; }
+
+  /* ---- plans ---- */
+  .plans{
+    display:grid; grid-template-columns: repeat(3,1fr); gap: 20px;
+    margin-top: 44px;
+    align-items: stretch;
+  }
+  .plan{
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    padding: 30px 26px 28px;
+    display:flex; flex-direction:column;
+    box-shadow: var(--shadow);
+  }
+  .plan.featured{ border-color: var(--accent); }
+  .plan-tag{
+    align-self:flex-start;
+    font-size:0.66rem; letter-spacing:0.09em; text-transform:uppercase;
+    color: var(--accent-ink); background: var(--accent);
+    border-radius:999px; padding:4px 10px; font-weight:700;
+    margin-bottom: 16px;
+  }
+  .plan-tag.outline{
+    background:transparent; color:var(--accent); border:1px solid var(--accent);
+  }
+  .plan h3{
+    font-size: 1.6rem;
+    font-weight:600;
+  }
+  .plan .plan-sub{
+    font-size:0.86rem; color: var(--ink-muted); margin-top:6px; margin-bottom:22px;
+  }
+  .plan ul{ list-style:none; margin:0; padding:0; display:grid; gap:13px; flex:1; }
+  .plan li{ font-size:0.88rem; color: var(--ink-muted); display:flex; gap:10px; }
+  .plan li::before{ content:"✓"; color: var(--accent); font-weight:700; flex:none; }
+  .plan li b{ color: var(--ink); font-weight:600; }
+  .plan-note{
+    margin-top:20px; padding-top:16px; border-top:1px dashed var(--line-strong);
+    font-size:0.82rem; color: var(--accent);
+  }
+
+  /* ---- CLT vs BPO comparison ---- */
+  .compare-grid{
+    display:grid; grid-template-columns: repeat(2,1fr); gap: 20px;
+    margin-top: 44px; align-items: stretch;
+  }
+  .compare-grid table.price td{ font-size:0.92rem; }
+  .compare-grid table.price td:last-child{ font-weight:600; }
+
+  /* ---- investment ---- */
+  .invest-box{
+    background: var(--surface);
+    border:1px solid var(--line-strong);
+    border-radius:16px;
+    padding: 36px 36px 32px;
+    margin-top: 40px;
+  }
+  .invest-range{
+    display:flex; flex-wrap:wrap; align-items:baseline; gap:10px;
+    font-family:'Cormorant Garamond',serif; font-size:1.3rem;
+    margin-bottom: 26px; padding-bottom:26px; border-bottom:1px solid var(--line);
+  }
+  table.price{
+    width:100%; border-collapse:collapse;
+  }
+  table.price th{
+    text-align:left; font-size:0.68rem; letter-spacing:0.09em; text-transform:uppercase;
+    color: var(--ink-faint); font-weight:600; padding-bottom:10px; border-bottom:1px solid var(--line-strong);
+  }
+  table.price td{
+    padding: 16px 0; border-bottom:1px solid var(--line);
+    font-size:0.98rem;
+  }
+  table.price td:last-child, table.price th:last-child{ text-align:right; font-variant-numeric: tabular-nums; }
+  table.price tr:last-child td{ border-bottom:none; }
+  table.price .plan-name{ font-weight:600; }
+  table.price .fine{ display:block; font-size:0.78rem; color: var(--ink-muted); font-weight:400; margin-top:2px; }
+
+  .callout{
+    margin-top: 22px;
+    display:flex; gap:12px;
+    background: var(--accent-soft);
+    border:1px solid var(--accent);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-size: 0.88rem;
+    color: var(--ink);
+  }
+  .callout .ico{ color: var(--accent); flex:none; font-size:1.1rem; line-height:1; }
+
+  .addon-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:20px; }
+  .addon{
+    background: var(--surface-2); border:1px solid var(--line);
+    border-radius:12px; padding:20px 22px;
+  }
+  .addon .addon-top{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .addon .addon-top b{ font-size:1rem; }
+  .addon .addon-top span{ font-variant-numeric: tabular-nums; color:var(--accent); font-weight:700; white-space:nowrap; }
+  .addon p{ margin-top:8px; font-size:0.86rem; color:var(--ink-muted); }
+
+  /* ---- differentials ---- */
+  .diff-grid{
+    display:grid; grid-template-columns: repeat(4,1fr); gap: 1px;
+    background: var(--line); border:1px solid var(--line);
+    margin-top: 40px;
+  }
+  .diff{ background: var(--bg); padding: 26px 22px; }
+  .section.alt .diff{ background: var(--surface); }
+  .diff h3{ font-family:'Geist','Inter',sans-serif; font-weight:600; font-size:0.96rem; margin-bottom:8px; }
+  .diff p{ font-size:0.86rem; color: var(--ink-muted); margin:0; }
+
+  /* ---- steps ---- */
+  .steps{ display:grid; grid-template-columns: repeat(3,1fr); gap: 28px; margin-top:44px; counter-reset: step; }
+  .step{ position:relative; padding-top: 6px; }
+  .step .n{
+    font-family:'Cormorant Garamond',serif; font-weight:600; font-size:2.6rem; color: var(--accent);
+    line-height:1; margin-bottom:14px; display:block;
+  }
+  .step h3{ font-size:1.15rem; font-weight:600; font-family:'Geist','Inter',sans-serif; margin-bottom:8px; }
+  .step p{ color:var(--ink-muted); font-size:0.92rem; margin:0; }
+
+  /* ---- portals ---- */
+  .portal-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:40px; }
+  .portal{
+    border:1px solid var(--line-strong); border-radius:14px; padding:28px 26px; background: var(--surface);
+  }
+  .portal .eyebrow{ display:block; margin-bottom:10px; }
+  .portal h3{ font-size:1.4rem; margin-bottom:10px; }
+  .portal p{ color:var(--ink-muted); font-size:0.94rem; margin:0; }
+
+  /* ---- terms ---- */
+  .terms{ margin-top:40px; border-top:1px solid var(--line-strong); }
+  .term-row{
+    display:grid; grid-template-columns: 220px 1fr; gap: 24px;
+    padding: 18px 0; border-bottom:1px solid var(--line);
+  }
+  .term-row .t{ font-size:0.78rem; letter-spacing:0.06em; text-transform:uppercase; color: var(--ink-faint); }
+  .term-row .d{ color: var(--ink); font-size:0.96rem; }
+
+  /* ---- footer cta ---- */
+  .cta{
+    background: var(--surface-2);
+    padding: 96px 0 80px;
+    text-align:center;
+    border-top: 1px solid var(--line);
+  }
+  .cta h2{ font-size: clamp(1.9rem,4vw,2.7rem); max-width: 20ch; margin:0 auto; }
+  .cta p{ color: var(--ink-muted); max-width:48ch; margin: 18px auto 34px; }
+  .cta .actions{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+  footer{
+    padding: 30px 28px 46px; text-align:center;
+    font-size:0.8rem; color: var(--ink-faint);
+  }
+  footer a{ color: var(--ink-muted); text-decoration:none; }
+  footer .fmark{ font-family:'Anton',sans-serif; color:var(--ink-muted); letter-spacing:0.02em; margin-bottom:10px; display:block; }
+
+  @media (max-width: 860px){
+    .plans, .reason-grid, .diff-grid, .steps, .portal-grid, .addon-grid, .compare-grid{ grid-template-columns: 1fr; }
+    .stat-row{ grid-template-columns:1fr; }
+    .term-row{ grid-template-columns: 1fr; gap:4px; }
+    .hero{ padding: 72px 0 56px; }
+    .section{ padding: 60px 0; }
+  }
+</style>
+
+<header class="topbar">
+  <div class="mark">DABLIW<span class="dot">.</span><span class="bpo">BPO</span></div>
+  <a class="btn" href="https://wa.me/5565992536122" target="_blank" rel="noopener">Falar no WhatsApp</a>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <span class="eyebrow">Proposta Comercial · BPO Financeiro &amp; RH</span>
+      <h1>O financeiro e o RH da sua empresa, sem estresse.</h1>
+      <p class="lede">Gerenciamos a rotina financeira e cuidamos da burocracia de Recursos Humanos da sua empresa, de forma terceirizada e integrada — em um único fornecedor, com portais digitais e atendimento direto.</p>
+      <div class="fillrow">
+        <div class="field"><span class="label">Preparado para</span><span class="filled">Clínica de Fisioterapia — Gabrielli &amp; Ana Paula</span></div>
+        <div class="field"><span class="label">Data</span><span class="filled">24/08/2026</span></div>
+        <div class="field"><span class="label">Validade da proposta</span><span class="fixedval">15 dias</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap prose">
+      <span class="eyebrow">Sobre a DABLIW BPO</span>
+      <blockquote>"O financeiro e o RH da sua empresa, sem estresse."</blockquote>
+      <p style="margin-top:26px; color:var(--ink-muted); font-size:1.02rem;">A DABLIW BPO é parceira de terceirização que unifica a gestão financeira e de recursos humanos das empresas em um único fornecedor — com equipe integrada, portais digitais e atendimento direto — para que você foque no que realmente importa: o seu negócio.</p>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="wrap">
+      <div class="section-head prose">
+        <span class="eyebrow">O desafio</span>
+        <h2>Sem controle, financeiro e RH viram um ponto cego.</h2>
+      </div>
+      <ul class="pain-list prose">
+        <li>Atrasos e erros em contas a pagar/receber e na folha de pagamento</li>
+        <li>Falta de visibilidade financeira — sem relatórios gerenciais para decidir</li>
+        <li>Retrabalho ao usar fornecedores separados para financeiro e RH, que não conversam entre si</li>
+        <li>Riscos trabalhistas por documentação e prazos mal geridos</li>
+        <li>Tempo do sócio consumido em rotina operacional em vez de estratégia</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" id="porque">
+    <div class="wrap">
+      <div class="section-head prose">
+        <span class="eyebrow">Por que começar certo, desde o dia 1</span>
+        <h2>Empresa nova não quebra por falta de mercado. Quebra por falta de controle.</h2>
+        <p>Começar um negócio já é arriscado — começar sem controle financeiro e de pessoal aumenta esse risco sem necessidade. Os números do próprio setor mostram por quê.</p>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat">
+          <span class="num">60%</span>
+          <p class="cap">das micro e pequenas empresas brasileiras encerram as atividades em até 5 anos.</p>
+        </div>
+        <div class="stat">
+          <span class="num">48%</span>
+          <p class="cap">desses fechamentos estão ligados à falta de planejamento financeiro e ao descontrole de caixa — não à falta de clientes.</p>
+        </div>
+        <div class="stat">
+          <span class="num">+70%</span>
+          <p class="cap">mais chance de sobrevivência para empresas com um sistema de controle financeiro eficiente.</p>
+        </div>
+      </div>
+      <p class="stat-source">Fonte: Sebrae, via <a href="https://agenciabrasil.ebc.com.br/economia/noticia/2021-06/sebrae-pequenos-negocios-tem-maior-taxa-de-mortalidade" target="_blank" rel="noopener">Agência Brasil</a> e <a href="https://www.cartacapital.com.br/do-micro-ao-macro/mortalidade-empresarial-de-60-em-cinco-anos-revela-falhas-de-gestao-e-planejamento/" target="_blank" rel="noopener">CartaCapital</a>.</p>
+
+      <div class="reason-grid">
+        <div class="reason">
+          <h3>Separação entre PF e PJ desde o dia 1</h3>
+          <p>Misturar recursos pessoais e da empresa é um dos erros mais comuns — e mais caros — em negócios novos. Dificulta saber se o negócio é realmente lucrativo.</p>
+        </div>
+        <div class="reason">
+          <h3>Decisão com base em dado, não em "sensação de caixa"</h3>
+          <p>Fluxo de caixa, DRE gerencial e conciliação bancária desde o início evitam descobrir um problema financeiro só quando ele já é grande.</p>
+        </div>
+        <div class="reason">
+          <h3>Compliance trabalhista desde a 1ª contratação</h3>
+          <p>Erros em admissão, férias, folha ou documentação geram passivos que crescem junto com o time. Corrigir depois custa mais do que fazer certo desde já.</p>
+        </div>
+        <div class="reason">
+          <h3>Credibilidade para crédito e investimento</h3>
+          <p>Bancos, investidores e fornecedores avaliam a organização financeira da empresa. Histórico organizado facilita crédito, aportes e parcerias.</p>
+        </div>
+        <div class="reason">
+          <h3>Estrutura que cresce junto com você</h3>
+          <p>Planos escaláveis — Assistente → Analista → Gerente — permitem começar enxuto e evoluir conforme o volume e o time crescem, sem trocar de fornecedor.</p>
+        </div>
+        <div class="reason">
+          <h3>O tempo do fundador vale mais em outro lugar</h3>
+          <p>Em empresa nova, o tempo do sócio é o recurso mais escasso. Terceirizar financeiro e RH libera esse tempo para vender e validar o negócio.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt" id="planos">
+    <div class="wrap">
+      <div class="section-head prose">
+        <span class="eyebrow">Nossa solução</span>
+        <h2>Um modelo, três níveis de profundidade.</h2>
+        <p>BPO integrado de Financeiro + RH em três planos escaláveis, conforme o volume de documentos e o número de funcionários. Todos incluem o Portal do Cliente; a partir do Analista, também o Portal do Colaborador.</p>
+      </div>
+
+      <div class="plans">
+        <div class="plan">
+          <span class="plan-tag outline">Financeiro básico</span>
+          <h3>Assistente</h3>
+          <div class="plan-sub">O essencial para manter o financeiro em dia.</div>
+          <ul>
+            <li><b>Contas a Pagar</b> — controle, previsão e pagamento</li>
+            <li><b>Contas a Receber</b> — emissão de nota, boletos e envio</li>
+            <li><b>Conciliação Bancária</b> — diária, entradas / saídas = saldo final</li>
+            <li><b>Gestão de Documentos</b> — arquivo digital e fechamento com a contabilidade (extratos em PDF e XML)</li>
+            <li><b>Emissão de Contratos</b> — elaboração e emissão de contratos com fornecedores</li>
+            <li><b>Análise Financeira</b> — fluxo de caixa</li>
+            <li>Portal do Cliente</li>
+          </ul>
+        </div>
+
+        <div class="plan featured">
+          <span class="plan-tag">Financeiro + RH</span>
+          <h3>Analista</h3>
+          <div class="plan-sub">Financeiro intermediário com Departamento Pessoal.</div>
+          <ul>
+            <li><b>Contas a Pagar</b> — controle, previsão, orçamento e pagamento</li>
+            <li><b>Contas a Receber</b> — emissão de nota, boletos e envio</li>
+            <li><b>Conciliação Bancária</b> — diária, entradas / saídas = saldo final</li>
+            <li><b>Gestão de Documentos</b> — arquivo digital e fechamento com a contabilidade</li>
+            <li><b>Emissão de Contratos</b> — elaboração e emissão de contratos com fornecedores</li>
+            <li><b>Departamento Pessoal</b> — admissões, rescisões, férias, folha e holerites, documentação trabalhista (CLT e PJ)</li>
+            <li><b>Análise Financeira</b> — fluxo de caixa, DRE gerencial e centro de custo por departamento</li>
+            <li>Reunião semanal de acompanhamento</li>
+            <li>Portal do Cliente + Portal do Colaborador</li>
+          </ul>
+          <div class="plan-note">+ R$ 150,00/mês por funcionário ativo (Departamento Pessoal)</div>
+        </div>
+
+        <div class="plan">
+          <span class="plan-tag outline">Tudo ilimitado</span>
+          <h3>Gerente</h3>
+          <div class="plan-sub">Todo o Analista, sem limites.</div>
+          <ul>
+            <li>Todo o escopo do plano <b>Analista</b></li>
+            <li><b>Bancos ilimitados</b></li>
+            <li><b>Funcionários ilimitados</b> — sem adicional por funcionário</li>
+            <li><b>Lançamentos ilimitados</b></li>
+            <li><b>Visita técnica</b> inclusa</li>
+            <li>Reuniões diárias de acompanhamento</li>
+            <li>Portal do Cliente + Portal do Colaborador</li>
+          </ul>
+          <div class="plan-note">Valor fixo — ver Investimento</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="comparativo">
+    <div class="wrap">
+      <div class="section-head prose">
+        <span class="eyebrow">CLT vs. BPO Financeiro</span>
+        <h2>Um funcionário custa mais do que o salário no contracheque.</h2>
+        <p>Antes de decidir entre contratar um funcionário para cuidar do financeiro (CLT) ou terceirizar com a DABLIW BPO, vale colocar os dois custos lado a lado — incluindo o que normalmente fica de fora da conta.</p>
+      </div>
+
+      <div class="compare-grid">
+        <div class="plan">
+          <span class="plan-tag outline">Alternativa</span>
+          <h3 style="font-size:1.35rem;">1 Funcionário CLT (financeiro)</h3>
+          <div class="plan-sub">Auxiliar/analista financeiro dedicado só ao financeiro — sem RH.</div>
+          <table class="price">
+            <tbody>
+              <tr><td>Salário bruto <span class="fine">referência de mercado para a função</span></td><td>R$ 2.500,00</td></tr>
+              <tr><td>Encargos trabalhistas <span class="fine">INSS patronal, FGTS, 13º, férias + 1/3, provisões¹</span></td><td>R$ 1.750,00</td></tr>
+              <tr><td>Benefícios <span class="fine">vale-transporte + vale-refeição/alimentação</span></td><td>R$ 750,00</td></tr>
+              <tr style="border-top:1px solid var(--line-strong);">
+                <td style="font-size:1.05rem; padding-top:20px;">Total mensal estimado</td>
+                <td style="font-size:1.15rem; color:var(--ink); padding-top:20px;">R$ 5.000,00</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="plan-note" style="color:var(--ink-muted);">+ recrutamento, treinamento, rotatividade e ausência de backup em férias/atestado — e ainda sem Departamento Pessoal incluso.</div>
+        </div>
+
+        <div class="plan featured">
+          <span class="plan-tag">DABLIW BPO</span>
+          <h3 style="font-size:1.35rem;">Sua proposta — Assistente / Analista</h3>
+          <div class="plan-sub">Equipe completa, com backup — financeiro, e RH para a Clínica a partir do Analista.</div>
+          <table class="price">
+            <tbody>
+              <tr><td>Plano Assistente <span class="fine">financeiro essencial</span></td><td>R$ 1.600,00</td></tr>
+              <tr><td>Plano Analista <span class="fine">financeiro + DP (1 CLT + 1 PJ)</span></td><td>R$ 2.200,00</td></tr>
+              <tr style="border-top:1px solid var(--line-strong);">
+                <td style="font-size:1.05rem; padding-top:20px;">Economia frente ao CLT</td>
+                <td style="font-size:1.15rem; color:var(--accent); padding-top:20px;">56% a 68% menor</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="plan-note">Sem encargos, sem rotatividade, com equipe de backup — e o Departamento Pessoal da clínica (1 CLT + 1 PJ) já incluso no Analista.</div>
+        </div>
+      </div>
+      <p class="stat-source">¹ Estimativa com base no custo médio de 1,6× a 1,85× o salário bruto (INSS patronal, FGTS, 13º, férias + 1/3 e provisões), segundo <a href="https://contaja.com.br/blog/quanto-custa-um-funcionario-para-empresa/" target="_blank" rel="noopener">ContaJá</a> e <a href="https://calculojuridico.com.br/calculadora-custo-funcionario-clt/" target="_blank" rel="noopener">Cálculo Jurídico</a>. Valores de referência — o custo real varia conforme região, regime tributário e benefícios praticados.</p>
+    </div>
+  </section>
+
+  <section class="section" id="investimento">
+    <div class="wrap">
+      <div class="section-head prose">
+        <span class="eyebrow">Investimento</span>
+        <h2>Um valor claro, na faixa de volume da sua empresa.</h2>
+      </div>
+
+      <div class="invest-box">
+        <div class="invest-range">Faixa contratada: até <span class="filled">150</span> documentos/mês · Quadro atual: <span class="filled">1 CLT + 1 PJ</span> (2 pessoas)</div>
+        <table class="price">
+          <thead><tr><th>Plano</th><th>Investimento mensal</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="plan-name">Assistente</td>
+              <td class="filled" style="min-width:120px;">R$ 1.600,00</td>
+            </tr>
+            <tr>
+              <td class="plan-name">Analista<span class="fine">Financeiro intermediário</span></td>
+              <td class="filled" style="min-width:120px;">R$ 1.900,00</td>
+            </tr>
+            <tr>
+              <td class="plan-name">Departamento Pessoal<span class="fine">2 pessoas (1 CLT + 1 PJ) × R$ 150,00/mês</span></td>
+              <td class="filled" style="min-width:120px;">R$ 300,00</td>
+            </tr>
+            <tr style="border-top:1px solid var(--line-strong);">
+              <td class="plan-name" style="font-size:1.05rem; padding-top:20px;">Total — Plano Analista</td>
+              <td class="filled" style="min-width:120px; font-size:1.15rem; color:var(--accent); padding-top:20px;">R$ 2.200,00</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <span class="ico">&#9888;</span>
+          <span>Caso o volume mensal de documentos ultrapasse a faixa contratada, será feita uma revisão dos valores da mensalidade, reenquadrando a conta na faixa correspondente.</span>
+        </div>
+      </div>
+
+      <div class="addon-grid">
+        <div class="addon">
+          <div class="addon-top"><b>Plano Gerente</b><span>R$ 6.500,00/mês</span></div>
+          <p>Valor fixo até 30 funcionários — sem cobrança adicional por documento, banco ou funcionário dentro desse limite. Acima de 30, aplica-se R$ 150,00/mês por funcionário a partir do 31º.</p>
+        </div>
+        <div class="addon">
+          <div class="addon-top"><b>Sistema Conta Azul <span style="font-weight:400;color:var(--ink-muted);">(opcional)</span></b><span>+ R$ 250,00/mês</span></div>
+          <p>Operação executada no Conta Azul, sistema de gestão financeira em nuvem: contas a pagar/receber, emissão de notas e boletos, conciliação bancária e relatórios em um painel único, com acesso do cliente em tempo real.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="wrap">
+      <div class="section-head prose">
+        <span class="eyebrow">Diferenciais</span>
+        <h2>O que muda com a DABLIW BPO.</h2>
+      </div>
+      <div class="diff-grid">
+        <div class="diff">
+          <h3>Equipe integrada</h3>
+          <p>Um único fornecedor cuida de financeiro e RH — sem ruído de comunicação entre sistemas diferentes.</p>
+        </div>
+        <div class="diff">
+          <h3>Documentos e assinaturas digitais</h3>
+          <p>Holerites e contratos assinados no portal, sem papel perdido nem cobrança manual.</p>
+        </div>
+        <div class="diff">
+          <h3>Acesso separado por perfil</h3>
+          <p>Clientes e colaboradores enxergam só o que é deles, com login próprio.</p>
+        </div>
+        <div class="diff">
+          <h3>Atendimento direto</h3>
+          <p>Você fala com quem cuida da sua conta — sem central de atendimento automática.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head prose">
+        <span class="eyebrow">Como funciona</span>
+        <h2>Do diagnóstico à operação, em três etapas.</h2>
+      </div>
+      <div class="steps">
+        <div class="step"><span class="n">01</span><h3>Diagnóstico</h3><p>Entendemos como funciona hoje o financeiro e o RH da sua empresa.</p></div>
+        <div class="step"><span class="n">02</span><h3>Organização</h3><p>Documentos, processos e histórico entram no portal, prontos para uso.</p></div>
+        <div class="step"><span class="n">03</span><h3>Operação</h3><p>Financeiro e RH passam a rodar no dia a dia, com suporte direto e rotina de relatórios.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="wrap">
+      <div class="section-head prose">
+        <span class="eyebrow">Portais digitais</span>
+        <h2>Cada documento, ao alcance de um clique.</h2>
+      </div>
+      <div class="portal-grid">
+        <div class="portal">
+          <span class="eyebrow">Portal do Cliente</span>
+          <h3>Documentos e relatórios organizados</h3>
+          <p>Toda a documentação financeira da empresa, centralizada e disponível em tempo real.</p>
+        </div>
+        <div class="portal">
+          <span class="eyebrow">Portal do Colaborador</span>
+          <h3>Holerites, férias e admissão em um só lugar</h3>
+          <p>Cada funcionário acessa seus próprios documentos, com login individual — sem depender do RH para cada solicitação.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="termos">
+    <div class="wrap prose">
+      <span class="eyebrow">Termos e condições</span>
+      <h2 style="margin-top:12px;">O combinado, por escrito.</h2>
+      <div class="terms">
+        <div class="term-row"><div class="t">Vigência</div><div class="d">Contrato mínimo de 12 meses, com renovação automática.</div></div>
+        <div class="term-row"><div class="t">Reajuste</div><div class="d">Anual, pelo índice IPCA/IGP-M.</div></div>
+        <div class="term-row"><div class="t">Faturamento</div><div class="d">Mensal, com vencimento todo dia 10.</div></div>
+        <div class="term-row"><div class="t">Adicionais</div><div class="d">Departamento Pessoal (Analista) e sistema Conta Azul cobrados conforme headcount/uso ativo no mês de referência.</div></div>
+        <div class="term-row"><div class="t">Cancelamento</div><div class="d">Mediante aviso prévio de 30 dias.</div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<section class="cta">
+  <div class="wrap">
+    <h2>Vamos organizar o financeiro e o RH da sua empresa?</h2>
+    <p>Fale com a nossa equipe e entenda como a DABLIW BPO pode assumir essa rotina por você.</p>
+    <div class="actions">
+      <a class="btn" href="https://wa.me/5565992536122" target="_blank" rel="noopener">Falar no WhatsApp</a>
+      <a class="btn ghost" href="mailto:gestao@dabliwbpo.com.br">gestao@dabliwbpo.com.br</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="fmark">DABLIW.</span>
+  <a href="https://dabliwbpo.com.br" target="_blank" rel="noopener">dabliwbpo.com.br</a> · (65) 99253-6122
+</footer>
