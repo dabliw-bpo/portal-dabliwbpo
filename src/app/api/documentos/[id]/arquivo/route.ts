@@ -66,12 +66,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     });
   }
 
-  const buffer = await readStoredFile(document.filePath);
+  // Depois de assinado, o que se abre é a via com a rubrica no corpo do
+  // documento. O original continua servido por `?tipo=original`, porque é dele
+  // que sai o hash registrado na auditoria — quem confere a prova precisa
+  // conseguir chegar no arquivo exato que foi assinado.
+  const wantsOriginal = new URL(request.url).searchParams.get("tipo") === "original";
+  const path = !wantsOriginal && document.signedFilePath ? document.signedFilePath : document.filePath;
+  const buffer = await readStoredFile(path);
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": document.mimeType,
       "Content-Disposition": `inline; filename="${encodeURIComponent(document.fileName)}"`,
-      "Content-Length": String(document.fileSize),
+      // O tamanho vem do que foi lido, não do cadastro: a via assinada tem a
+      // rubrica desenhada dentro e não bate com o fileSize do original.
+      "Content-Length": String(buffer.byteLength),
       "Cache-Control": "private, no-store",
     },
   });

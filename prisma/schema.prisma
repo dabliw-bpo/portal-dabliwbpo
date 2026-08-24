@@ -199,6 +199,9 @@ model Document {
   /// Competência (YYYY-MM) — usada pelos holerites mensais.
   referenceMonth   String?
   /// Relatório de auditoria gerado no momento da assinatura.
+  /// Via com a assinatura manuscrita carimbada. O original em filePath
+  /// nunca muda: é dele que sai o fileHash que prova o que foi assinado.
+  signedFilePath   String?
   auditFilePath    String?
   /// SHA-256 do arquivo original, impresso no relatório para conferência.
   fileHash         String?

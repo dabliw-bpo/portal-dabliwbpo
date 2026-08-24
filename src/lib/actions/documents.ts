@@ -14,6 +14,7 @@ import { sendDocumentUploadedEmail, sendSignatureReceiptEmail } from "@/lib/emai
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES, uploadDocumentSchema } from "@/lib/validations/document";
 import { parseSignatureImage } from "@/lib/validations/signature";
 import { buildSignatureReport, sha256 } from "@/lib/signature-report";
+import { stampSignatureOnReceipt } from "@/lib/signature-stamp";
 
 export type UploadDocumentState = {
   error?: string;
@@ -161,6 +162,7 @@ type SignedDocument = Prisma.DocumentGetPayload<{
   include: {
     uploadedBy: { select: { name: true } };
     owner: { select: { name: true; email: true; cpf: true; company: true } };
+    paymentReceipt: { select: { id: true } };
   };
 }>;
 
@@ -219,9 +221,26 @@ async function issueSignatureReceipt({
   });
 
   const auditFilePath = await saveFile(report, "auditoria.pdf", `${document.id}-auditoria`);
+
+  // A via assinada é um arquivo novo, nunca uma reescrita do original: o
+  // original é o que o fileHash acima atesta.
+  let signedFilePath: string | null = null;
+  if (document.paymentReceipt) {
+    try {
+      const stamped = await stampSignatureOnReceipt(original, {
+        imageData,
+        signerName: document.owner.name,
+        signedAt,
+      });
+      signedFilePath = await saveFile(stamped, document.fileName, `${document.id}-assinado`);
+    } catch (error) {
+      console.error("[assinatura] Falha ao carimbar a via assinada:", error);
+    }
+  }
+
   await prisma.document.update({
     where: { id: document.id },
-    data: { auditFilePath, fileHash },
+    data: { auditFilePath, fileHash, ...(signedFilePath ? { signedFilePath } : {}) },
   });
 
   if (!company?.partnerEmail) {
@@ -343,6 +362,7 @@ export async function signDocumentAction(
     include: {
       uploadedBy: { select: { name: true } },
       owner: { select: { name: true, email: true, cpf: true, company: true } },
+      paymentReceipt: { select: { id: true } },
     },
   });
 

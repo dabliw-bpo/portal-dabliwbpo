@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
 import { APP_TIME_ZONE, formatCents } from "@/lib/format";
+import { RECEIPT_SIGNATURE_FIELD } from "@/lib/signature-stamp";
 import { centsToWords } from "@/lib/valor-extenso";
 
 const A4: [number, number] = [595.28, 841.89];
@@ -157,6 +158,30 @@ export async function buildReceiptPdf(input: ReceiptPdfInput): Promise<Buffer> {
     year: "numeric",
   }).format(input.issuedAt);
   page.drawText(`${place}${issued}.`, { x: MARGIN, y, size: 10.5, font: regular, color: INK });
+
+  // O campo onde a assinatura manuscrita é carimbada depois. Sai vazio na via
+  // que vai para assinatura, como numa folha de papel esperando a caneta.
+  const field = RECEIPT_SIGNATURE_FIELD;
+  page.drawLine({
+    start: { x: field.x, y: field.lineY },
+    end: { x: field.x + field.lineWidth, y: field.lineY },
+    thickness: 0.8,
+    color: rgb(0.55, 0.58, 0.63),
+  });
+  page.drawText("ASSINATURA DO RECEBEDOR", {
+    x: field.x,
+    y: field.lineY - 14,
+    size: 8,
+    font: bold,
+    color: MUTED,
+  });
+  page.drawText(input.collaboratorName, {
+    x: field.x,
+    y: field.lineY - 29,
+    size: 10.5,
+    font: regular,
+    color: INK,
+  });
 
   page.drawText(
     "Assinado eletronicamente pelo recebedor no portal. A trilha de auditoria acompanha este recibo.",
