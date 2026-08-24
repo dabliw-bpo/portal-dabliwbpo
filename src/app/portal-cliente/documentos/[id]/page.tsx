@@ -36,6 +36,20 @@ export default async function ClienteDocumentoPage({
         <DocumentStatusBadge status={document.status} />
       </div>
 
+      {/* Mesma ordem do portal do colaborador: assinar primeiro, ler depois. */}
+      {document.signature ? (
+        <div className="mt-6">
+          <SignatureProof signature={document.signature} auditUrl={document.auditFilePath ? `/api/documentos/${document.id}/arquivo?tipo=auditoria` : null} />
+        </div>
+      ) : (
+        <div className="mt-6 flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-emerald-900">
+            Este documento está aguardando a sua assinatura.
+          </p>
+          <SignDocumentModal documentId={document.id} signerName={session.user.name ?? ""} />
+        </div>
+      )}
+
       <div className="mt-6">
         <DocumentViewer
           fileUrl={`/api/documentos/${document.id}/arquivo`}
@@ -43,16 +57,6 @@ export default async function ClienteDocumentoPage({
           fileName={document.fileName}
         />
       </div>
-
-      {document.signature ? (
-        <div className="mt-4">
-          <SignatureProof signature={document.signature} auditUrl={document.auditFilePath ? `/api/documentos/${document.id}/arquivo?tipo=auditoria` : null} />
-        </div>
-      ) : (
-        <div className="mt-4">
-          <SignDocumentModal documentId={document.id} signerName={session.user.name ?? ""} />
-        </div>
-      )}
     </div>
   );
 }

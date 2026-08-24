@@ -36,6 +36,21 @@ export default async function ColaboradorDocumentoPage({
         <DocumentStatusBadge status={document.status} />
       </div>
 
+      {/* Antes do visualizador: o PDF é alto, e embaixo dele o botão de
+          assinar ficava fora da tela em quem abre pelo celular. */}
+      {document.signature ? (
+        <div className="mt-6">
+          <SignatureProof signature={document.signature} auditUrl={document.auditFilePath ? `/api/documentos/${document.id}/arquivo?tipo=auditoria` : null} />
+        </div>
+      ) : (
+        <div className="mt-6 flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-emerald-900">
+            Este documento está aguardando a sua assinatura.
+          </p>
+          <SignDocumentModal documentId={document.id} signerName={session.user.name ?? ""} />
+        </div>
+      )}
+
       <div className="mt-6">
         <DocumentViewer
           fileUrl={`/api/documentos/${document.id}/arquivo`}
@@ -43,16 +58,6 @@ export default async function ColaboradorDocumentoPage({
           fileName={document.fileName}
         />
       </div>
-
-      {document.signature ? (
-        <div className="mt-4">
-          <SignatureProof signature={document.signature} auditUrl={document.auditFilePath ? `/api/documentos/${document.id}/arquivo?tipo=auditoria` : null} />
-        </div>
-      ) : (
-        <div className="mt-4">
-          <SignDocumentModal documentId={document.id} signerName={session.user.name ?? ""} />
-        </div>
-      )}
     </div>
   );
 }
