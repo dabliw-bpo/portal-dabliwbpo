@@ -10,9 +10,13 @@ import { requireRole } from "@/lib/authz";
 import { documentPathForRole } from "@/lib/paths";
 import { prisma } from "@/lib/prisma";
 import { deleteStoredFile, readPublicAsset, readStoredFile, saveFile } from "@/lib/storage";
-import { sendDocumentUploadedEmail, sendSignatureReceiptEmail } from "@/lib/email";
+import {
+  sendDocumentUploadedEmail,
+  sendSignatureReceiptEmail,
+  sendSignatureRejectedEmail,
+} from "@/lib/email";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES, uploadDocumentSchema } from "@/lib/validations/document";
-import { parseSignatureImage } from "@/lib/validations/signature";
+import { SIGNATURE_REJECTION_REASONS, parseSignatureImage } from "@/lib/validations/signature";
 import { buildSignatureReport, sha256 } from "@/lib/signature-report";
 import { appendSignaturePage, stampSignatureOnReceipt } from "@/lib/signature-stamp";
 
@@ -220,7 +224,7 @@ async function issueSignatureReceipt({
     },
   });
 
-  const auditFilePath = await saveFile(report, "auditoria.pdf", `${document.id}-auditoria`);
+  const auditFilePath = await saveFile(report, "auditoria.pdf", `${document.id}-auditoria-${createId()}`);
 
   // A via assinada é um arquivo novo, nunca uma reescrita do original: o
   // original é o que o fileHash acima atesta.
@@ -245,7 +249,7 @@ async function issueSignatureReceipt({
             companyName: company?.name ?? "DABLIW BPO",
             companyLogo,
           });
-      signedFilePath = await saveFile(stamped, document.fileName, `${document.id}-assinado`);
+      signedFilePath = await saveFile(stamped, document.fileName, `${document.id}-assinado-${createId()}`);
     } catch (error) {
       console.error("[assinatura] Falha ao gerar a via assinada:", error);
     }
@@ -496,4 +500,98 @@ export async function deleteDocumentAction(
 
   revalidatePath(redirectTo);
   redirect(redirectTo);
+}
+
+export type RejectSignatureState = {
+  error?: string;
+};
+
+/**
+ * Recusa uma assinatura e devolve o documento para "aguardando assinatura".
+ *
+ * A Signature é um-para-um com o documento, então ela precisa sair para uma
+ * nova poder entrar. Mas apagá-la apagaria a prova de que alguém assinou — e,
+ * quando o motivo é "nome de outra pessoa", essa é justamente a evidência que
+ * interessa. Por isso ela é copiada inteira para o histórico de recusas antes
+ * de sair: traço, IP, navegador e as vias que ela gerou.
+ *
+ * O arquivo original não muda: o colaborador assina de novo o mesmo documento,
+ * e o fileHash da auditoria continua valendo para ele.
+ */
+export async function rejectSignatureAction(
+  _prevState: RejectSignatureState,
+  formData: FormData
+): Promise<RejectSignatureState> {
+  const session = await auth();
+  const authSession = requireRole(session, ["ADMIN"]);
+
+  const documentId = String(formData.get("documentId") ?? "");
+  const motivo = String(formData.get("motivo") ?? "");
+  const detalhe = String(formData.get("detalhe") ?? "").trim();
+
+  const presets: Record<string, string> = SIGNATURE_REJECTION_REASONS;
+  const reason = motivo === "outro" ? detalhe : presets[motivo] ?? "";
+  if (!reason) {
+    return {
+      error: motivo === "outro" ? "Descreva o motivo da recusa." : "Escolha o motivo da recusa.",
+    };
+  }
+  if (reason.length > 500) {
+    return { error: "O motivo pode ter no máximo 500 caracteres." };
+  }
+
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+    include: { signature: true, owner: { select: { name: true, email: true, role: true } } },
+  });
+  if (!document) {
+    return { error: "Documento não encontrado." };
+  }
+  const signature = document.signature;
+  if (!signature) {
+    return { error: "Este documento não tem assinatura para recusar." };
+  }
+
+  await prisma.$transaction([
+    prisma.signatureRejection.create({
+      data: {
+        documentId: document.id,
+        signerUserId: signature.userId,
+        signerName: signature.signerName,
+        signedAt: signature.signedAt,
+        ipAddress: signature.ipAddress,
+        userAgent: signature.userAgent,
+        imageData: signature.imageData,
+        signedFilePath: document.signedFilePath,
+        auditFilePath: document.auditFilePath,
+        reason,
+        rejectedByUserId: authSession.user.id,
+      },
+    }),
+    prisma.signature.delete({ where: { id: signature.id } }),
+    prisma.document.update({
+      where: { id: document.id },
+      // As vias da assinatura recusada deixam o documento. Os arquivos ficam
+      // no storage, apontados pelo histórico acima — são parte da prova.
+      data: { status: "PENDING_SIGNATURE", signedFilePath: null, auditFilePath: null },
+    }),
+  ]);
+
+  const appUrl = process.env.APP_URL;
+  const documentPath = documentPathForRole(document.owner.role, document.id);
+  const sent = await sendSignatureRejectedEmail({
+    to: document.owner.email,
+    recipientName: document.owner.name,
+    documentTitle: document.title,
+    reason,
+    documentUrl: appUrl && documentPath ? `${appUrl}${documentPath}` : undefined,
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/portal-colaborador");
+  revalidatePath(`/portal-colaborador/documentos/${document.id}`);
+  revalidatePath(`/portal-rh/documentos/${document.id}`);
+  revalidatePath(`/admin/documentos/${document.id}`);
+  // A página em que o botão estava perde a assinatura; o aviso vai pela URL.
+  redirect(`/admin/documentos/${document.id}?recusa=${sent.ok ? "ok" : "sem-email"}`);
 }

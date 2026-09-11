@@ -252,3 +252,60 @@ export async function sendPasswordResetEmail({
     console.error("[email] Falha ao enviar e-mail de redefinição de senha:", error);
   }
 }
+
+/**
+ * Avisa o colaborador que a assinatura dele foi recusada e que o documento
+ * voltou a esperar assinatura. Sem anexo: ele já recebeu o arquivo antes, e o
+ * que precisa agora é o motivo e o caminho de volta.
+ */
+export async function sendSignatureRejectedEmail({
+  to,
+  recipientName,
+  documentTitle,
+  reason,
+  documentUrl,
+}: {
+  to: string;
+  recipientName: string;
+  documentTitle: string;
+  reason: string;
+  documentUrl?: string;
+}): Promise<SendResult> {
+  const client = getTransporter();
+  if (!client) {
+    const error = "GMAIL_USER/GMAIL_APP_PASSWORD não configurados.";
+    console.warn(`[email] ${error} Aviso de assinatura recusada não enviado.`);
+    return { ok: false, error };
+  }
+
+  const text = [
+    `Olá, ${recipientName}.`,
+    `A sua assinatura no documento "${documentTitle}" foi recusada e precisa ser feita novamente.`,
+    `Motivo: ${reason}`,
+    "Abra o documento no portal e assine outra vez.",
+    ...(documentUrl ? [documentUrl] : []),
+  ].join("\n\n");
+
+  try {
+    await client.sendMail({
+      from: `"Portal de Documentos" <${process.env.GMAIL_USER}>`,
+      to,
+      encoding: "base64",
+      subject: `Assine novamente: ${documentTitle}`,
+      text,
+      html: [
+        `<p>Olá, ${escapeHtml(recipientName)}.</p>`,
+        `<p>A sua assinatura no documento <strong>${escapeHtml(documentTitle)}</strong> foi recusada e precisa ser feita novamente.</p>`,
+        `<p><strong>Motivo:</strong> ${escapeHtml(reason)}</p>`,
+        `<p>Abra o documento no portal e assine outra vez.</p>`,
+        documentUrl
+          ? `<p><a href="${escapeHtml(documentUrl)}" style="display:inline-block;background:#0f172a;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none">Assinar novamente no portal</a></p>`
+          : "",
+      ].join(""),
+    });
+    return { ok: true };
+  } catch (error) {
+    console.error("[email] Falha ao enviar aviso de assinatura recusada:", error);
+    return { ok: false, error: (error as Error).message };
+  }
+}

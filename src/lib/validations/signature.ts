@@ -21,3 +21,12 @@ export function parseSignatureImage(value: unknown): string | null {
 
   return trimmed;
 }
+
+/**
+ * Motivos de recusa oferecidos ao admin. O texto vai no e-mail ao
+ * colaborador e fica no histórico; "outro" pede uma explicação livre.
+ */
+export const SIGNATURE_REJECTION_REASONS = {
+  ilegivel: "Assinatura ilegível ou incompleta",
+  outra_pessoa: "Assinatura com o nome de outra pessoa",
+} as const;

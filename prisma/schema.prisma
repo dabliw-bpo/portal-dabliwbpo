@@ -158,6 +158,8 @@ model User {
   ownedDocuments      Document[]           @relation("DocumentOwner")
   uploadedDocuments   Document[]           @relation("DocumentUploader")
   signatures          Signature[]
+  rejectedSignatures  SignatureRejection[] @relation("RejectedSigner")
+  signatureRejections SignatureRejection[] @relation("SignatureRejecter")
   vacationRequests    VacationRequest[]    @relation("VacationCollaborator")
   reviewedVacations   VacationRequest[]    @relation("VacationReviewer")
   passwordResetTokens PasswordResetToken[]
@@ -215,6 +217,7 @@ model Document {
   owner           User             @relation("DocumentOwner", fields: [ownerUserId], references: [id])
   uploadedBy      User             @relation("DocumentUploader", fields: [uploadedByUserId], references: [id])
   signature       Signature?
+  signatureRejections SignatureRejection[]
   vacationRequest VacationRequest?
   paymentReceipt  PaymentReceipt?
   task            Task?            @relation(fields: [taskId], references: [id])
@@ -237,6 +240,32 @@ model Signature {
 
   document Document @relation(fields: [documentId], references: [id])
   user     User     @relation(fields: [userId], references: [id])
+}
+
+/// Assinatura recusada pelo admin — ilegível, incompleta ou com o nome de
+/// outra pessoa. A Signature sai do documento para liberar uma nova, mas a
+/// evidência do que foi recusado fica aqui: quem assinou, quando, de onde e o
+/// traço, além das vias que aquela assinatura gerou.
+model SignatureRejection {
+  id               String   @id @default(cuid())
+  documentId       String
+  signerUserId     String
+  signerName       String
+  signedAt         DateTime
+  ipAddress        String
+  userAgent        String
+  imageData        String?
+  signedFilePath   String?
+  auditFilePath    String?
+  reason           String
+  rejectedAt       DateTime @default(now())
+  rejectedByUserId String
+
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  signer     User     @relation("RejectedSigner", fields: [signerUserId], references: [id])
+  rejectedBy User     @relation("SignatureRejecter", fields: [rejectedByUserId], references: [id])
+
+  @@index([documentId])
 }
 
 model VacationRequest {
