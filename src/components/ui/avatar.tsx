@@ -22,7 +22,7 @@ export function Avatar({
         alt={name}
         width={size}
         height={size}
-        className="shrink-0 rounded-full object-cover"
+        className="shrink-0 rounded-full object-cover portal:ring-1 portal:ring-fio-forte"
         style={{ width: size, height: size }}
       />
     );
@@ -31,7 +31,7 @@ export function Avatar({
   return (
     <span
       aria-hidden
-      className="flex shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-medium text-slate-600"
+      className="flex shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-medium text-slate-600 portal:bg-cartao portal:text-ouro portal:ring-1 portal:ring-fio-forte"
       style={{ width: size, height: size }}
     >
       {initials(name)}

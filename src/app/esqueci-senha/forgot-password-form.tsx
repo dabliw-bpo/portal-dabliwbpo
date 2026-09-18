@@ -11,17 +11,20 @@ export function ForgotPasswordForm() {
 
   if (state.message) {
     return (
-      <p className="mt-6 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+      <p className="mt-8 border border-salvia/30 bg-salvia/10 p-4 text-sm text-marfim" role="status">
         {state.message}
       </p>
     );
   }
 
   return (
-    <form action={formAction} className="mt-6 flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium text-slate-700">
-          Email
+    <form action={formAction} className="mt-8 flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
+        <label
+          htmlFor="email"
+          className="text-[11px] font-medium uppercase tracking-[0.22em] text-areia"
+        >
+          E-mail
         </label>
         <input
           id="email"
@@ -33,12 +36,12 @@ export function ForgotPasswordForm() {
         />
       </div>
       {state.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-terracota" role="alert">
           {state.error}
         </p>
       )}
-      <button type="submit" disabled={pending} className={`mt-2 ${buttonPrimary}`}>
-        {pending ? "Enviando..." : "Enviar link de redefinição"}
+      <button type="submit" disabled={pending} className={`mt-2 w-full ${buttonPrimary}`}>
+        {pending ? "Enviando..." : "Enviar link"}
       </button>
     </form>
   );

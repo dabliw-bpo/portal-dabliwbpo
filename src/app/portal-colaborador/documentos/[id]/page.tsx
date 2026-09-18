@@ -1,10 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { DocumentViewer } from "@/components/documents/document-viewer";
-import { DocumentStatusBadge } from "@/components/documents/document-status-badge";
-import { SignDocumentModal } from "@/components/documents/sign-document-modal";
-import { SignatureProof } from "@/components/documents/signature-proof";
+import { dataCurta } from "@/lib/datas";
+import { DocumentoDetalhe } from "@/components/portal/documento-detalhe";
 
 export default async function ColaboradorDocumentoPage({
   params,
@@ -19,7 +17,10 @@ export default async function ColaboradorDocumentoPage({
 
   const document = await prisma.document.findUnique({
     where: { id },
-    include: { signature: true },
+    include: {
+      signature: true,
+      signatureRejections: { orderBy: { rejectedAt: "desc" }, take: 1, select: { reason: true } },
+    },
   });
 
   if (!document || document.ownerUserId !== session.user.id) {
@@ -27,37 +28,12 @@ export default async function ColaboradorDocumentoPage({
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-slate-900">{document.title}</h1>
-          <p className="mt-1 text-sm text-slate-500">{document.fileName}</p>
-        </div>
-        <DocumentStatusBadge status={document.status} />
-      </div>
-
-      {/* Antes do visualizador: o PDF é alto, e embaixo dele o botão de
-          assinar ficava fora da tela em quem abre pelo celular. */}
-      {document.signature ? (
-        <div className="mt-6">
-          <SignatureProof signature={document.signature} auditUrl={document.auditFilePath ? `/api/documentos/${document.id}/arquivo?tipo=auditoria` : null} />
-        </div>
-      ) : (
-        <div className="mt-6 flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-emerald-900">
-            Este documento está aguardando a sua assinatura.
-          </p>
-          <SignDocumentModal documentId={document.id} signerName={session.user.name ?? ""} />
-        </div>
-      )}
-
-      <div className="mt-6">
-        <DocumentViewer
-          fileUrl={`/api/documentos/${document.id}/arquivo`}
-          mimeType={document.mimeType}
-          fileName={document.fileName}
-        />
-      </div>
-    </div>
+    <DocumentoDetalhe
+      voltar={{ href: "/portal-colaborador/documentos", rotulo: "Meus documentos" }}
+      documento={{ ...document, enviadoEm: dataCurta(document.createdAt) }}
+      arquivoUrl={`/api/documentos/${document.id}/arquivo`}
+      assinante={session.user.name ?? ""}
+      recusaAnterior={document.signature ? null : (document.signatureRejections[0]?.reason ?? null)}
+    />
   );
 }

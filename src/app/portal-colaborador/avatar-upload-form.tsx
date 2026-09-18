@@ -11,26 +11,29 @@ export function AvatarUploadForm({ name, avatarUrl }: { name: string; avatarUrl:
   const [state, formAction, pending] = useActionState(updateAvatarAction, initialState);
 
   return (
-    <div className="flex items-center gap-4">
-      <Avatar name={name} src={avatarUrl} size={64} />
-      <form action={formAction} className="flex flex-col gap-2">
-        <label htmlFor="avatar" className="text-xs font-medium text-slate-700">
+    <div className="flex flex-wrap items-center gap-5">
+      <Avatar name={name} src={avatarUrl} size={72} />
+      <form action={formAction} className="flex min-w-0 flex-col gap-2">
+        <label
+          htmlFor="avatar"
+          className="text-[11px] font-medium uppercase tracking-[0.22em] text-areia"
+        >
           Foto de perfil
         </label>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input
             id="avatar"
             name="avatar"
             type="file"
             accept=".png,.jpg,.jpeg,.webp"
-            className="text-xs text-slate-500 file:mr-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+            className="max-w-full text-xs text-areia file:mr-3 file:cursor-pointer file:border file:border-solid file:border-fio-forte file:bg-transparent file:px-3 file:py-2 file:text-[11px] file:font-medium file:uppercase file:tracking-[0.14em] file:text-ouro hover:file:bg-ouro/10"
           />
           <button type="submit" disabled={pending} className={buttonGhost}>
             {pending ? "Enviando..." : "Salvar"}
           </button>
         </div>
         {state.error && (
-          <p className="text-xs text-red-600" role="alert">
+          <p className="text-xs text-terracota" role="alert">
             {state.error}
           </p>
         )}

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { VacationStatusBadge } from "@/components/vacation/vacation-status-badge";
 import { formatVacationPeriod } from "@/lib/format";
+import { dataCurta } from "@/lib/datas";
 import { buttonPrimary } from "@/components/ui/styles";
+import { FeriasLista } from "@/components/portal/ferias-lista";
+import { Sobrelinha } from "@/components/portal/sobrelinha";
 
 export default async function PortalColaboradorFeriasPage() {
   const session = await auth();
@@ -14,58 +16,27 @@ export default async function PortalColaboradorFeriasPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-slate-900">Minhas férias</h1>
-        <Link
-          href="/portal-colaborador/ferias/nova"
-          className={buttonPrimary}
-        >
+      <div className="flex flex-wrap items-end justify-between gap-6">
+        <div>
+          <Sobrelinha>Solicitações e acordos</Sobrelinha>
+          <h1 className="mt-5 font-serifa text-5xl font-medium leading-none text-marfim sm:text-6xl">
+            Minhas férias
+          </h1>
+        </div>
+        <Link href="/portal-colaborador/ferias/nova" className={buttonPrimary}>
           Solicitar férias
         </Link>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
-            <tr>
-              <th scope="col" className="px-4 py-2 font-medium">Período</th>
-              <th scope="col" className="px-4 py-2 font-medium">Status</th>
-              <th scope="col" className="px-4 py-2 font-medium">Documento</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {requests.map((req) => (
-              <tr key={req.id}>
-                <td className="px-4 py-2 text-slate-900">
-                  {formatVacationPeriod(req)}
-                </td>
-                <td className="px-4 py-2">
-                  <VacationStatusBadge status={req.status} />
-                </td>
-                <td className="px-4 py-2">
-                  {req.documentId ? (
-                    <Link
-                      href={`/portal-colaborador/documentos/${req.documentId}`}
-                      className="text-slate-900 underline hover:text-slate-700"
-                    >
-                      Ver / assinar
-                    </Link>
-                  ) : (
-                    <span className="text-slate-600">—</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {requests.length === 0 && (
-              <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-slate-600">
-                  Nenhuma solicitação ainda.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <FeriasLista
+        itens={requests.map((req) => ({
+          id: req.id,
+          periodo: formatVacationPeriod(req),
+          solicitadoEm: dataCurta(req.createdAt),
+          status: req.status,
+          documentId: req.documentId,
+        }))}
+      />
     </div>
   );
 }

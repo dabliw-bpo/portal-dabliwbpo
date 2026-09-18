@@ -8,14 +8,16 @@ import { MIN_PASSWORD_LENGTH } from "@/lib/validations/password";
 
 const initialState: ResetPasswordState = {};
 
+const rotulo = "text-[11px] font-medium uppercase tracking-[0.22em] text-areia";
+
 export function ResetPasswordForm({ token }: { token: string }) {
   const [state, formAction, pending] = useActionState(resetPasswordAction, initialState);
 
   return (
-    <form action={formAction} className="mt-6 flex flex-col gap-4">
+    <form action={formAction} className="mt-8 flex flex-col gap-5">
       <input type="hidden" name="token" value={token} />
-      <div className="flex flex-col gap-1">
-        <label htmlFor="password" className="text-sm font-medium text-slate-700">
+      <div className="flex flex-col gap-2">
+        <label htmlFor="password" className={rotulo}>
           Nova senha
         </label>
         <input
@@ -25,12 +27,16 @@ export function ResetPasswordForm({ token }: { token: string }) {
           required
           minLength={MIN_PASSWORD_LENGTH}
           autoComplete="new-password"
+          aria-describedby="password-hint"
           className={inputBase}
         />
+        <p id="password-hint" className="text-xs text-areia">
+          Pelo menos {MIN_PASSWORD_LENGTH} caracteres.
+        </p>
       </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">
-          Confirmar nova senha
+      <div className="flex flex-col gap-2">
+        <label htmlFor="confirmPassword" className={rotulo}>
+          Repita a senha nova
         </label>
         <input
           id="confirmPassword"
@@ -43,15 +49,15 @@ export function ResetPasswordForm({ token }: { token: string }) {
         />
       </div>
       {state.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-terracota" role="alert">
           {state.error}{" "}
-          <Link href="/esqueci-senha" className="underline">
-            Solicitar novo link
+          <Link href="/esqueci-senha" className="text-ouro underline hover:text-ouro-claro">
+            Pedir um link novo
           </Link>
         </p>
       )}
-      <button type="submit" disabled={pending} className={`mt-2 ${buttonPrimary}`}>
-        {pending ? "Salvando..." : "Salvar nova senha"}
+      <button type="submit" disabled={pending} className={`mt-2 w-full ${buttonPrimary}`}>
+        {pending ? "Salvando..." : "Salvar senha nova"}
       </button>
     </form>
   );

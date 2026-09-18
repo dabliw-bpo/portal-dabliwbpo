@@ -1,13 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { buttonSecondary } from "@/components/ui/styles";
+import { buttonGhost } from "@/components/ui/styles";
 
 /** Points are stored normalized (0..1) so a resize redraws faithfully. */
 type Point = { x: number; y: number };
 
-const INK = "#0f172a";
+// A imagem vai carimbada em PDFs de fundo branco, então a tinta é escura
+// mesmo com o portal escuro em volta.
+const INK = "#1a1814";
 
+/**
+ * O quadro é uma tira de papel marfim com o "×" e a linha de assinar. Os dois
+ * ficam por cima do canvas, não desenhados nele: a imagem exportada leva só a
+ * rubrica, sobre fundo transparente.
+ */
 export function SignaturePad({
   name,
   onSignatureChange,
@@ -129,28 +136,43 @@ export function SignaturePad({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span id={`${name}-label`} className="text-sm font-medium text-slate-700">
-          Assinatura manuscrita
+        <span
+          id={`${name}-label`}
+          className="text-[11px] font-medium uppercase tracking-[0.22em] text-areia"
+        >
+          Sua assinatura
         </span>
-        <button type="button" onClick={clear} disabled={!hasSignature} className={buttonSecondary}>
+        <button type="button" onClick={clear} disabled={!hasSignature} className={buttonGhost}>
           Limpar
         </button>
       </div>
 
-      <canvas
-        ref={canvasRef}
-        aria-labelledby={`${name}-label`}
-        aria-describedby={`${name}-hint`}
-        role="img"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        className="h-40 w-full touch-none rounded-md border-2 border-dashed border-slate-300 bg-white"
-      />
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          aria-labelledby={`${name}-label`}
+          aria-describedby={`${name}-hint`}
+          role="img"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="block h-44 w-full cursor-crosshair touch-none bg-marfim"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute bottom-7 left-5 font-serifa text-2xl italic leading-none text-ouro-tinta"
+        >
+          ×
+        </span>
+        <span
+          aria-hidden
+          className="pointer-events-none absolute bottom-8 left-11 right-5 h-px bg-breu/25"
+        />
+      </div>
 
-      <p id={`${name}-hint`} className="text-xs text-slate-500">
-        Desenhe sua assinatura no quadro acima usando o mouse, a caneta ou o dedo.
+      <p id={`${name}-hint`} className="text-xs text-areia">
+        Assine sobre a linha com o dedo, a caneta ou o mouse.
       </p>
 
       <input ref={inputRef} type="hidden" name={name} />
