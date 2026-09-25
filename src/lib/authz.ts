@@ -1,10 +1,22 @@
 import { Role } from "@prisma/client";
 import type { Session } from "next-auth";
 
+/** Papéis da equipe interna do BPO — os que executam atividades. */
+export const INTERNAL_ROLES = ["ADMIN", "GESTOR", "OPERADOR"] as const satisfies readonly Role[];
+
+export type InternalRole = (typeof INTERNAL_ROLES)[number];
+
+export function isInternalRole(role: Role): role is InternalRole {
+  return (INTERNAL_ROLES as readonly Role[]).includes(role);
+}
+
 export function homePathForRole(role: Role): string {
   switch (role) {
     case "ADMIN":
       return "/admin";
+    case "GESTOR":
+    case "OPERADOR":
+      return "/atividades";
     case "COMPANY_HR":
       return "/portal-rh";
     case "COLLABORATOR":
