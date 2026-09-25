@@ -135,8 +135,6 @@ model User {
   cpf                 String?
   admissionDate       DateTime?
   birthDate           DateTime?
-  /// Ano do último parabéns enviado, para o envio diário não repetir.
-  birthdayGreetedYear Int?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 

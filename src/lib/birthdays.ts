@@ -64,30 +64,3 @@ export async function listMonthBirthdays(now: Date = new Date()): Promise<Birthd
     .sort((a, b) => a.day - b.day || a.name.localeCompare(b.name, "pt-BR"));
 }
 
-/** Everyone whose birthday falls today and who has not been greeted this year. */
-export async function listTodaysBirthdaysToGreet(now: Date = new Date()) {
-  const { year, month, day } = todayInBrazil(now);
-
-  const users = await prisma.user.findMany({
-    where: {
-      birthDate: { not: null },
-      active: true,
-      OR: [{ birthdayGreetedYear: null }, { birthdayGreetedYear: { lt: year } }],
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      birthDate: true,
-      company: { select: { name: true } },
-    },
-  });
-
-  return {
-    year,
-    users: users.filter(
-      (user) =>
-        user.birthDate!.getUTCMonth() + 1 === month && user.birthDate!.getUTCDate() === day
-    ),
-  };
-}
