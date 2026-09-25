@@ -11,7 +11,7 @@ export async function CompanyTabs({
    * ainda passa esse valor, mas o processo será revisto antes de voltar à
    * navegação.
    */
-  active: "cadastro" | "bancos" | "servicos" | "pessoas" | "integracoes";
+  active: "cadastro" | "bancos" | "servicos" | "pessoas";
 }) {
   // Vacation reviews and unsigned documents are both reached through Folha,
   // so the badge lives there.
@@ -21,7 +21,6 @@ export async function CompanyTabs({
     { key: "cadastro", label: "Cadastro", href: `/admin/empresas/${companyId}/cadastro` },
     { key: "bancos", label: "Dados bancários", href: `/admin/empresas/${companyId}/bancos` },
     { key: "pessoas", label: "Folha", href: `/admin/empresas/${companyId}` },
-    { key: "integracoes", label: "Integrações", href: `/admin/empresas/${companyId}/integracoes` },
   ] as const;
 
   return (

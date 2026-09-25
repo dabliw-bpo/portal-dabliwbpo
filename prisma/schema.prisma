@@ -96,7 +96,6 @@ model Company {
 
   users                User[]
   bankAccounts         BankAccount[]
-  contaAzulIntegration ContaAzulIntegration?
   serviceContracts     ServiceContract[]
   tasks                Task[]
   paymentReceipts      PaymentReceipt[]
@@ -119,18 +118,6 @@ model BankAccount {
   tasks            Task[]
 
   @@index([companyId])
-}
-
-model ContaAzulIntegration {
-  id           String   @id @default(cuid())
-  companyId    String   @unique
-  accessToken  String
-  refreshToken String
-  expiresAt    DateTime
-  connectedAt  DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 model User {
