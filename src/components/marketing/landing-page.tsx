@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -5,8 +6,8 @@ import {
   ChatCircle,
   Check,
   CheckCircle,
+  Briefcase,
   FileText,
-  Folder,
   Handshake,
   IdentificationBadge,
   LockKey,
@@ -76,8 +77,13 @@ const DIFERENCIAIS = [
   },
   {
     icon: LockKey,
-    title: "Acesso separado por perfil",
-    desc: "Clientes e colaboradores enxergam só o que é deles, com login próprio.",
+    title: "Acesso próprio para cada colaborador",
+    desc: "Cada colaborador enxerga só o que é dele, com login próprio.",
+  },
+  {
+    icon: Briefcase,
+    title: "Trabalhamos junto com o seu contador",
+    desc: "Enviamos os documentos todo mês e esclarecemos as dúvidas com ele.",
   },
   {
     icon: ChatCircle,
@@ -93,11 +99,15 @@ export function LandingPage() {
     >
       <header className="fixed inset-x-0 top-0 z-50 border-b border-[rgba(201,169,110,0.12)] bg-[#0f0e0b]/85 backdrop-blur-xl">
         <div className="relative mx-auto flex h-20 max-w-[1280px] items-center justify-between px-6 sm:px-10 lg:px-16">
-          <a
-            href="#hero"
-            className="font-[family-name:var(--font-display)] text-xl font-medium tracking-wide text-[#f0ece4]"
-          >
-            DABLIW<span className="text-[#c9a96e]"> BPO</span>
+          <a href="#hero" aria-label="DABLIW BPO, início">
+            <Image
+              src="/logo-dabliw-bpo.svg"
+              alt="DABLIW BPO"
+              width={172}
+              height={40}
+              priority
+              className="h-10 w-auto"
+            />
           </a>
 
           <nav className="hidden items-center gap-9 md:flex">
@@ -305,20 +315,11 @@ export function LandingPage() {
             <div className="grid gap-4">
               <div className="flex items-center gap-4 rounded-xl border border-[rgba(201,169,110,0.12)] bg-[#1c1a15] p-5">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgba(201,169,110,0.25)] text-[#c9a96e]">
-                  <Folder size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#f0ece4]">Portal do Cliente</p>
-                  <p className="text-xs text-[#706b61]">Documentos e relatórios da sua empresa, organizados.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 rounded-xl border border-[rgba(201,169,110,0.12)] bg-[#1c1a15] p-5">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgba(201,169,110,0.25)] text-[#c9a96e]">
                   <IdentificationBadge size={20} />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-[#f0ece4]">Portal do Colaborador</p>
-                  <p className="text-xs text-[#706b61]">Holerites, férias e admissão em um só lugar.</p>
+                  <p className="text-xs text-[#706b61]">Holerites, férias e contratos em um só lugar, assinados no celular.</p>
                 </div>
               </div>
             </div>
@@ -336,16 +337,9 @@ export function LandingPage() {
             </h2>
             <p className="mb-8 max-w-md text-base leading-relaxed text-[#a8a295]">
               Holerites, admissões, férias e contratos organizados num portal só
-              seu, com acesso separado para clientes e colaboradores.
+              seu, com acesso separado para cada colaborador.
             </p>
             <div className="flex flex-wrap gap-x-8 gap-y-4">
-              <Link
-                href="/login?callbackUrl=/portal-cliente"
-                className="inline-flex items-center gap-2 text-[14px] font-normal uppercase tracking-[0.1em] text-[#a8a295] transition-colors hover:text-[#c9a96e]"
-              >
-                Portal do Cliente
-                <ArrowRight size={14} />
-              </Link>
               <Link
                 href="/login?callbackUrl=/portal-colaborador"
                 className="inline-flex items-center gap-2 text-[14px] font-normal uppercase tracking-[0.1em] text-[#a8a295] transition-colors hover:text-[#c9a96e]"
@@ -445,9 +439,7 @@ export function LandingPage() {
       <footer className="px-6 py-14 sm:px-10 lg:px-16">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-10 md:flex-row md:items-start md:justify-between">
           <div className="max-w-xs">
-            <span className="font-[family-name:var(--font-display)] text-xl font-medium text-[#f0ece4]">
-              DABLIW<span className="text-[#c9a96e]"> BPO</span>
-            </span>
+            <Image src="/logo-dabliw-bpo.svg" alt="DABLIW BPO" width={190} height={44} className="h-11 w-auto" />
             <p className="mt-3 text-sm leading-relaxed text-[#706b61]">
               Financeiro e RH completos para empresas que preferem cuidar do
               próprio negócio.
@@ -476,11 +468,6 @@ export function LandingPage() {
               </h4>
               <ul className="mt-4 flex flex-col gap-2.5 text-sm text-[#a8a295]">
                 <li>
-                  <Link href="/login?callbackUrl=/portal-cliente" className="transition-colors hover:text-[#c9a96e]">
-                    Portal do Cliente
-                  </Link>
-                </li>
-                <li>
                   <Link href="/login?callbackUrl=/portal-colaborador" className="transition-colors hover:text-[#c9a96e]">
                     Portal do Colaborador
                   </Link>
@@ -506,6 +493,16 @@ export function LandingPage() {
                     className="transition-colors hover:text-[#c9a96e]"
                   >
                     (65) 99253-6122
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.instagram.com/dabliwbpo"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="transition-colors hover:text-[#c9a96e]"
+                  >
+                    @dabliwbpo
                   </a>
                 </li>
               </ul>
