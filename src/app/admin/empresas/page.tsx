@@ -10,12 +10,29 @@ export default async function AdminEmpresasPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold text-slate-900">Empresas</h1>
-        <Link href="/admin/empresas/novo" className={buttonPrimary}>
-          Nova empresa
-        </Link>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link
+            href="/admin/servicos"
+            className="text-sm text-slate-600 underline hover:text-slate-900"
+          >
+            Catálogo de serviços
+          </Link>
+          <Link
+            href="/atividades"
+            className="text-sm text-slate-600 underline hover:text-slate-900"
+          >
+            Fila de atividades
+          </Link>
+          <Link href="/admin/empresas/novo" className={buttonPrimary}>
+            Nova empresa
+          </Link>
+        </div>
       </div>
+      <p className="mt-1 text-sm text-slate-500">
+        As demandas de cada cliente ficam na aba Gestão de Tarefas da empresa.
+      </p>
 
       <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">

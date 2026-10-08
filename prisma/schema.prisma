@@ -436,6 +436,7 @@ model ServiceContract {
   /// TRIMESTRAL/ANUAL — meses aplicáveis (1 a 12).
   months         Int[]
   /// Hora limite legal, "HH:mm". O corte bancário mora aqui.
+  deadlineTime   String         @default("18:00")
 
   adjustment       NonBusinessDayAdjustment @default(POSTERGAR)
   /// Prazo meta = prazo legal menos N dias úteis.
