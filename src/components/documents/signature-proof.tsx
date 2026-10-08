@@ -1,5 +1,6 @@
 import type { Signature } from "@prisma/client";
 import { APP_TIME_ZONE } from "@/lib/format";
+import { describeSelfie } from "@/lib/selfie";
 
 /**
  * The signature receipt shown on every document detail page. `detailed` adds
@@ -9,12 +10,21 @@ export function SignatureProof({
   signature,
   detailed = false,
   auditUrl = null,
+  selfieUrl = null,
 }: {
   signature: Signature;
   detailed?: boolean;
   /** Link para o relatório de auditoria, quando já emitido. */
   auditUrl?: string | null;
+  /** Só o admin recebe: a imagem da selfie não é mostrada a mais ninguém na tela. */
+  selfieUrl?: string | null;
 }) {
+  const selfieText = describeSelfie({
+    hasSelfie: Boolean(signature.selfiePath),
+    source: signature.selfieSource,
+    skipReason: signature.selfieSkipReason,
+  });
+
   return (
     <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 portal:rounded-none portal:border-fio-forte portal:bg-cartao portal:p-6 portal:text-areia">
       <p className="font-medium portal:text-[12px] portal:uppercase portal:tracking-[0.22em] portal:text-salvia">
@@ -35,6 +45,20 @@ export function SignatureProof({
         </figure>
       )}
 
+      {selfieUrl && signature.selfiePath && (
+        <figure className="mt-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- rota protegida do próprio app */}
+          <img
+            src={selfieUrl}
+            alt={`Selfie de ${signature.signerName} no ato da assinatura`}
+            width={96}
+            height={96}
+            className="h-24 w-24 rounded-md border border-emerald-200 object-cover"
+          />
+          <figcaption className="mt-1 text-xs text-emerald-800">Selfie no ato da assinatura</figcaption>
+        </figure>
+      )}
+
       <div className="mt-3 portal:mt-4">
         <p>
           Assinante: <span className="portal:text-marfim">{signature.signerName}</span>
@@ -46,6 +70,12 @@ export function SignatureProof({
             <p>IP: {signature.ipAddress}</p>
             <p>Navegador: {signature.userAgent}</p>
           </>
+        )}
+        {selfieText && (detailed || signature.selfiePath) && (
+          <p>{detailed ? selfieText : "Selfie registrada junto com a assinatura."}</p>
+        )}
+        {detailed && signature.selfieHash && (
+          <p className="break-all font-mono text-xs">SHA-256 da selfie: {signature.selfieHash}</p>
         )}
       </div>
 

@@ -222,6 +222,17 @@ model Signature {
   /// Assinatura manuscrita capturada no ato, como data URL PNG. Nulo apenas
   /// para as assinaturas registradas antes da captura passar a ser exigida.
   imageData  String?
+  /// Selfie tirada no ato da assinatura (JPEG no storage privado). Dado
+  /// pessoal sensível: só o admin abre; o relatório de auditoria leva a foto.
+  /// Nula quando a pessoa não pôde tirá-la — `selfieSkipReason` diz por quê.
+  selfiePath       String?
+  /// SHA-256 do arquivo da selfie, impresso no relatório de auditoria.
+  selfieHash       String?
+  /// "ao_vivo" (câmera aberta pelo portal) ou "camera_do_aparelho" (o app de
+  /// câmera do celular, quando o navegador não libera a câmera).
+  selfieSource     String?
+  /// "sem_suporte", "permissao_negada", "erro_camera" ou "falha_ao_salvar".
+  selfieSkipReason String?
 
   document Document @relation(fields: [documentId], references: [id])
   user     User     @relation(fields: [userId], references: [id])
@@ -242,6 +253,9 @@ model SignatureRejection {
   imageData        String?
   signedFilePath   String?
   auditFilePath    String?
+  /// A selfie da assinatura recusada, preservada junto com o traço dela.
+  selfiePath       String?
+  selfieHash       String?
   reason           String
   rejectedAt       DateTime @default(now())
   rejectedByUserId String

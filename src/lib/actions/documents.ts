@@ -18,6 +18,15 @@ import {
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES, uploadDocumentSchema } from "@/lib/validations/document";
 import { SIGNATURE_REJECTION_REASONS, parseSignatureImage } from "@/lib/validations/signature";
 import { buildSignatureReport, sha256 } from "@/lib/signature-report";
+import {
+  parseSelfieImage,
+  parseSelfieSkipReason,
+  parseSelfieSource,
+  selfieExigida,
+  type ParsedSelfie,
+  type SelfieSkipReason,
+  type SelfieSource,
+} from "@/lib/selfie";
 import { appendSignaturePage, stampSignatureOnReceipt } from "@/lib/signature-stamp";
 
 export type UploadDocumentState = {
@@ -180,12 +189,17 @@ async function issueSignatureReceipt({
   ipAddress,
   userAgent,
   imageData,
+  selfie,
+  selfieSkipReason,
 }: {
   document: SignedDocument;
   signedAt: Date;
   ipAddress: string;
   userAgent: string;
   imageData: string;
+  /** A foto que foi de fato guardada, quando houve. */
+  selfie: (ParsedSelfie & { source: SelfieSource }) | null;
+  selfieSkipReason: SelfieSkipReason | null;
 }): Promise<void> {
   const company = document.owner.company;
   const original = await readStoredFile(document.filePath);
@@ -221,6 +235,8 @@ async function issueSignatureReceipt({
       ipAddress,
       userAgent,
       signatureImage: imageData,
+      selfie: selfie ? { bytes: selfie.buffer, hash: selfie.hash, source: selfie.source } : null,
+      selfieSkipReason,
     },
   });
 
@@ -396,6 +412,39 @@ export async function signDocumentAction(
     return { error: "Desenhe sua assinatura manuscrita para concluir." };
   }
 
+  // A selfie vem junto com a assinatura. Sem câmera (aparelho antigo, navegador
+  // embutido num aplicativo, permissão recusada) a pessoa ainda assina, e o
+  // comprovante registra que foi sem selfie e por quê — o navegador declara o
+  // motivo. Já uma foto inválida, ou nem foto nem motivo, não passa.
+  let selfie: (ParsedSelfie & { source: SelfieSource }) | null = null;
+  let selfieSkipReason: SelfieSkipReason | null = null;
+  if (selfieExigida(session.user.email)) {
+    const parsed = parseSelfieImage(formData.get("selfieImage"));
+    const source = parseSelfieSource(formData.get("selfieSource"));
+    const skip = parseSelfieSkipReason(formData.get("selfieSkip"));
+    if (parsed && source) {
+      selfie = { ...parsed, source };
+    } else if (skip) {
+      selfieSkipReason = skip;
+    } else {
+      return { error: "Tire a selfie para concluir a assinatura." };
+    }
+  }
+
+  // A foto é guardada antes do registro, como os demais arquivos. Se o storage
+  // falhar, a pessoa não perde a assinatura que já desenhou: assina sem selfie
+  // e o motivo fica registrado.
+  let selfiePath: string | null = null;
+  if (selfie) {
+    try {
+      selfiePath = await saveFile(selfie.buffer, "selfie.jpg", `${document.id}-selfie-${createId()}`);
+    } catch (error) {
+      console.error("[assinatura] Falha ao guardar a selfie:", error);
+      selfie = null;
+      selfieSkipReason = "falha_ao_salvar";
+    }
+  }
+
   const headerList = await headers();
   const ipAddress = headerList.get("x-forwarded-for")?.split(",")[0]?.trim() || "desconhecido";
   const userAgent = headerList.get("user-agent") ?? "desconhecido";
@@ -403,22 +452,34 @@ export async function signDocumentAction(
   const basePath =
     session.user.role === "COLLABORATOR" ? "/portal-colaborador" : "/portal-cliente";
 
-  await prisma.$transaction([
-    prisma.signature.create({
-      data: {
-        documentId: document.id,
-        userId: session.user.id,
-        signerName: session.user.name ?? session.user.email ?? "Usuário",
-        ipAddress,
-        userAgent,
-        imageData,
-      },
-    }),
-    prisma.document.update({
-      where: { id: document.id },
-      data: { status: "SIGNED" },
-    }),
-  ]);
+  try {
+    await prisma.$transaction([
+      prisma.signature.create({
+        data: {
+          documentId: document.id,
+          userId: session.user.id,
+          signerName: session.user.name ?? session.user.email ?? "Usuário",
+          ipAddress,
+          userAgent,
+          imageData,
+          selfiePath,
+          selfieHash: selfie?.hash ?? null,
+          selfieSource: selfie?.source ?? null,
+          selfieSkipReason,
+        },
+      }),
+      prisma.document.update({
+        where: { id: document.id },
+        data: { status: "SIGNED" },
+      }),
+    ]);
+  } catch (error) {
+    // Sem registro, a foto não tem a que se ligar: não deixa órfã no storage.
+    if (selfiePath) {
+      await deleteStoredFile(selfiePath).catch(() => undefined);
+    }
+    throw error;
+  }
 
   // O comprovante é um efeito posterior: se ele falhar, a assinatura já está
   // registrada e não pode ser desfeita por causa de um PDF ou de um e-mail.
@@ -429,6 +490,8 @@ export async function signDocumentAction(
       ipAddress,
       userAgent,
       imageData,
+      selfie,
+      selfieSkipReason,
     });
   } catch (error) {
     console.error("[assinatura] Falha ao emitir o comprovante:", error);
@@ -463,7 +526,12 @@ export async function deleteDocumentAction(
   const documentId = String(formData.get("documentId") ?? "");
   const document = await prisma.document.findUnique({
     where: { id: documentId },
-    include: { signature: { select: { id: true } }, paymentReceipt: { select: { id: true } } },
+    include: {
+      signature: { select: { id: true } },
+      paymentReceipt: { select: { id: true } },
+      // As selfies de assinaturas recusadas só existem por causa do documento.
+      signatureRejections: { select: { selfiePath: true } },
+    },
   });
 
   if (!document) {
@@ -494,6 +562,9 @@ export async function deleteDocumentAction(
   try {
     await deleteStoredFile(document.filePath);
     if (document.auditFilePath) await deleteStoredFile(document.auditFilePath);
+    for (const recusa of document.signatureRejections) {
+      if (recusa.selfiePath) await deleteStoredFile(recusa.selfiePath);
+    }
   } catch (error) {
     console.error("[documento] Registro excluído, arquivo permaneceu:", error);
   }
@@ -564,6 +635,8 @@ export async function rejectSignatureAction(
         imageData: signature.imageData,
         signedFilePath: document.signedFilePath,
         auditFilePath: document.auditFilePath,
+        selfiePath: signature.selfiePath,
+        selfieHash: signature.selfieHash,
         reason,
         rejectedByUserId: authSession.user.id,
       },

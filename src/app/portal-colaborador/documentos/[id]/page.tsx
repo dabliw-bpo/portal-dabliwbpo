@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { dataCurta } from "@/lib/datas";
+import { selfieExigida } from "@/lib/selfie";
 import { DocumentoDetalhe } from "@/components/portal/documento-detalhe";
 
 export default async function ColaboradorDocumentoPage({
@@ -34,6 +35,7 @@ export default async function ColaboradorDocumentoPage({
       arquivoUrl={`/api/documentos/${document.id}/arquivo`}
       assinante={session.user.name ?? ""}
       recusaAnterior={document.signature ? null : (document.signatureRejections[0]?.reason ?? null)}
+      pedirSelfie={selfieExigida(session.user.email)}
     />
   );
 }

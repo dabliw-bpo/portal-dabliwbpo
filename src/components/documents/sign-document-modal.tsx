@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { signDocumentAction, type SignDocumentState } from "@/lib/actions/documents";
+import { SelfieCapture } from "@/components/documents/selfie-capture";
 import { SignaturePad } from "@/components/documents/signature-pad";
 import { buttonGhost, buttonSuccess } from "@/components/ui/styles";
 
@@ -10,13 +11,17 @@ const initialState: SignDocumentState = {};
 export function SignDocumentModal({
   documentId,
   signerName,
+  pedirSelfie = false,
 }: {
   documentId: string;
   signerName: string;
+  /** Decidido no servidor (selfieExigida): o servidor também confere na hora de gravar. */
+  pedirSelfie?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
+  const [selfiePronta, setSelfiePronta] = useState(false);
   const [state, formAction, pending] = useActionState(signDocumentAction, initialState);
   const submittedOnce = useRef(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -39,6 +44,8 @@ export function SignDocumentModal({
     }
   }, [open]);
 
+  const podeConfirmar = agreed && hasSignature && (!pedirSelfie || selfiePronta) && !pending;
+
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={`shrink-0 ${buttonSuccess}`}>
@@ -49,7 +56,7 @@ export function SignDocumentModal({
         ref={dialogRef}
         onClose={() => setOpen(false)}
         aria-labelledby="sign-document-title"
-        className="m-auto w-[calc(100%-2rem)] max-w-lg border border-fio-forte bg-cartao p-6 text-marfim shadow-[0_40px_90px_-20px_rgba(0,0,0,0.95)] backdrop:bg-breu/80 backdrop:backdrop-blur-sm sm:p-8"
+        className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto border border-fio-forte bg-cartao p-6 text-marfim shadow-[0_40px_90px_-20px_rgba(0,0,0,0.95)] backdrop:bg-breu/80 backdrop:backdrop-blur-sm sm:p-8"
       >
         <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-ouro">
           Assinatura eletrônica
@@ -63,13 +70,15 @@ export function SignDocumentModal({
         <p className="mt-3 text-sm leading-relaxed text-areia">
           Você está assinando como <strong className="font-medium text-marfim">{signerName}</strong>.
           Ficam registrados a sua assinatura manuscrita, o seu nome, a data, a hora e o endereço de
-          onde você assinou.
+          onde você assinou{pedirSelfie ? ", além da sua selfie" : ""}.
         </p>
 
         <form action={formAction} className="mt-6 flex flex-col gap-5">
           <input type="hidden" name="documentId" value={documentId} />
 
           <SignaturePad name="signatureImage" onSignatureChange={setHasSignature} />
+
+          {pedirSelfie && <SelfieCapture ativa={open} onReadyChange={setSelfiePronta} />}
 
           <label className="flex items-start gap-3 text-sm text-areia">
             <input
@@ -91,11 +100,7 @@ export function SignDocumentModal({
             <button type="button" onClick={() => setOpen(false)} className={buttonGhost}>
               Cancelar
             </button>
-            <button
-              type="submit"
-              disabled={!agreed || !hasSignature || pending}
-              className={buttonSuccess}
-            >
+            <button type="submit" disabled={!podeConfirmar} className={buttonSuccess}>
               {pending ? "Assinando..." : "Confirmar assinatura"}
             </button>
           </div>

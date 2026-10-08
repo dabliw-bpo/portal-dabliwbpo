@@ -82,7 +82,12 @@ export default async function AdminDocumentoPage({
 
       {document.signature ? (
         <div className="mt-4 flex flex-col gap-3">
-          <SignatureProof signature={document.signature} detailed auditUrl={document.auditFilePath ? `/api/documentos/${document.id}/arquivo?tipo=auditoria` : null} />
+          <SignatureProof
+            signature={document.signature}
+            detailed
+            auditUrl={document.auditFilePath ? `/api/documentos/${document.id}/arquivo?tipo=auditoria` : null}
+            selfieUrl={document.signature.selfiePath ? `/api/documentos/${document.id}/arquivo?tipo=selfie` : null}
+          />
           <div className="flex justify-end">
             <RejectSignatureButton documentId={document.id} signerName={document.signature.signerName} />
           </div>
@@ -109,6 +114,16 @@ export default async function AdminDocumentoPage({
                       src={r.imageData}
                       alt={`Assinatura recusada de ${r.signerName}`}
                       className="h-14 w-40 rounded border border-slate-200 bg-slate-50 object-contain p-1"
+                    />
+                  )}
+                  {r.selfiePath && (
+                    // eslint-disable-next-line @next/next/no-img-element -- rota protegida do próprio app
+                    <img
+                      src={`/api/documentos/${document.id}/arquivo?tipo=selfie&recusa=${r.id}`}
+                      alt={`Selfie da assinatura recusada de ${r.signerName}`}
+                      width={56}
+                      height={56}
+                      className="h-14 w-14 rounded border border-slate-200 object-cover"
                     />
                   )}
                   <div className="flex flex-col gap-0.5">

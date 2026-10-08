@@ -18,6 +18,7 @@ export function DocumentoDetalhe({
   arquivoUrl,
   assinante,
   recusaAnterior,
+  pedirSelfie,
 }: {
   voltar: { href: string; rotulo: string };
   documento: {
@@ -34,6 +35,8 @@ export function DocumentoDetalhe({
   assinante: string;
   /** Motivo da última recusa, quando o documento voltou a esperar assinatura. */
   recusaAnterior: string | null;
+  /** Se a assinatura termina com uma selfie. Quem decide é o servidor. */
+  pedirSelfie: boolean;
 }) {
   const auditUrl = documento.auditFilePath
     ? `/api/documentos/${documento.id}/arquivo?tipo=auditoria`
@@ -82,7 +85,7 @@ export function DocumentoDetalhe({
               <p className="mt-1.5 text-sm text-areia">Leia até o fim e assine quando estiver de acordo.</p>
             )}
           </div>
-          <SignDocumentModal documentId={documento.id} signerName={assinante} />
+          <SignDocumentModal documentId={documento.id} signerName={assinante} pedirSelfie={pedirSelfie} />
         </div>
       )}
 

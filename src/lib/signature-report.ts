@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { APP_TIME_ZONE, gmtOffsetLabel } from "@/lib/format";
+import { describeSelfie } from "@/lib/selfie";
 
 const A4: [number, number] = [595.28, 841.89];
 const MARGIN = 48;
@@ -27,6 +28,10 @@ export type SignatureReportInput = {
     ipAddress: string;
     userAgent: string;
     signatureImage: string | null;
+    /** A foto tirada no ato, quando houve. Vai no relatório e, por ele, no e-mail ao sócio. */
+    selfie?: { bytes: Uint8Array; hash: string; source: string | null } | null;
+    /** Por que não houve selfie, quando era para haver. */
+    selfieSkipReason?: string | null;
   };
 };
 
@@ -44,6 +49,17 @@ function stamp(date: Date): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+/** As linhas da trilha sobre a selfie: o que foi feito e o código da foto, ou por que não houve. */
+function selfieDetails(signer: SignatureReportInput["signer"]): string[] {
+  const frase = describeSelfie({
+    hasSelfie: Boolean(signer.selfie),
+    source: signer.selfie?.source ?? null,
+    skipReason: signer.selfieSkipReason ?? null,
+  });
+  if (!frase) return [];
+  return signer.selfie ? [frase, `Hash SHA-256 da selfie: ${signer.selfie.hash}`] : [frase];
 }
 
 /** Quebra o texto para caber na largura dada, para o user agent não vazar da página. */
@@ -189,7 +205,30 @@ export async function buildSignatureReport(input: SignatureReportInput): Promise
     thickness: 0.7,
     color: RULE,
   });
+  const faixaTopo = y;
   y -= 76;
+
+  // A selfie fica no canto direito da faixa, ao lado da assinatura.
+  if (input.signer.selfie) {
+    try {
+      const photo = await pdf.embedJpg(input.signer.selfie.bytes);
+      const lado = 104;
+      const x = width - MARGIN - lado;
+      const base = faixaTopo - 12 - lado;
+      page.drawRectangle({ x: x - 1, y: base - 1, width: lado + 2, height: lado + 2, color: RULE });
+      page.drawImage(photo, { x, y: base, width: lado, height: lado });
+      const legenda = "Selfie no ato da assinatura";
+      page.drawText(legenda, {
+        x: x + lado - regular.widthOfTextAtSize(legenda, 7),
+        y: base - 11,
+        size: 7,
+        font: regular,
+        color: MUTED,
+      });
+    } catch {
+      // Foto ilegível não pode impedir a emissão do comprovante; o hash segue na trilha.
+    }
+  }
 
   if (input.signer.signatureImage) {
     try {
@@ -245,6 +284,7 @@ export async function buildSignatureReport(input: SignatureReportInput): Promise
       details: [
         `Endereço de IP: ${input.signer.ipAddress}`,
         `Navegador: ${input.signer.userAgent}`,
+        ...selfieDetails(input.signer),
       ],
     },
   ];

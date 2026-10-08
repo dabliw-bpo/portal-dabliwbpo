@@ -49,9 +49,41 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "Sem permissão para acessar este documento." }, { status: 403 });
   }
 
+  // A selfie é dado pessoal sensível: só o admin abre a imagem, mesmo que o
+  // dono do documento e o RH da empresa possam abrir o documento em si. (O
+  // relatório de auditoria, abaixo, leva a foto e segue a permissão do documento.)
+  const query = new URL(request.url).searchParams;
+  if (query.get("tipo") === "selfie") {
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Sem permissão para ver a selfie." }, { status: 403 });
+    }
+    const recusaId = query.get("recusa");
+    const holder = recusaId
+      ? await prisma.signatureRejection.findFirst({
+          where: { id: recusaId, documentId: document.id },
+          select: { selfiePath: true },
+        })
+      : await prisma.signature.findUnique({
+          where: { documentId: document.id },
+          select: { selfiePath: true },
+        });
+    if (!holder?.selfiePath) {
+      return NextResponse.json({ error: "Selfie não disponível." }, { status: 404 });
+    }
+    const photo = await readStoredFile(holder.selfiePath);
+    return new NextResponse(new Uint8Array(photo), {
+      headers: {
+        "Content-Type": "image/jpeg",
+        "Content-Length": String(photo.byteLength),
+        "Cache-Control": "private, no-store",
+        "X-Robots-Tag": "noindex, nofollow",
+      },
+    });
+  }
+
   // O relatório de auditoria é servido pela mesma rota, sob a mesma permissão
   // do documento a que pertence.
-  const wantsAudit = new URL(request.url).searchParams.get("tipo") === "auditoria";
+  const wantsAudit = query.get("tipo") === "auditoria";
   if (wantsAudit) {
     if (!document.auditFilePath) {
       return NextResponse.json({ error: "Relatório não disponível." }, { status: 404 });
@@ -70,7 +102,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   // documento. O original continua servido por `?tipo=original`, porque é dele
   // que sai o hash registrado na auditoria — quem confere a prova precisa
   // conseguir chegar no arquivo exato que foi assinado.
-  const wantsOriginal = new URL(request.url).searchParams.get("tipo") === "original";
+  const wantsOriginal = query.get("tipo") === "original";
   const path = !wantsOriginal && document.signedFilePath ? document.signedFilePath : document.filePath;
   const buffer = await readStoredFile(path);
   return new NextResponse(new Uint8Array(buffer), {
