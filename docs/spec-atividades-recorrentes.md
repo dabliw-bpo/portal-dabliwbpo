@@ -516,3 +516,16 @@ Concluir uma atividade depende só do checklist obrigatório. `Service.requiresD
 nem gravado (a coluna ficou no banco para não exigir migração): saíram a caixa "Exige documento de
 entrega" do cadastro do serviço, a etiqueta no catálogo, a trava em `completeTaskAction` e os avisos
 da tela da atividade. Anexar um documento continua possível, como opcional.
+
+## Geração automática, aviso de conclusão e lista enxuta (08/10/2026)
+
+- **Geração automática:** `vercel.json` agenda `/api/cron/gerar-atividades` todo dia às 09:00 UTC
+  (06:00 em Brasília). A rota exige `Authorization: Bearer $CRON_SECRET` (variável de produção; sem ela
+  a rota recusa todo mundo) e chama `generateTasks()` com o horizonte padrão de 30 dias. Idempotente.
+  O botão "Gerar próximas demandas" e `npm run atividades:gerar` continuam valendo.
+- **Aviso de conclusão:** `completeTaskAction` envia um e-mail a cada atividade concluída, depois da
+  resposta (`after`), para `dabliwbpo@gmail.com` (troca por `TASK_NOTIFY_EMAIL`). Falha de e-mail só
+  vai para o log; a conclusão não é desfeita nem atrasada.
+- **Lista enxuta:** a árvore da empresa mostra só o que está em aberto. As concluídas e canceladas saem
+  da lista e voltam pelo link "Mostrar N concluídas ocultas" (`?concluidas=1`), onde também dá para
+  reabrir. A fila `/atividades` já abria em "não concluídas".

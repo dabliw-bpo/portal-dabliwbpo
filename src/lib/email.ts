@@ -269,3 +269,95 @@ export async function sendSignatureRejectedEmail({
     return { ok: false, error: (error as Error).message };
   }
 }
+
+export type TaskCompletedEmailInput = {
+  to: string;
+  companyName: string;
+  serviceName: string;
+  /** "Banco · ag X · cc Y", quando o serviço é por conta bancária. */
+  accountLabel: string | null;
+  dueDate: Date;
+  completedBy: string;
+  completedAt: Date;
+  checklistDone: number;
+  checklistTotal: number;
+  documentCount: number;
+  taskUrl?: string;
+};
+
+/**
+ * Avisa que uma atividade foi concluída. Roda depois da resposta (`after`) e
+ * nunca lança: o e-mail não pode desfazer nem atrasar uma conclusão.
+ */
+export async function sendTaskCompletedEmail(input: TaskCompletedEmailInput): Promise<SendResult> {
+  const client = getTransporter();
+  if (!client) {
+    const error = "GMAIL_USER/GMAIL_APP_PASSWORD não configurados.";
+    console.warn(`[email] ${error} Aviso de atividade concluída não enviado.`);
+    return { ok: false, error };
+  }
+
+  const stamp = (date: Date) =>
+    new Intl.DateTimeFormat("pt-BR", {
+      timeZone: APP_TIME_ZONE,
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(date);
+  const shortDay = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: APP_TIME_ZONE,
+    day: "2-digit",
+    month: "2-digit",
+  }).format(input.dueDate);
+
+  const rows: Array<[string, string]> = [
+    ["Empresa", input.companyName],
+    ["Serviço", input.serviceName],
+    ...(input.accountLabel ? ([["Conta", input.accountLabel]] as Array<[string, string]>) : []),
+    ["Prazo", stamp(input.dueDate)],
+    ["Concluída por", input.completedBy],
+    ["Concluída em", stamp(input.completedAt)],
+    ["Etapas", `${input.checklistDone} de ${input.checklistTotal}`],
+    ...(input.documentCount > 0
+      ? ([["Anexos", String(input.documentCount)]] as Array<[string, string]>)
+      : []),
+  ];
+
+  const subject = [
+    `Atividade concluída: ${input.serviceName}`,
+    input.companyName,
+    ...(input.accountLabel ? [input.accountLabel] : []),
+    shortDay,
+  ].join(" — ");
+
+  try {
+    await client.sendMail({
+      from: `"Portal de Documentos" <${process.env.GMAIL_USER}>`,
+      to: input.to,
+      encoding: "base64",
+      subject,
+      text: [
+        "Uma atividade foi concluída.",
+        rows.map(([label, value]) => `${label}: ${value}`).join("\n"),
+        ...(input.taskUrl ? [input.taskUrl] : []),
+      ].join("\n\n"),
+      html: [
+        `<p>Uma atividade foi concluída.</p>`,
+        `<table style="border-collapse:collapse">`,
+        rows
+          .map(
+            ([label, value]) =>
+              `<tr><td style="padding:3px 16px 3px 0;color:#64748b">${escapeHtml(label)}</td><td style="padding:3px 0"><strong>${escapeHtml(value)}</strong></td></tr>`
+          )
+          .join(""),
+        `</table>`,
+        input.taskUrl
+          ? `<p><a href="${escapeHtml(input.taskUrl)}" style="display:inline-block;background:#0f172a;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none">Abrir a atividade</a></p>`
+          : "",
+      ].join(""),
+    });
+    return { ok: true };
+  } catch (error) {
+    console.error("[email] Falha ao enviar aviso de atividade concluída:", error);
+    return { ok: false, error: (error as Error).message };
+  }
+}

@@ -4,22 +4,26 @@ import { APP_TIME_ZONE, formatDateOnly } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { describeRecurrence } from "@/lib/tasks/recurrence";
 import { listAssignableUsers } from "@/lib/tasks/assignees";
-import { JANELA_HISTORICO_DIAS, loadCompanyTasks } from "@/lib/tasks/company-tasks";
+import { JANELA_HISTORICO_DIAS, countEncerradas, loadCompanyTasks } from "@/lib/tasks/company-tasks";
 import { buildCompanyTree } from "@/lib/tasks/tree";
 import { ContractsPanel } from "@/components/services/contracts-panel";
 import { AcoesEmpresa } from "@/components/tasks/acoes-empresa";
+import { AlternaEncerradas } from "@/components/tasks/alterna-encerradas";
 import { ArvoreTarefas } from "@/components/tasks/arvore-tarefas";
 import { CompanyTabs } from "../company-tabs";
 
 export default async function EmpresaTarefasPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const incluirEncerradas = (await searchParams).concluidas === "1";
   const agora = new Date();
 
-  const [company, services, assignees, tasks] = await Promise.all([
+  const [company, services, assignees, tasks, encerradas] = await Promise.all([
     prisma.company.findUnique({
       where: { id },
       include: {
@@ -41,7 +45,8 @@ export default async function EmpresaTarefasPage({
     }),
     listAssignableUsers(),
     // A rota é só do ADMIN (layout e proxy), então o recorte de papel é vazio.
-    loadCompanyTasks(id, {}, agora),
+    loadCompanyTasks(id, {}, agora, { incluirEncerradas }),
+    countEncerradas(id, {}),
   ]);
 
   if (!company) {
@@ -78,15 +83,22 @@ export default async function EmpresaTarefasPage({
 
       <div className="mt-6 flex flex-col gap-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <p className="text-sm text-slate-600" aria-live="polite">
-            <strong className="font-semibold text-slate-900">{abertas}</strong> em aberto
-            {vencidas > 0 && (
-              <>
-                {" · "}
-                <strong className="font-semibold text-red-700">{vencidas}</strong> vencida(s)
-              </>
-            )}
-          </p>
+          <div className="flex flex-col gap-1">
+            <p className="text-sm text-slate-600" aria-live="polite">
+              <strong className="font-semibold text-slate-900">{abertas}</strong> em aberto
+              {vencidas > 0 && (
+                <>
+                  {" · "}
+                  <strong className="font-semibold text-red-700">{vencidas}</strong> vencida(s)
+                </>
+              )}
+            </p>
+            <AlternaEncerradas
+              ativo={incluirEncerradas}
+              total={encerradas}
+              href={`/admin/empresas/${id}/tarefas`}
+            />
+          </div>
           <AcoesEmpresa
             companyId={id}
             servicos={services.map((service) => ({
@@ -104,8 +116,10 @@ export default async function EmpresaTarefasPage({
         <ArvoreTarefas servicos={arvore} voltar={`/admin/empresas/${id}/tarefas`} />
 
         <p className="text-xs text-slate-500">
-          Mostrando os últimos {Math.round(JANELA_HISTORICO_DIAS / 30)} meses e tudo que está em
-          aberto. A conclusão segue o checklist obrigatório de cada serviço; anexar documento é opcional.
+          {incluirEncerradas
+            ? `Mostrando também as concluídas dos últimos ${Math.round(JANELA_HISTORICO_DIAS / 30)} meses.`
+            : "As concluídas saem da lista; use o link acima para revê-las ou reabrir uma."}{" "}
+          A conclusão segue o checklist obrigatório de cada serviço; anexar documento é opcional.
         </p>
 
         <section aria-labelledby="contratos-titulo">

@@ -11,20 +11,28 @@ export const JANELA_HISTORICO_DIAS = 120;
  * O `scope` é o recorte de papel (`taskScopeFor`): o admin passa `{}`, a equipe
  * da Matriz passa o recorte dela, e ele entra como termo do `AND` para que
  * nada vindo da tela o amplie.
+ *
+ * Concluídas e canceladas ficam de fora por padrão: com dezenas de contas
+ * gerando demanda todo dia útil, a página só é legível se mostrar o que ainda
+ * falta fazer. `incluirEncerradas` traz de volta a janela de histórico.
  */
 export function loadCompanyTasks(
   companyId: string,
   scope: Prisma.TaskWhereInput,
-  agora: Date = new Date()
+  agora: Date = new Date(),
+  { incluirEncerradas = false }: { incluirEncerradas?: boolean } = {}
 ) {
   const desde = new Date(agora.getTime() - JANELA_HISTORICO_DIAS * 24 * 60 * 60 * 1000);
+  const janela: Prisma.TaskWhereInput = incluirEncerradas
+    ? { OR: [{ dueDateLegal: { gte: desde } }, { status: { in: [...OPEN_STATUSES] } }] }
+    : { status: { in: [...OPEN_STATUSES] } };
 
   return prisma.task.findMany({
     where: {
       AND: [
         scope,
         { companyId },
-        { OR: [{ dueDateLegal: { gte: desde } }, { status: { in: [...OPEN_STATUSES] } }] },
+        janela,
       ],
     },
     orderBy: [{ dueDateLegal: "asc" }, { id: "asc" }],
@@ -40,5 +48,12 @@ export function loadCompanyTasks(
       },
       _count: { select: { documents: true } },
     },
+  });
+}
+
+/** Quantas concluídas/canceladas ficam escondidas na árvore (dentro do recorte). */
+export function countEncerradas(companyId: string, scope: Prisma.TaskWhereInput) {
+  return prisma.task.count({
+    where: { AND: [scope, { companyId }, { status: { in: ["CONCLUIDA", "CANCELADA"] } }] },
   });
 }

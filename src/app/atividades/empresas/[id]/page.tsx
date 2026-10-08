@@ -3,9 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { isInternalRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
-import { JANELA_HISTORICO_DIAS, loadCompanyTasks } from "@/lib/tasks/company-tasks";
+import { JANELA_HISTORICO_DIAS, countEncerradas, loadCompanyTasks } from "@/lib/tasks/company-tasks";
 import { taskScopeFor } from "@/lib/tasks/scope";
 import { buildCompanyTree } from "@/lib/tasks/tree";
+import { AlternaEncerradas } from "@/components/tasks/alterna-encerradas";
 import { ArvoreTarefas } from "@/components/tasks/arvore-tarefas";
 
 /**
@@ -16,10 +17,13 @@ import { ArvoreTarefas } from "@/components/tasks/arvore-tarefas";
  */
 export default async function EmpresaDaOperacaoPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const incluirEncerradas = (await searchParams).concluidas === "1";
   const session = await auth();
   if (session?.user && !isInternalRole(session.user.role)) {
     redirect("/atividades");
@@ -34,7 +38,10 @@ export default async function EmpresaDaOperacaoPage({
     notFound();
   }
 
-  const tasks = await loadCompanyTasks(id, scope);
+  const [tasks, encerradas] = await Promise.all([
+    loadCompanyTasks(id, scope, new Date(), { incluirEncerradas }),
+    countEncerradas(id, scope),
+  ]);
   // Sem contratos de propósito: um serviço sem demanda visível para este papel
   // não deve aparecer na árvore, senão ela revelaria o que o recorte esconde.
   const arvore = buildCompanyTree(tasks, []);
@@ -62,6 +69,13 @@ export default async function EmpresaDaOperacaoPage({
           </>
         )}
       </p>
+      <div className="mt-1">
+        <AlternaEncerradas
+          ativo={incluirEncerradas}
+          total={encerradas}
+          href={`/atividades/empresas/${id}`}
+        />
+      </div>
 
       <div className="mt-4">
         <ArvoreTarefas
@@ -72,8 +86,9 @@ export default async function EmpresaDaOperacaoPage({
       </div>
 
       <p className="mt-4 text-xs text-slate-500">
-        Mostrando os últimos {Math.round(JANELA_HISTORICO_DIAS / 30)} meses e tudo que está em
-        aberto.
+        {incluirEncerradas
+          ? `Mostrando também as concluídas dos últimos ${Math.round(JANELA_HISTORICO_DIAS / 30)} meses.`
+          : "As concluídas saem da lista; use o link acima para revê-las."}
       </p>
     </div>
   );

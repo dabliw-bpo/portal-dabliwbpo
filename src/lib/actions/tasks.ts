@@ -1,12 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { auth } from "@/lib/auth";
 import { AuthzError, requireRole } from "@/lib/authz";
+import { sendTaskCompletedEmail } from "@/lib/email";
 import { createId } from "@/lib/id";
 import { prisma } from "@/lib/prisma";
 import { saveFile } from "@/lib/storage";
 import { ASSIGNABLE_USERS } from "@/lib/tasks/assignees";
+import { taskNotificationEmail } from "@/lib/tasks/notify";
 import { applyDeadlineTime } from "@/lib/tasks/recurrence";
 import { assertCanActOnTask } from "@/lib/tasks/scope";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/validations/document";
@@ -144,6 +147,10 @@ export async function completeTaskAction(
       where: { id: taskId },
       include: {
         checklist: { select: { required: true, checkedAt: true } },
+        company: { select: { name: true } },
+        service: { select: { name: true } },
+        bankAccount: { select: { bankName: true, agency: true, accountNumber: true } },
+        _count: { select: { documents: true } },
       },
     });
     if (!task) {
@@ -184,6 +191,29 @@ export async function completeTaskAction(
     ]);
 
     revalidateTask(task.id);
+
+    // O aviso sai depois da resposta: a conclusão já está gravada e não espera
+    // (nem falha) por causa do e-mail.
+    const completedAt = new Date();
+    const appUrl = process.env.APP_URL;
+    after(async () => {
+      await sendTaskCompletedEmail({
+        to: taskNotificationEmail(),
+        companyName: task.company.name,
+        serviceName: task.service.name,
+        accountLabel: task.bankAccount
+          ? `${task.bankAccount.bankName} · ag ${task.bankAccount.agency} · cc ${task.bankAccount.accountNumber}`
+          : null,
+        dueDate: task.dueDateLegal,
+        completedBy: authSession.user.name ?? "Equipe",
+        completedAt,
+        checklistDone: task.checklist.filter((item) => item.checkedAt).length,
+        checklistTotal: task.checklist.length,
+        documentCount: task._count.documents,
+        taskUrl: appUrl ? `${appUrl}/atividades/${task.id}` : undefined,
+      });
+    });
+
     return { success: "Atividade concluída." };
   } catch (error) {
     if (error instanceof AuthzError) {

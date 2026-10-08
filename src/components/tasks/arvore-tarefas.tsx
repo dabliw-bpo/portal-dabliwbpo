@@ -107,7 +107,8 @@ export function ArvoreTarefas({
                         </span>
                         <span className="font-medium">{mes.label}</span>
                         <span className="text-xs text-slate-500">
-                          {mes.done}/{mes.tasks.length} concluída(s)
+                          {mes.open} em aberto
+                          {mes.done > 0 && ` · ${mes.done} concluída(s)`}
                         </span>
                         {mes.overdue > 0 && (
                           <span className="text-xs font-medium text-red-700">
