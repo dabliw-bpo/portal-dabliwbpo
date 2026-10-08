@@ -19,7 +19,6 @@ function paraLinha(task: TreeTask): LinhaDemandaDados {
       marcado: item.checked,
     })),
     documentos: task.documentCount,
-    exigeDocumento: task.requiresDocument,
   };
 }
 

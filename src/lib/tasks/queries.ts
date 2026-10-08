@@ -62,7 +62,7 @@ function assigneeCondition(assignee: string, currentUserId: string): Prisma.Task
 export type QueueTask = Prisma.TaskGetPayload<{
   include: {
     company: { select: { id: true; name: true; tradeName: true } };
-    service: { select: { id: true; name: true; requiresDocument: true } };
+    service: { select: { id: true; name: true } };
     department: { select: { id: true; name: true; color: true } };
     bankAccount: { select: { id: true; bankName: true; agency: true; accountNumber: true } };
     assignee: { select: { id: true; name: true } };
@@ -109,7 +109,7 @@ export async function listQueueTasks(
       orderBy: [{ dueDateLegal: "asc" }, { id: "asc" }],
       include: {
         company: { select: { id: true, name: true, tradeName: true } },
-        service: { select: { id: true, name: true, requiresDocument: true } },
+        service: { select: { id: true, name: true } },
         department: { select: { id: true, name: true, color: true } },
         bankAccount: { select: { id: true, bankName: true, agency: true, accountNumber: true } },
         assignee: { select: { id: true, name: true } },

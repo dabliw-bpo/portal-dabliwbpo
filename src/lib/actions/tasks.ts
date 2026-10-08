@@ -142,9 +142,7 @@ export async function completeTaskAction(
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: {
-        service: { select: { requiresDocument: true } },
         checklist: { select: { required: true, checkedAt: true } },
-        documents: { select: { id: true } },
       },
     });
     if (!task) {
@@ -162,10 +160,6 @@ export async function completeTaskAction(
       return {
         error: `Faltam ${pendingRequired.length} item(ns) obrigatório(s) do checklist.`,
       };
-    }
-
-    if (task.service.requiresDocument && task.documents.length === 0) {
-      return { error: "Este serviço exige documento de entrega. Anexe o arquivo antes de concluir." };
     }
 
     await prisma.$transaction([

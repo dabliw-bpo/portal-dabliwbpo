@@ -30,7 +30,6 @@ export type TreeTask = {
   assigneeName: string | null;
   checklist: TreeChecklistItem[];
   documentCount: number;
-  requiresDocument: boolean;
 };
 
 export type MonthNode = {
@@ -70,7 +69,7 @@ export type TreeSourceTask = {
   bankAccountId: string | null;
   assignee: { name: string } | null;
   checklist: Array<{ id: string; text: string; required: boolean; order: number; checkedAt: Date | null }>;
-  service: { name: string; requiresDocument: boolean; department: { name: string } };
+  service: { name: string; department: { name: string } };
   bankAccount: { bankName: string; agency: string; accountNumber: string } | null;
   _count: { documents: number };
 };
@@ -151,7 +150,6 @@ function toTreeTask(task: TreeSourceTask, now: Date): TreeTask {
     assigneeName: task.assignee?.name ?? null,
     checklist,
     documentCount: task._count.documents,
-    requiresDocument: task.service.requiresDocument,
   };
 }
 

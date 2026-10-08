@@ -51,7 +51,7 @@ export default async function AtividadeDetalhePage({
     where: { AND: [{ id }, scope] },
     include: {
       company: { select: { id: true, name: true, cnpj: true } },
-      service: { select: { name: true, requiresDocument: true, estimatedMinutes: true } },
+      service: { select: { name: true, estimatedMinutes: true } },
       department: { select: { name: true } },
       bankAccount: { select: { bankName: true, agency: true, accountNumber: true } },
       assignee: { select: { name: true } },
@@ -269,8 +269,6 @@ export default async function AtividadeDetalhePage({
 
           <PainelConclusao
             taskId={task.id}
-            requiresDocument={task.service.requiresDocument}
-            hasDocument={task.documents.length > 0}
             defaultTitle={`${task.service.name} — ${task.company.name} — ${period}`}
             disabled={encerrada}
           />

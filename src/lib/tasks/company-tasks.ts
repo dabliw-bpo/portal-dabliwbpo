@@ -30,7 +30,7 @@ export function loadCompanyTasks(
     orderBy: [{ dueDateLegal: "asc" }, { id: "asc" }],
     include: {
       service: {
-        select: { name: true, requiresDocument: true, department: { select: { name: true } } },
+        select: { name: true, department: { select: { name: true } } },
       },
       bankAccount: { select: { bankName: true, agency: true, accountNumber: true } },
       assignee: { select: { name: true } },

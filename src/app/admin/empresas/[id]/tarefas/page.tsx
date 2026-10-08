@@ -109,7 +109,7 @@ export default async function EmpresaTarefasPage({
 
         <p className="text-xs text-slate-500">
           Mostrando os últimos {Math.round(JANELA_HISTORICO_DIAS / 30)} meses e tudo que está em
-          aberto. A conclusão segue o checklist obrigatório e o anexo exigido por cada serviço.
+          aberto. A conclusão segue o checklist obrigatório de cada serviço; anexar documento é opcional.
         </p>
 
         <section aria-labelledby="contratos-titulo">

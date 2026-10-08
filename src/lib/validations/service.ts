@@ -58,7 +58,6 @@ export const serviceSchema = z.object({
   departmentId: z.string().min(1, "Selecione o departamento."),
   nature: z.enum(["RECORRENTE", "SOB_DEMANDA"]),
   scope: z.enum(["EMPRESA", "CONTA_BANCARIA", "COLABORADOR"]),
-  requiresDocument: z.preprocess((value) => value === "on" || value === true, z.boolean()),
   estimatedMinutes: optionalInt.refine(
     (value) => value === undefined || (value > 0 && value <= 60 * 24),
     "Estimativa deve estar entre 1 e 1440 minutos."

@@ -509,3 +509,10 @@ O acesso às demais empresas vem do **cadastro na Matriz** (a empresa com `isHea
 - O recorte por departamento continua valendo: o que cada gestor/operador vê dentro de cada empresa
   depende dos departamentos de que participa. Quem é cadastrado e ainda não está em departamento algum
   vê só as demandas atribuídas a si.
+
+## Anexo deixou de ser exigência (08/10/2026)
+
+Concluir uma atividade depende só do checklist obrigatório. `Service.requiresDocument` não é mais lido
+nem gravado (a coluna ficou no banco para não exigir migração): saíram a caixa "Exige documento de
+entrega" do cadastro do serviço, a etiqueta no catálogo, a trava em `completeTaskAction` e os avisos
+da tela da atividade. Anexar um documento continua possível, como opcional.

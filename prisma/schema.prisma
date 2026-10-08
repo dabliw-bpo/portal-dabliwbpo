@@ -377,7 +377,8 @@ model Service {
   departmentId     String
   nature           ServiceNature @default(RECORRENTE)
   scope            ServiceScope  @default(EMPRESA)
-  /// Quando verdadeiro, a tarefa só conclui com documento anexado.
+  /// Legado: não é mais lido nem gravado. A exigência de anexo para concluir foi
+  /// retirada em 08/10/2026; a coluna fica para não exigir migração.
   requiresDocument Boolean       @default(false)
   estimatedMinutes Int?
   description      String?

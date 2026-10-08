@@ -155,7 +155,6 @@ function parseService(formData: FormData) {
     departmentId: formData.get("departmentId"),
     nature: formData.get("nature"),
     scope: formData.get("scope"),
-    requiresDocument: formData.get("requiresDocument"),
     estimatedMinutes: formData.get("estimatedMinutes"),
     description: formData.get("description"),
     checklist: formData.get("checklist"),
@@ -180,7 +179,6 @@ export async function createServiceAction(
       departmentId: parsed.data.departmentId,
       nature: parsed.data.nature,
       scope: parsed.data.scope,
-      requiresDocument: parsed.data.requiresDocument,
       estimatedMinutes: parsed.data.estimatedMinutes ?? null,
       description: parsed.data.description ?? null,
       checklistTemplate: {
@@ -221,7 +219,6 @@ export async function updateServiceAction(
         departmentId: parsed.data.departmentId,
         nature: parsed.data.nature,
         scope: parsed.data.scope,
-        requiresDocument: parsed.data.requiresDocument,
         estimatedMinutes: parsed.data.estimatedMinutes ?? null,
         description: parsed.data.description ?? null,
         active: formData.get("active") === "on",

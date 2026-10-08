@@ -11,21 +11,15 @@ import { buttonSuccess, buttonSecondary, inputBase } from "@/components/ui/style
 const initialState: TaskActionState = {};
 
 /**
- * Anexo e conclusão ficam juntos porque as duas ações compartilham o mesmo
- * motivo de falha mais comum: "o serviço exige documento". Separá-las faria a
- * mensagem de erro da conclusão apontar para um formulário em outro lugar da
- * página.
+ * Entrega da atividade: anexar um documento é opcional e nunca trava a
+ * conclusão — o que bloqueia concluir é só o checklist obrigatório.
  */
 export function PainelConclusao({
   taskId,
-  requiresDocument,
-  hasDocument,
   defaultTitle,
   disabled,
 }: {
   taskId: string;
-  requiresDocument: boolean;
-  hasDocument: boolean;
   defaultTitle: string;
   disabled: boolean;
 }) {
@@ -41,12 +35,9 @@ export function PainelConclusao({
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
       <h2 className="text-sm font-semibold text-slate-900">Entrega</h2>
-
-      {requiresDocument && (
-        <p className="mt-1 text-xs text-slate-500">
-          Este serviço exige documento de entrega — a conclusão fica bloqueada sem anexo.
-        </p>
-      )}
+      <p className="mt-1 text-xs text-slate-500">
+        Anexar um documento é opcional — a atividade pode ser concluída sem ele.
+      </p>
 
       {!disabled && (
         <form action={attachAction} className="mt-3 flex flex-col gap-3">
@@ -90,14 +81,11 @@ export function PainelConclusao({
         <input type="hidden" name="taskId" value={taskId} />
         <button
           type="submit"
-          disabled={completePending || disabled || (requiresDocument && !hasDocument)}
+          disabled={completePending || disabled}
           className={buttonSuccess}
         >
           {completePending ? "Concluindo..." : "Concluir atividade"}
         </button>
-        {requiresDocument && !hasDocument && !disabled && (
-          <p className="mt-2 text-xs text-slate-500">Anexe o documento para liberar a conclusão.</p>
-        )}
         {completeState.error && (
           <p className="mt-2 text-sm text-red-600" role="alert">
             {completeState.error}

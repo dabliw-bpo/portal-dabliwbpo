@@ -46,7 +46,6 @@ export default async function EditarServicoPage({
           departmentId: service.departmentId,
           nature: service.nature,
           scope: service.scope,
-          requiresDocument: service.requiresDocument,
           estimatedMinutes: service.estimatedMinutes,
           description: service.description,
           active: service.active,

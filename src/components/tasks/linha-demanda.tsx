@@ -25,7 +25,6 @@ export type LinhaDemandaDados = {
   responsavel: string | null;
   itens: Array<{ id: string; texto: string; obrigatorio: boolean; marcado: boolean }>;
   documentos: number;
-  exigeDocumento: boolean;
 };
 
 const ORIGEM: Partial<Record<TaskOrigin, string>> = {
@@ -133,10 +132,8 @@ export function LinhaDemanda({ dados, voltar }: { dados: LinhaDemandaDados; volt
             {aberta ? "Ocultar etapas" : `Etapas ${feitos}/${dados.itens.length}`}
           </button>
         )}
-        {dados.exigeDocumento && (
-          <span className="text-xs text-slate-400">
-            {dados.documentos > 0 ? `${dados.documentos} anexo(s)` : "exige anexo"}
-          </span>
+        {dados.documentos > 0 && (
+          <span className="text-xs text-slate-400">{dados.documentos} anexo(s)</span>
         )}
 
         <span className="ml-auto flex items-center gap-3 text-xs text-slate-400">

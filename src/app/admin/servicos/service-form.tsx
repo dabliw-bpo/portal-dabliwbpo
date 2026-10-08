@@ -16,7 +16,6 @@ export type ServiceDefaults = {
   departmentId: string;
   nature: "RECORRENTE" | "SOB_DEMANDA";
   scope: "EMPRESA" | "CONTA_BANCARIA" | "COLABORADOR";
-  requiresDocument: boolean;
   estimatedMinutes: number | null;
   description: string | null;
   active: boolean;
@@ -28,7 +27,6 @@ const EMPTY: ServiceDefaults = {
   departmentId: "",
   nature: "RECORRENTE",
   scope: "EMPRESA",
-  requiresDocument: false,
   estimatedMinutes: null,
   description: null,
   active: true,
@@ -130,15 +128,6 @@ export function ServiceForm({
             className={inputBase}
           />
         </div>
-
-        <label className="flex items-center gap-2 self-end pb-2 text-sm text-slate-700 sm:col-span-4">
-          <input
-            type="checkbox"
-            name="requiresDocument"
-            defaultChecked={defaults.requiresDocument}
-          />
-          Exige documento de entrega (trava a conclusão sem anexo)
-        </label>
 
         <div className="flex flex-col gap-1 sm:col-span-6">
           <label htmlFor="description" className="text-sm font-medium text-slate-700">

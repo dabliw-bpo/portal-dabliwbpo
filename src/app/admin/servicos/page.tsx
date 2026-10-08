@@ -75,11 +75,6 @@ export default async function AdminServicosPage() {
                       Inativo
                     </span>
                   )}
-                  {service.requiresDocument && (
-                    <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
-                      Exige documento
-                    </span>
-                  )}
                 </td>
                 <td className="px-4 py-2 text-slate-600">{service.department.name}</td>
                 <td className="px-4 py-2 text-slate-600">{NATURE_LABELS[service.nature]}</td>
