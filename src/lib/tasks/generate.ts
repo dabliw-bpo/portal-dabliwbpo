@@ -9,7 +9,7 @@ export type GenerationResult = {
   errors: string[];
 };
 
-const DEFAULT_HORIZON_DAYS = 45;
+const DEFAULT_HORIZON_DAYS = 30;
 
 /**
  * Materializa as atividades recorrentes de todos os contratos ativos até o

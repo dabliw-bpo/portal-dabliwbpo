@@ -31,7 +31,7 @@ export function GerarAtividadesPanel({ lastRun }: { lastRun: GenerationRun | nul
           type="number"
           min={1}
           max={365}
-          defaultValue={45}
+          defaultValue={30}
           className={`${inputBase} w-28`}
         />
       </div>

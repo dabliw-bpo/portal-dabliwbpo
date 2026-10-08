@@ -304,7 +304,7 @@ Filtro aplicado na **camada de dados** (`src/lib/actions/atividades.ts`), nunca 
 `src/lib/atividades/gerar.ts` — função pura sobre o banco, sem cron ainda.
 
 ```
-gerarAtividades({ horizonDays = 45, triggeredById? }) → GenerationRun
+gerarAtividades({ horizonDays = 30, triggeredById? }) → GenerationRun
 ```
 
 **Algoritmo**
@@ -484,11 +484,11 @@ O menu do admin deixou de ter "Serviços" e "Atividades". O fluxo agora parte de
   conclusão. A caixa conclui pela mesma regra de `completeTaskAction` (checklist obrigatório completo
   e, se o serviço exige, anexo); quando barra, o motivo aparece na linha. Reabrir é clicar na caixa de
   novo. Cada data abre as etapas do checklist ali mesmo.
-- **Contratar serviço** (recorrência) fica na mesma aba e já gera as demandas dos próximos 45 dias ao
+- **Contratar serviço** (recorrência) fica na mesma aba e já gera as demandas dos próximos 30 dias ao
   salvar. **Nova demanda** abre uma demanda avulsa (pedido do cliente ou ordem de serviço), sem
   contrato: `serviceContractId` nulo, vencimento escolhido, checklist copiado do serviço.
 - **Gerar próximas demandas** roda o gerador só para a empresa. Continua não havendo cron: sem o botão
-  (ou `npm run atividades:gerar`), as demandas recorrentes acabam quando o horizonte de 45 dias passa.
+  (ou `npm run atividades:gerar`), as demandas recorrentes acabam quando o horizonte de 30 dias passa.
 - O **catálogo de serviços** e os **departamentos** seguem em `/admin/servicos` e
   `/admin/departamentos`, agora alcançados por links em Empresas. A **fila** `/atividades` continua
   existindo para GESTOR e OPERADOR, que não entram em `/admin`; o ADMIN chega nela por Empresas.

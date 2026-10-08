@@ -12,7 +12,7 @@ async function main() {
   const horizonDays = horizonArg ? Number(horizonArg.split("=")[1]) : undefined;
 
   if (horizonArg && !Number.isFinite(horizonDays)) {
-    console.error("Horizonte inválido. Use --horizonte=45.");
+    console.error("Horizonte inválido. Use --horizonte=30.");
     process.exit(1);
   }
 
