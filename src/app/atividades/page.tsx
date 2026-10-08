@@ -32,6 +32,7 @@ export default async function AtividadesPage({
     redirect("/login");
   }
 
+  const isCollaborator = session.user.role === "COLLABORATOR";
   const params = await searchParams;
   const filters = parseFilters(params);
   const { tasks, options } = await listQueueTasks(session, filters);
@@ -51,17 +52,38 @@ export default async function AtividadesPage({
   return (
     <div>
       <div className="flex items-baseline justify-between">
-        <h1 className="text-lg font-semibold text-slate-900">Atividades</h1>
+        <h1 className="text-lg font-semibold text-slate-900">
+          {isCollaborator ? "Minhas atividades" : "Atividades"}
+        </h1>
         <span className="text-sm text-slate-500">
           {tasks.length} {tasks.length === 1 ? "atividade" : "atividades"}
         </span>
       </div>
 
-      <Filtros filters={filters} options={options} currentUserId={session.user.id} />
+      {isCollaborator ? (
+        <nav aria-label="Situação" className="mt-4 flex gap-4 text-sm">
+          <Link
+            href="/atividades"
+            className={filters.status === "open" ? "font-medium text-slate-900" : "text-slate-500 underline"}
+          >
+            Em aberto
+          </Link>
+          <Link
+            href="/atividades?status=all"
+            className={filters.status === "all" ? "font-medium text-slate-900" : "text-slate-500 underline"}
+          >
+            Todas
+          </Link>
+        </nav>
+      ) : (
+        <Filtros filters={filters} options={options} currentUserId={session.user.id} />
+      )}
 
       {tasks.length === 0 ? (
         <p className="mt-6 rounded-lg border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-600">
-          Nenhuma atividade com esses filtros.
+          {isCollaborator
+            ? "Nenhuma atividade atribuída a você por enquanto."
+            : "Nenhuma atividade com esses filtros."}
         </p>
       ) : (
         <div className="mt-6 flex flex-col gap-6">

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { INTERNAL_ROLES } from "@/lib/authz";
 import { APP_TIME_ZONE, formatDateOnly } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { describeRecurrence } from "@/lib/tasks/recurrence";
+import { listAssignableUsers } from "@/lib/tasks/assignees";
 import { JANELA_HISTORICO_DIAS, loadCompanyTasks } from "@/lib/tasks/company-tasks";
 import { buildCompanyTree } from "@/lib/tasks/tree";
 import { ContractsPanel } from "@/components/services/contracts-panel";
@@ -39,11 +39,7 @@ export default async function EmpresaTarefasPage({
       orderBy: { name: "asc" },
       include: { department: { select: { name: true } } },
     }),
-    prisma.user.findMany({
-      where: { role: { in: [...INTERNAL_ROLES] }, active: true },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
+    listAssignableUsers(),
     // A rota é só do ADMIN (layout e proxy), então o recorte de papel é vazio.
     loadCompanyTasks(id, {}, agora),
   ]);

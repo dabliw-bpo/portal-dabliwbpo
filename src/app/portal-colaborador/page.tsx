@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { dataCurta, hojePorExtenso } from "@/lib/datas";
+import { isHeadquartersStaff } from "@/lib/tasks/scope";
+import { OPEN_STATUSES } from "@/lib/tasks/urgency";
 import { InicioColaborador } from "@/components/portal/inicio-colaborador";
 
 /**
@@ -21,6 +23,15 @@ export default async function PortalColaboradorPage() {
     select: { id: true, title: true, createdAt: true },
   });
 
+  // A equipe da Matriz executa atividades pelo próprio portal: o atalho só
+  // aparece para ela.
+  const executaAtividades = await isHeadquartersStaff(session.user.id);
+  const atividadesAbertas = executaAtividades
+    ? await prisma.task.count({
+        where: { assigneeId: session.user.id, status: { in: [...OPEN_STATUSES] } },
+      })
+    : null;
+
   return (
     <InicioColaborador
       primeiroNome={session.user.name?.trim().split(/\s+/)[0] ?? ""}
@@ -30,6 +41,7 @@ export default async function PortalColaboradorPage() {
         titulo: doc.title,
         enviadoEm: dataCurta(doc.createdAt),
       }))}
+      atividades={atividadesAbertas === null ? null : { abertas: atividadesAbertas }}
     />
   );
 }

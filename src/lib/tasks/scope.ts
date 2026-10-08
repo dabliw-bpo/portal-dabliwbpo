@@ -4,23 +4,6 @@ import { AuthzError, isInternalRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Recorte de leitura de atividades por papel:
- *
- * - ADMIN    enxerga tudo;
- * - GESTOR   enxerga os departamentos onde é `DepartmentMember.manager`;
- * - OPERADOR enxerga as próprias atividades mais as que ainda não têm
- *            responsável dentro dos departamentos de que participa.
- *
- * Gestor e operador só valem se estiverem cadastrados na Matriz (a empresa
- * marcada como `isHeadquarters`): é o cadastro na Matriz que dá à equipe
- * interna acesso às demandas das demais empresas. Quem tem papel interno mas
- * está em outra empresa não enxerga nada.
- *
- * Devolve um fragmento de `where` para ser combinado com os filtros da tela.
- * O recorte mora aqui, na camada de dados, e nunca só na UI — é o que impede
- * um operador de ler a carteira inteira mexendo na query string.
- */
-/**
  * Equipe da Matriz: usuário ativo cadastrado na empresa marcada como matriz.
  * Consulta o banco em vez de confiar na empresa gravada no token, que fica
  * velha se o cadastro mudar depois do login.
@@ -33,20 +16,44 @@ export async function isHeadquartersStaff(userId: string): Promise<boolean> {
   return found !== null;
 }
 
+/**
+ * Recorte de leitura de atividades por papel:
+ *
+ * - ADMIN        enxerga tudo;
+ * - GESTOR       enxerga os departamentos onde é `DepartmentMember.manager`;
+ * - OPERADOR     enxerga as próprias atividades mais as que ainda não têm
+ *                responsável dentro dos departamentos de que participa;
+ * - COLABORADOR  da Matriz enxerga e executa só as atividades atribuídas a ele
+ *                — não vê a fila, os departamentos nem a lista de empresas.
+ *
+ * Todos, exceto o ADMIN, só valem se estiverem cadastrados na Matriz (a
+ * empresa marcada como `isHeadquarters`): é o cadastro na Matriz que dá à
+ * equipe acesso às demandas das demais empresas. Quem está em outra empresa
+ * não enxerga nada.
+ *
+ * Devolve um fragmento de `where` para ser combinado com os filtros da tela.
+ * O recorte mora aqui, na camada de dados, e nunca só na UI — é o que impede
+ * um operador de ler a carteira inteira mexendo na query string.
+ */
 export async function taskScopeFor(session: Session | null): Promise<Prisma.TaskWhereInput> {
   if (!session?.user) {
     throw new AuthzError("Não autenticado.");
   }
-  if (!isInternalRole(session.user.role)) {
+  const role = session.user.role;
+  if (role !== "COLLABORATOR" && !isInternalRole(role)) {
     throw new AuthzError("Sem permissão para acessar atividades.");
   }
 
-  if (session.user.role === "ADMIN") {
+  if (role === "ADMIN") {
     return {};
   }
 
   if (!(await isHeadquartersStaff(session.user.id))) {
     throw new AuthzError("O acesso às empresas é da equipe cadastrada na Matriz.");
+  }
+
+  if (role === "COLLABORATOR") {
+    return { assigneeId: session.user.id };
   }
 
   const memberships = await prisma.departmentMember.findMany({

@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, CalendarBlank, FileText, UserCircle } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowRight,
+  CalendarBlank,
+  FileText,
+  ListChecks,
+  UserCircle,
+} from "@phosphor-icons/react/dist/ssr";
 import { Reveal } from "@/components/marketing/reveal";
 import { FolhaPendente } from "./folha-pendente";
 import { Sobrelinha } from "./sobrelinha";
@@ -38,11 +44,30 @@ export function InicioColaborador({
   primeiroNome,
   hoje,
   pendentes,
+  atividades = null,
 }: {
   primeiroNome: string;
   hoje: string;
   pendentes: Pendente[];
+  /** Só para quem executa atividades (equipe da Matriz): quantas estão em aberto. */
+  atividades?: { abertas: number } | null;
 }) {
+  const atalhos = atividades
+    ? [
+        {
+          href: "/atividades",
+          Icone: ListChecks,
+          titulo: "Minhas atividades",
+          descricao:
+            atividades.abertas === 0
+              ? "Nada em aberto"
+              : atividades.abertas === 1
+                ? "1 em aberto"
+                : `${atividades.abertas} em aberto`,
+        },
+        ...ATALHOS,
+      ]
+    : ATALHOS;
   const total = pendentes.length;
   const visiveis = pendentes.slice(0, FOLHAS_NO_INICIO);
   const restantes = total - visiveis.length;
@@ -117,8 +142,13 @@ export function InicioColaborador({
       )}
 
       <Reveal delay={0.3}>
-        <nav aria-label="Atalhos" className="mt-16 grid gap-px border border-fio bg-fio sm:grid-cols-3">
-          {ATALHOS.map(({ href, Icone, titulo, descricao }) => (
+        <nav
+          aria-label="Atalhos"
+          className={`mt-16 grid gap-px border border-fio bg-fio ${
+            atalhos.length > 3 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"
+          }`}
+        >
+          {atalhos.map(({ href, Icone, titulo, descricao }) => (
             <Link
               key={href}
               href={href}

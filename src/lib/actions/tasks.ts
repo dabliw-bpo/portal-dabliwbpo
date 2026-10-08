@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
-import { AuthzError, INTERNAL_ROLES, requireRole } from "@/lib/authz";
+import { AuthzError, requireRole } from "@/lib/authz";
 import { createId } from "@/lib/id";
 import { prisma } from "@/lib/prisma";
 import { saveFile } from "@/lib/storage";
+import { ASSIGNABLE_USERS } from "@/lib/tasks/assignees";
 import { applyDeadlineTime } from "@/lib/tasks/recurrence";
 import { assertCanActOnTask } from "@/lib/tasks/scope";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/validations/document";
@@ -239,6 +240,10 @@ export async function attachTaskDocumentAction(
         id,
         title: parsed.data.title,
         type: "OTHER",
+        // Evidência não é documento a assinar: sem isto o padrão
+        // (PENDING_SIGNATURE) a colocaria na fila de assinatura de quem a
+        // anexou — e o colaborador da Matriz anexa pela tela de atividades.
+        status: "ARCHIVED",
         // A evidência de entrega pertence a quem a produziu. Quando o bloco de
         // portal do cliente entrar, é aqui que passa a valer a visibilidade
         // para o cliente.
@@ -322,7 +327,7 @@ export async function createDemandAction(
 
   if (parsed.data.assigneeId) {
     const assignee = await prisma.user.findFirst({
-      where: { id: parsed.data.assigneeId, active: true, role: { in: [...INTERNAL_ROLES] } },
+      where: { AND: [{ id: parsed.data.assigneeId }, ASSIGNABLE_USERS] },
       select: { id: true },
     });
     if (!assignee) {

@@ -20,7 +20,7 @@ export default async function PortalRhDocumentosPage() {
 
   const documents = session.user.companyId
     ? await prisma.document.findMany({
-        where: { owner: { companyId: session.user.companyId } },
+        where: { owner: { companyId: session.user.companyId }, taskId: null },
         orderBy: { createdAt: "desc" },
         include: { owner: true },
       })

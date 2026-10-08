@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { isInternalRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { taskScopeFor } from "@/lib/tasks/scope";
 import { OPEN_STATUSES } from "@/lib/tasks/urgency";
@@ -11,6 +13,10 @@ import { OPEN_STATUSES } from "@/lib/tasks/urgency";
  */
 export default async function EmpresasDaOperacaoPage() {
   const session = await auth();
+  // O colaborador só executa o que lhe foi atribuído; não navega pelas empresas.
+  if (session?.user && !isInternalRole(session.user.role)) {
+    redirect("/atividades");
+  }
   const scope = await taskScopeFor(session);
   const agora = new Date();
 

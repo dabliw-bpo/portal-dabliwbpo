@@ -14,7 +14,7 @@ export default async function ColaboradorDocumentosPage({
 
   // Payslips and vacation papers have their own tabs; everything else lands here.
   const documents = await prisma.document.findMany({
-    where: { ownerUserId: userId, type: { in: ["CONTRACT", "OTHER"] } },
+    where: { ownerUserId: userId, taskId: null, type: { in: ["CONTRACT", "OTHER"] } },
     orderBy: { createdAt: "desc" },
     include: { signature: { select: { signedAt: true } } },
   });

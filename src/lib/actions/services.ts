@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { requireRole, INTERNAL_ROLES } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
+import { ASSIGNABLE_USERS } from "@/lib/tasks/assignees";
 import { generateTasks } from "@/lib/tasks/generate";
 import {
   departmentSchema,
@@ -288,6 +289,16 @@ export async function createServiceContractAction(
     });
     if (!account) {
       return { error: "Conta bancária não pertence a esta empresa." };
+    }
+  }
+
+  if (parsed.data.assigneeId) {
+    const assignee = await prisma.user.findFirst({
+      where: { AND: [{ id: parsed.data.assigneeId }, ASSIGNABLE_USERS] },
+      select: { id: true },
+    });
+    if (!assignee) {
+      return { error: "Responsável inválido." };
     }
   }
 

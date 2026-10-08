@@ -11,7 +11,8 @@ export default async function PortalColaboradorDocumentosPage() {
   }
 
   const documents = await prisma.document.findMany({
-    where: { ownerUserId: session.user.id },
+    // Evidência de atividade (taskId) não é documento do colaborador.
+    where: { ownerUserId: session.user.id, taskId: null },
     orderBy: { createdAt: "desc" },
     include: { signature: { select: { signedAt: true } } },
   });

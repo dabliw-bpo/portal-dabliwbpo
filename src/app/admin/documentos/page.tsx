@@ -12,6 +12,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default async function AdminDocumentosPage() {
   const documents = await prisma.document.findMany({
+    where: { taskId: null },
     orderBy: { createdAt: "desc" },
     include: { owner: true },
   });

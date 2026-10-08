@@ -1,22 +1,29 @@
 import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
 import { auth } from "@/lib/auth";
-import { isInternalRole } from "@/lib/authz";
+import { AuthzError } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { readStoredFile } from "@/lib/storage";
 import { taskScopeFor } from "@/lib/tasks/scope";
 
-/** A atividade está no recorte de leitura deste usuário interno? */
+/**
+ * A atividade está no recorte de leitura deste usuário? Quem não tem recorte
+ * algum (cliente, RH, colaborador fora da Matriz...) simplesmente não lê.
+ */
 async function canReadTaskDocument(session: Session, taskId: string): Promise<boolean> {
-  if (!isInternalRole(session.user.role)) {
-    return false;
+  try {
+    const scope = await taskScopeFor(session);
+    const found = await prisma.task.findFirst({
+      where: { AND: [{ id: taskId }, scope] },
+      select: { id: true },
+    });
+    return found !== null;
+  } catch (error) {
+    if (error instanceof AuthzError) {
+      return false;
+    }
+    throw error;
   }
-  const scope = await taskScopeFor(session);
-  const found = await prisma.task.findFirst({
-    where: { AND: [{ id: taskId }, scope] },
-    select: { id: true },
-  });
-  return found !== null;
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {

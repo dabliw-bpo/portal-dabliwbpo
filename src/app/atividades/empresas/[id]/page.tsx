@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { isInternalRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { JANELA_HISTORICO_DIAS, loadCompanyTasks } from "@/lib/tasks/company-tasks";
 import { taskScopeFor } from "@/lib/tasks/scope";
@@ -20,6 +21,9 @@ export default async function EmpresaDaOperacaoPage({
 }) {
   const { id } = await params;
   const session = await auth();
+  if (session?.user && !isInternalRole(session.user.role)) {
+    redirect("/atividades");
+  }
   const scope = await taskScopeFor(session);
 
   const company = await prisma.company.findFirst({

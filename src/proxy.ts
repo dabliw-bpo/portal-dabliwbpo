@@ -4,7 +4,9 @@ import { homePathForRole } from "@/lib/authz";
 
 const SECTION_ROLES = {
   "/admin": ["ADMIN"],
-  "/atividades": ["ADMIN", "GESTOR", "OPERADOR"],
+  // Colaborador entra para executar as atividades atribuídas a ele; o recorte
+  // (e a exigência de ser da Matriz) é aplicado em `taskScopeFor`.
+  "/atividades": ["ADMIN", "GESTOR", "OPERADOR", "COLLABORATOR"],
   "/portal-rh": ["COMPANY_HR"],
   "/portal-colaborador": ["COLLABORATOR"],
   "/portal-cliente": ["CLIENT"],
