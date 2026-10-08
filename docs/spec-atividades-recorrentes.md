@@ -493,3 +493,19 @@ O menu do admin deixou de ter "Serviços" e "Atividades". O fluxo agora parte de
   `/admin/departamentos`, agora alcançados por links em Empresas. A **fila** `/atividades` continua
   existindo para GESTOR e OPERADOR, que não entram em `/admin`; o ADMIN chega nela por Empresas.
 - `/admin/empresas/[id]/servicos` redireciona para `/tarefas`.
+
+## Acesso da equipe da Matriz (08/10/2026)
+
+O acesso às demais empresas vem do **cadastro na Matriz** (a empresa com `isHeadquarters`):
+
+- `taskScopeFor` só devolve um recorte para GESTOR/OPERADOR **ativos e cadastrados na Matriz**
+  (`isHeadquartersStaff`, que consulta o banco, não o token). Quem tem papel interno mas está em outra
+  empresa recebe um aviso no layout de `/atividades` e nenhuma demanda. O ADMIN segue vendo tudo.
+- Criar ou editar um usuário como Operador ou Gestor grava a empresa **Matriz** automaticamente, mesmo
+  que outra tenha sido escolhida no formulário. Sem Matriz marcada, o cadastro é recusado com aviso.
+- `/atividades/empresas` lista as empresas clientes e `/atividades/empresas/[id]` mostra a mesma árvore
+  da aba do admin, **sem** contratar, gerar nem abrir demanda avulsa (isso segue só do ADMIN) e sem RH,
+  folha, documentos ou dados bancários.
+- O recorte por departamento continua valendo: o que cada gestor/operador vê dentro de cada empresa
+  depende dos departamentos de que participa. Quem é cadastrado e ainda não está em departamento algum
+  vê só as demandas atribuídas a si.

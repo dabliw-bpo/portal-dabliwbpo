@@ -4,15 +4,12 @@ import { INTERNAL_ROLES } from "@/lib/authz";
 import { APP_TIME_ZONE, formatDateOnly } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { describeRecurrence } from "@/lib/tasks/recurrence";
+import { JANELA_HISTORICO_DIAS, loadCompanyTasks } from "@/lib/tasks/company-tasks";
 import { buildCompanyTree } from "@/lib/tasks/tree";
-import { OPEN_STATUSES } from "@/lib/tasks/urgency";
 import { ContractsPanel } from "@/components/services/contracts-panel";
 import { AcoesEmpresa } from "@/components/tasks/acoes-empresa";
 import { ArvoreTarefas } from "@/components/tasks/arvore-tarefas";
 import { CompanyTabs } from "../company-tabs";
-
-/** Concluídas antigas saem da árvore; o que está em aberto fica sempre. */
-const JANELA_HISTORICO_DIAS = 120;
 
 export default async function EmpresaTarefasPage({
   params,
@@ -21,7 +18,6 @@ export default async function EmpresaTarefasPage({
 }) {
   const { id } = await params;
   const agora = new Date();
-  const desde = new Date(agora.getTime() - JANELA_HISTORICO_DIAS * 24 * 60 * 60 * 1000);
 
   const [company, services, assignees, tasks] = await Promise.all([
     prisma.company.findUnique({
@@ -48,25 +44,8 @@ export default async function EmpresaTarefasPage({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
-    prisma.task.findMany({
-      where: {
-        companyId: id,
-        OR: [{ dueDateLegal: { gte: desde } }, { status: { in: [...OPEN_STATUSES] } }],
-      },
-      orderBy: [{ dueDateLegal: "asc" }, { id: "asc" }],
-      include: {
-        service: {
-          select: { name: true, requiresDocument: true, department: { select: { name: true } } },
-        },
-        bankAccount: { select: { bankName: true, agency: true, accountNumber: true } },
-        assignee: { select: { name: true } },
-        checklist: {
-          orderBy: { order: "asc" },
-          select: { id: true, text: true, required: true, order: true, checkedAt: true },
-        },
-        _count: { select: { documents: true } },
-      },
-    }),
+    // A rota é só do ADMIN (layout e proxy), então o recorte de papel é vazio.
+    loadCompanyTasks(id, {}, agora),
   ]);
 
   if (!company) {

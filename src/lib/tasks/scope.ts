@@ -11,10 +11,28 @@ import { prisma } from "@/lib/prisma";
  * - OPERADOR enxerga as próprias atividades mais as que ainda não têm
  *            responsável dentro dos departamentos de que participa.
  *
+ * Gestor e operador só valem se estiverem cadastrados na Matriz (a empresa
+ * marcada como `isHeadquarters`): é o cadastro na Matriz que dá à equipe
+ * interna acesso às demandas das demais empresas. Quem tem papel interno mas
+ * está em outra empresa não enxerga nada.
+ *
  * Devolve um fragmento de `where` para ser combinado com os filtros da tela.
  * O recorte mora aqui, na camada de dados, e nunca só na UI — é o que impede
  * um operador de ler a carteira inteira mexendo na query string.
  */
+/**
+ * Equipe da Matriz: usuário ativo cadastrado na empresa marcada como matriz.
+ * Consulta o banco em vez de confiar na empresa gravada no token, que fica
+ * velha se o cadastro mudar depois do login.
+ */
+export async function isHeadquartersStaff(userId: string): Promise<boolean> {
+  const found = await prisma.user.findFirst({
+    where: { id: userId, active: true, company: { isHeadquarters: true } },
+    select: { id: true },
+  });
+  return found !== null;
+}
+
 export async function taskScopeFor(session: Session | null): Promise<Prisma.TaskWhereInput> {
   if (!session?.user) {
     throw new AuthzError("Não autenticado.");
@@ -25,6 +43,10 @@ export async function taskScopeFor(session: Session | null): Promise<Prisma.Task
 
   if (session.user.role === "ADMIN") {
     return {};
+  }
+
+  if (!(await isHeadquartersStaff(session.user.id))) {
+    throw new AuthzError("O acesso às empresas é da equipe cadastrada na Matriz.");
   }
 
   const memberships = await prisma.departmentMember.findMany({

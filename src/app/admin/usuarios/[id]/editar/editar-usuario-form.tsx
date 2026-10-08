@@ -81,6 +81,10 @@ export function EditarUsuarioForm({
           <option value="GESTOR">Gestor de departamento</option>
           <option value="ADMIN">Admin</option>
         </select>
+        <p className="text-xs text-slate-500">
+          Operador e Gestor são a equipe interna: ficam cadastrados na Matriz, que dá acesso às
+          demais empresas, seja qual for a empresa escolhida abaixo.
+        </p>
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="companyId" className="text-sm font-medium text-slate-700">

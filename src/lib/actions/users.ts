@@ -9,6 +9,28 @@ import { prisma } from "@/lib/prisma";
 import { createUserSchema, updateUserSchema } from "@/lib/validations/user";
 import { MIN_PASSWORD_LENGTH, NEW_PASSWORD_TOO_SHORT } from "@/lib/validations/password";
 
+/**
+ * Gestor e operador são a equipe interna do BPO e ficam sempre cadastrados na
+ * Matriz — é o cadastro lá que lhes dá acesso às demais empresas. Para os
+ * outros papéis vale a empresa escolhida no formulário.
+ */
+async function resolveCompanyId(
+  role: string,
+  requested: string | null
+): Promise<{ companyId: string | null } | { error: string }> {
+  if (role !== "GESTOR" && role !== "OPERADOR") {
+    return { companyId: requested };
+  }
+  const headquarters = await prisma.company.findFirst({
+    where: { isHeadquarters: true },
+    select: { id: true },
+  });
+  if (!headquarters) {
+    return { error: "Nenhuma empresa está marcada como Matriz. Marque a DABLIW antes de cadastrar a equipe interna." };
+  }
+  return { companyId: headquarters.id };
+}
+
 function listPathForActor(role: string): string {
   return role === "COMPANY_HR" ? "/portal-rh/colaboradores" : "/admin/usuarios";
 }
@@ -54,7 +76,13 @@ export async function createUserAction(
   }
 
   const role = isHr ? "COLLABORATOR" : parsed.data.role;
-  const companyId = isHr ? authSession.user.companyId : (parsed.data.companyId ?? null);
+  const resolved = isHr
+    ? { companyId: authSession.user.companyId }
+    : await resolveCompanyId(role, parsed.data.companyId ?? null);
+  if ("error" in resolved) {
+    return { error: resolved.error };
+  }
+  const companyId = resolved.companyId;
 
   const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (existing) {
@@ -135,7 +163,13 @@ export async function updateUserAction(
   const passwordHash = newPassword ? await bcrypt.hash(newPassword, 10) : undefined;
 
   const role = isHr ? "COLLABORATOR" : parsed.data.role;
-  const companyId = isHr ? authSession.user.companyId : (parsed.data.companyId ?? null);
+  const resolved = isHr
+    ? { companyId: authSession.user.companyId }
+    : await resolveCompanyId(role, parsed.data.companyId ?? null);
+  if ("error" in resolved) {
+    return { error: resolved.error };
+  }
+  const companyId = resolved.companyId;
 
   await prisma.user.update({
     where: { id: userId },

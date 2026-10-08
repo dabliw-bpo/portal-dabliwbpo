@@ -26,6 +26,7 @@ function revalidateTaskLists() {
   revalidatePath("/atividades");
   // A árvore de demandas de cada empresa mostra as mesmas tarefas da fila.
   revalidatePath("/admin/empresas/[id]/tarefas", "page");
+  revalidatePath("/atividades/empresas/[id]", "page");
 }
 
 function revalidateTask(taskId: string) {

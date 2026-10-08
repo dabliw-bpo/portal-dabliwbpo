@@ -19,7 +19,11 @@ import { PainelConclusao } from "./painel-conclusao";
  */
 function destinoDeVolta(raw: string | string[] | undefined): { href: string; rotulo: string } {
   const valor = Array.isArray(raw) ? raw[0] : raw;
-  if (valor && /^\/admin\/empresas\/[A-Za-z0-9_-]+\/tarefas$/.test(valor)) {
+  if (
+    valor &&
+    (/^\/admin\/empresas\/[A-Za-z0-9_-]+\/tarefas$/.test(valor) ||
+      /^\/atividades\/empresas\/[A-Za-z0-9_-]+$/.test(valor))
+  ) {
     return { href: valor, rotulo: "← Voltar para as tarefas da empresa" };
   }
   return { href: "/atividades", rotulo: "← Voltar para a fila" };

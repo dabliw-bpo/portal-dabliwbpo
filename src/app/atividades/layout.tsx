@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { homePathForRole, isInternalRole } from "@/lib/authz";
+import { isHeadquartersStaff } from "@/lib/tasks/scope";
 import { PortalNav } from "@/components/layout/portal-nav";
 
 /**
@@ -9,6 +10,10 @@ import { PortalNav } from "@/components/layout/portal-nav";
  * atividades. O `proxy.ts` já barra o acesso antes de chegar aqui; esta
  * checagem é a segunda camada, para o caso de a rota ser renderizada por
  * outro caminho.
+ *
+ * O acesso às empresas vem do cadastro na Matriz: gestor ou operador que não
+ * esteja nela vê o aviso abaixo em vez de uma tela vazia ou de um erro. Não há
+ * redirecionamento porque a página inicial desses papéis é esta mesma área.
  */
 export default async function AtividadesLayout({
   children,
@@ -23,15 +28,30 @@ export default async function AtividadesLayout({
     redirect(homePathForRole(session.user.role));
   }
 
-  const links = [{ href: "/atividades", label: "Atividades", exact: true }];
-  if (session.user.role === "ADMIN") {
+  const isAdmin = session.user.role === "ADMIN";
+  const permitido = isAdmin || (await isHeadquartersStaff(session.user.id));
+
+  const links = [
+    { href: "/atividades", label: "Atividades", exact: true },
+    { href: "/atividades/empresas", label: "Empresas", exact: false },
+  ];
+  if (isAdmin) {
     links.push({ href: "/admin", label: "Admin", exact: false });
   }
 
   return (
     <div className="flex flex-1 flex-col">
       <PortalNav title="Operação" userName={session.user.name ?? ""} links={links} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+        {permitido ? (
+          children
+        ) : (
+          <div role="alert" className="max-w-xl rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Seu cadastro não está na Matriz, e o acesso às atividades e às empresas é da equipe
+            cadastrada nela. Peça a um administrador para ajustar o seu cadastro.
+          </div>
+        )}
+      </main>
     </div>
   );
 }

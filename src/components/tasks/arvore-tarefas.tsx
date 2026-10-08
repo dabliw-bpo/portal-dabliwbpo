@@ -40,16 +40,18 @@ function Contagem({ open, overdue }: { open: number; overdue: number }) {
 export function ArvoreTarefas({
   servicos,
   voltar,
+  vazio = "Esta empresa ainda não tem serviço contratado nem demanda aberta. Contrate um serviço ou abra uma demanda avulsa.",
 }: {
   servicos: ServiceNode[];
   /** Caminho para a tela de atividade devolver o usuário a esta aba. */
   voltar: string;
+  /** Texto de quando não há nada a mostrar; muda conforme quem está olhando. */
+  vazio?: string;
 }) {
   if (servicos.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-600">
-        Esta empresa ainda não tem serviço contratado nem demanda aberta. Contrate um serviço
-        ou abra uma demanda avulsa.
+        {vazio}
       </p>
     );
   }

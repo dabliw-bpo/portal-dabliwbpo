@@ -76,6 +76,12 @@ export function NovoUsuarioForm({
           {!lockedCompany && <option value="GESTOR">Gestor de departamento</option>}
           {!lockedCompany && <option value="ADMIN">Admin</option>}
         </select>
+        {!lockedCompany && (
+          <p className="text-xs text-slate-500">
+            Operador e Gestor são a equipe interna: ficam cadastrados na Matriz, que dá acesso às
+            demais empresas, seja qual for a empresa escolhida abaixo.
+          </p>
+        )}
       </div>
       {lockedCompany ? (
         <div className="flex flex-col gap-1">
