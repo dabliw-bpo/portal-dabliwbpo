@@ -5,11 +5,9 @@ import {
   ChartLineUp,
   ChatCircle,
   Check,
-  CheckCircle,
   Briefcase,
   FileText,
   Handshake,
-  IdentificationBadge,
   LockKey,
   UsersThree,
   WhatsappLogo,
@@ -17,6 +15,7 @@ import {
 import { displayFont, bodyFont } from "./fonts";
 import { Reveal } from "./reveal";
 import { MobileNav } from "./mobile-nav";
+import { PortalStory } from "./portal-story";
 
 const WHATSAPP_HREF = `https://wa.me/5565992536122?text=${encodeURIComponent(
   "Olá! Quero saber mais sobre os serviços da DABLIW BPO."
@@ -29,17 +28,11 @@ const NAV_LINKS = [
   { href: "#contato", label: "Contato" },
 ];
 
-const DOCUMENT_ROWS = [
-  { label: "Holerite · Outubro 2026", status: "Assinado" },
-  { label: "Recibo de Férias", status: "Disponível" },
-  { label: "Admissão · Contrato", status: "Concluído" },
-];
-
 const FINANCEIRO_ITEMS = [
   "Contas a pagar e a receber",
   "Conciliação bancária e fechamento",
-  "Cálculo e conferência de comissões",
   "Análises e relatórios financeiros",
+  "Consultoria financeira",
 ];
 
 const RH_ITEMS = [
@@ -61,6 +54,24 @@ const STEPS = [
   {
     title: "Operação",
     desc: "Financeiro e RH passam a rodar no dia a dia, com suporte direto.",
+  },
+];
+
+const PONTOS_VENDA = [
+  {
+    icon: Handshake,
+    title: "Uma equipe, dois departamentos",
+    desc: "Financeiro e RH com o mesmo parceiro, sem repassar informação entre fornecedores diferentes.",
+  },
+  {
+    icon: FileText,
+    title: "A rotina organizada",
+    desc: "Documentos, processos e histórico entram no portal, prontos para uso.",
+  },
+  {
+    icon: ChatCircle,
+    title: "Fale com quem cuida da sua conta",
+    desc: "Atendimento direto, sem central de atendimento automática.",
   },
 ];
 
@@ -101,12 +112,12 @@ export function LandingPage() {
         <div className="relative mx-auto flex h-20 max-w-[1280px] items-center justify-between px-6 sm:px-10 lg:px-16">
           <a href="#hero" aria-label="DABLIW BPO, início">
             <Image
-              src="/logo-dabliw-bpo.svg"
+              src="/icone-redes-sociais.svg"
               alt="DABLIW BPO"
-              width={172}
-              height={40}
+              width={56}
+              height={56}
               priority
-              className="h-10 w-auto"
+              className="h-14 w-14 rounded-full"
             />
           </a>
 
@@ -139,110 +150,99 @@ export function LandingPage() {
       </header>
 
       <main>
-        {/* HERO */}
+        {/* ABERTURA: logo em movimento */}
         <section
           id="hero"
-          className="relative mx-auto grid min-h-[100dvh] max-w-[1280px] grid-cols-1 pt-20 md:grid-cols-2"
+          className="relative flex min-h-[100dvh] flex-col items-center justify-center px-6 pb-20 pt-28 text-center sm:px-10"
         >
-          <div className="flex flex-col justify-center px-6 py-16 sm:px-10 lg:px-16">
-            <Reveal>
-              <div className="mb-6 flex items-center gap-4">
-                <span className="h-px w-8 bg-[#c9a96e]" />
-                <span className="text-[13px] font-medium uppercase tracking-[0.25em] text-[#c9a96e]">
-                  BPO Financeiro &amp; RH
-                </span>
-              </div>
-            </Reveal>
-
-            <Reveal delay={0.08}>
-              <h1 className="mb-6 font-[family-name:var(--font-display)] text-4xl font-medium leading-[1.12] text-[#f0ece4] sm:text-5xl lg:text-6xl">
-                O financeiro e o RH da sua empresa, sem <em className="italic text-[#c9a96e]">estresse</em>.
-              </h1>
-            </Reveal>
-
-            <Reveal delay={0.16}>
-              <p className="mb-10 max-w-[440px] text-lg leading-[1.8] text-[#a8a295]">
-                Gerenciamos o seu financeiro de forma terceirizada e cuidamos da
-                sua burocracia com os documentos do RH.
-              </p>
-            </Reveal>
-
-            <Reveal delay={0.24}>
-              <div className="flex flex-wrap items-center gap-6">
-                <a
-                  href={WHATSAPP_HREF}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-3 bg-[#c9a96e] px-8 py-4 text-[14px] font-medium uppercase tracking-[0.12em] text-[#0f0e0b] transition-all hover:-translate-y-0.5 hover:bg-[#dfc596]"
-                >
-                  Falar no WhatsApp
-                  <ArrowRight size={16} />
-                </a>
-                <Link
-                  href="/portal"
-                  className="inline-flex items-center gap-2 text-[14px] font-normal uppercase tracking-[0.1em] text-[#a8a295] transition-colors hover:text-[#c9a96e]"
-                >
-                  Acessar Portal
-                  <ArrowRight size={14} />
-                </Link>
-              </div>
-            </Reveal>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse at 50% 36%, rgba(201,169,110,0.10) 0%, transparent 62%), radial-gradient(ellipse at 85% 90%, rgba(201,169,110,0.05) 0%, transparent 55%)",
+            }}
+          />
+          <div className="relative w-[min(720px,86vw)]" style={{ aspectRatio: "975 / 233" }}>
+            <Image
+              src="/logo-dabliw-bpo-completa.svg"
+              alt="DABLIW BPO, Financeiro e RH"
+              fill
+              priority
+              className="dw-logo-anim object-contain"
+            />
+            <div aria-hidden className="dw-logo-brilho" />
           </div>
 
-          <div className="relative hidden items-center justify-center overflow-hidden bg-[#161510] md:flex">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(ellipse at 30% 50%, rgba(201,169,110,0.08) 0%, transparent 70%), radial-gradient(ellipse at 80% 20%, rgba(201,169,110,0.05) 0%, transparent 60%)",
-              }}
-            />
-            <div
-              aria-hidden
-              className="dw-float absolute right-[10%] top-[15%] h-28 w-28 rounded-full border border-[rgba(201,169,110,0.12)]"
-            />
-            <div
-              aria-hidden
-              className="dw-float absolute bottom-[22%] left-[10%] h-14 w-14 rounded-full border border-[rgba(201,169,110,0.12)]"
-              style={{ animationDelay: "-2s" }}
-            />
-            <div
-              aria-hidden
-              className="dw-float absolute bottom-[10%] right-[20%] h-44 w-44 rounded-full border border-[rgba(201,169,110,0.12)] opacity-40"
-              style={{ animationDelay: "-4s" }}
-            />
+          <Reveal delay={1.4} className="relative mt-14 max-w-3xl">
+            <h1 className="font-[family-name:var(--font-display)] text-3xl font-medium leading-[1.15] text-[#f0ece4] sm:text-4xl lg:text-5xl">
+              O financeiro e o RH da sua empresa, sem <em className="italic text-[#c9a96e]">estresse</em>.
+            </h1>
+          </Reveal>
 
-            <Reveal delay={0.3} className="relative w-[82%] max-w-[420px]">
-              <div className="overflow-hidden rounded-xl border border-[rgba(201,169,110,0.12)] bg-[#1c1a15] shadow-[0_25px_60px_rgba(0,0,0,0.4)]">
-                <div className="flex items-center gap-1.5 border-b border-[rgba(201,169,110,0.12)] bg-white/[0.03] px-4 py-3.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#e06c60]/70" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#e5bf4e]/70" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#61c354]/70" />
-                  <span className="ml-auto text-[11px] tracking-wide text-[#706b61]">
-                    portal-colaborador
-                  </span>
+          <a
+            href="#para-sua-empresa"
+            aria-label="Ir para a próxima seção"
+            className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-[11px] uppercase tracking-[0.25em] text-[#706b61] transition-colors hover:text-[#c9a96e]"
+          >
+            Role
+            <span className="dw-float block h-8 w-px bg-[#c9a96e]/60" />
+          </a>
+        </section>
+
+        {/* COPY DE VENDAS */}
+        <section id="para-sua-empresa" className="mx-auto max-w-[1100px] px-6 py-24 sm:px-10 lg:px-6">
+          <Reveal>
+            <div className="mb-5 flex items-center gap-4">
+              <span className="h-px w-8 bg-[#c9a96e]" />
+              <span className="text-[13px] font-medium uppercase tracking-[0.25em] text-[#c9a96e]">
+                Para quem toca uma empresa
+              </span>
+            </div>
+            <h2 className="max-w-3xl font-[family-name:var(--font-display)] text-3xl font-medium leading-[1.15] text-[#f0ece4] sm:text-4xl lg:text-5xl">
+              Seu financeiro e seu RH, nas mãos de quem <em className="italic text-[#c9a96e]">cuida</em> disso todos os
+              dias.
+            </h2>
+            <p className="mt-6 max-w-2xl text-lg leading-[1.8] text-[#a8a295]">
+              Contas a pagar e a receber, conciliação, relatórios e consultoria financeira. Admissões, férias, folha e
+              documentos do RH. Uma única equipe cuida de tudo, com atendimento direto.
+            </p>
+          </Reveal>
+
+          <div className="mt-14 grid grid-cols-1 gap-x-10 gap-y-10 md:grid-cols-3">
+            {PONTOS_VENDA.map((item, i) => (
+              <Reveal key={item.title} delay={i * 0.1}>
+                <div className="flex gap-4">
+                  <item.icon size={22} className="mt-1 shrink-0 text-[#c9a96e]" />
+                  <div>
+                    <h3 className="text-base font-medium text-[#f0ece4]">{item.title}</h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-[#a8a295]">{item.desc}</p>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-4 p-6">
-                  {DOCUMENT_ROWS.map((row) => (
-                    <div key={row.label} className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <FileText size={16} className="shrink-0 text-[#706b61]" />
-                        <span className="text-sm text-[#a8a295]">{row.label}</span>
-                      </div>
-                      <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-[#c9a96e]">
-                        <CheckCircle size={14} weight="fill" />
-                        {row.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <p className="mt-4 text-center text-xs uppercase tracking-[0.15em] text-[#706b61]">
-                Prévia do Portal do Colaborador
-              </p>
-            </Reveal>
+              </Reveal>
+            ))}
           </div>
+
+          <Reveal delay={0.1}>
+            <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-5">
+              <a
+                href={WHATSAPP_HREF}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 bg-[#c9a96e] px-8 py-4 text-[14px] font-medium uppercase tracking-[0.12em] text-[#0f0e0b] transition-all hover:-translate-y-0.5 hover:bg-[#dfc596]"
+              >
+                <WhatsappLogo size={18} weight="fill" />
+                Falar no WhatsApp
+              </a>
+              <a
+                href="#servicos"
+                className="inline-flex items-center gap-2 text-[14px] font-normal uppercase tracking-[0.1em] text-[#a8a295] transition-colors hover:text-[#c9a96e]"
+              >
+                Ver o que fazemos
+                <ArrowRight size={14} />
+              </a>
+            </div>
+          </Reveal>
         </section>
 
         {/* SERVIÇOS */}
@@ -307,49 +307,31 @@ export function LandingPage() {
         </section>
 
         {/* PORTAL DIGITAL */}
-        <section
-          id="portal"
-          className="mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-12 px-6 py-24 sm:px-10 md:grid-cols-2 lg:px-16"
-        >
-          <Reveal className="order-2 md:order-1">
-            <div className="grid gap-4">
-              <div className="flex items-center gap-4 rounded-xl border border-[rgba(201,169,110,0.12)] bg-[#1c1a15] p-5">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgba(201,169,110,0.25)] text-[#c9a96e]">
-                  <IdentificationBadge size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[#f0ece4]">Portal do Colaborador</p>
-                  <p className="text-xs text-[#706b61]">Holerites, férias e contratos em um só lugar, assinados no celular.</p>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.1} className="order-1 md:order-2">
+        <section id="portal" className="mx-auto max-w-[1100px] px-6 pt-24 sm:px-10 lg:px-6">
+          <Reveal>
             <div className="mb-4 flex items-center gap-4">
               <span className="h-px w-8 bg-[#c9a96e]" />
               <span className="text-[13px] font-medium uppercase tracking-[0.25em] text-[#c9a96e]">
                 Portal Digital
               </span>
             </div>
-            <h2 className="mb-5 font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[#f0ece4] sm:text-4xl">
+            <h2 className="mb-5 max-w-2xl font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[#f0ece4] sm:text-4xl">
               Cada documento, ao alcance de um clique.
             </h2>
-            <p className="mb-8 max-w-md text-base leading-relaxed text-[#a8a295]">
+            <p className="mb-8 max-w-xl text-base leading-relaxed text-[#a8a295]">
               Holerites, admissões, férias e contratos organizados num portal só
               seu, com acesso separado para cada colaborador.
             </p>
-            <div className="flex flex-wrap gap-x-8 gap-y-4">
-              <Link
-                href="/login?callbackUrl=/portal-colaborador"
-                className="inline-flex items-center gap-2 text-[14px] font-normal uppercase tracking-[0.1em] text-[#a8a295] transition-colors hover:text-[#c9a96e]"
-              >
-                Portal do Colaborador
-                <ArrowRight size={14} />
-              </Link>
-            </div>
+            <Link
+              href="/login?callbackUrl=/portal-colaborador"
+              className="inline-flex items-center gap-2 text-[14px] font-normal uppercase tracking-[0.1em] text-[#a8a295] transition-colors hover:text-[#c9a96e]"
+            >
+              Portal do Colaborador
+              <ArrowRight size={14} />
+            </Link>
           </Reveal>
         </section>
+        <PortalStory />
 
         {/* COMO FUNCIONA */}
         <section
@@ -401,6 +383,8 @@ export function LandingPage() {
             ))}
           </div>
         </section>
+
+        {/* "Sobre nós" está pronto em ./sobre-nos.tsx, mas inativo até a DABLIW aprovar o texto e informar os sistemas. */}
 
         {/* CONTATO */}
         <section

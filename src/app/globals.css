@@ -71,3 +71,54 @@ body:has(.tema-portal) {
     transform: scale(0.75);
   }
 }
+
+/* Logo em movimento da abertura: a logo se revela da esquerda para a direita e,
+   depois, um brilho dourado passa por cima. Só roda para quem não pediu menos movimento. */
+.dw-logo-brilho {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  -webkit-mask: url("/logo-dabliw-bpo-completa.svg") center / contain no-repeat;
+  mask: url("/logo-dabliw-bpo-completa.svg") center / contain no-repeat;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 243, 214, 0.9) 50%, transparent 62%);
+  background-size: 250% 100%;
+  background-position: 100% 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dw-logo-anim {
+    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 33%, transparent 50%, transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0%, #000 33%, transparent 50%, transparent 100%);
+    -webkit-mask-size: 300% 100%;
+    mask-size: 300% 100%;
+    animation: dw-logo-revela 2.4s cubic-bezier(0.65, 0, 0.35, 1) 0.2s both;
+  }
+  .dw-logo-brilho {
+    opacity: 1;
+    animation: dw-logo-brilho 7s ease-in-out 3s infinite;
+  }
+}
+
+@keyframes dw-logo-revela {
+  from {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+    transform: translateY(10px);
+  }
+  to {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+    transform: none;
+  }
+}
+
+@keyframes dw-logo-brilho {
+  0% {
+    background-position: 100% 0;
+  }
+  35%,
+  100% {
+    background-position: 0% 0;
+  }
+}
