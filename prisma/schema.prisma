@@ -302,6 +302,10 @@ model PaymentReceipt {
   description                String
   amountCents                Int
   issuedAt                   DateTime @default(now())
+  /// Dia em que o valor foi pago ao colaborador (meia-noite UTC, só a data).
+  /// Controle interno: não entra no PDF, então pode ser preenchido ou corrigido
+  /// depois do envio. Nulo nos recibos anteriores à coluna.
+  paidAt                     DateTime?
   /// Assinatura da empresa, coletada pelo admin antes do envio.
   companySignatureImage      String?
   /// Mantida para os recibos assinados presencialmente, antes do envio ao

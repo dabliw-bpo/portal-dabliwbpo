@@ -5,6 +5,7 @@ import { centsToInput, formatCents } from "@/lib/format";
 import { buttonSecondary } from "@/components/ui/styles";
 import { CollaboratorTabs, loadCollaborator } from "../../collaborator-tabs";
 import { ReciboEditor } from "./recibo-editor";
+import { PagoEmCampo } from "../pago-em-campo";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { deleteReceiptAction } from "@/lib/actions/receipts";
 
@@ -40,6 +41,9 @@ export default async function ReciboPage({
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             {receipt.description} · emitido em {receipt.issuedAt.toLocaleDateString("pt-BR")}
+            {receipt.paidAt
+              ? ` · pago em ${receipt.paidAt.toLocaleDateString("pt-BR", { timeZone: "UTC" })}`
+              : " · data do pagamento não informada"}
           </p>
         </div>
         <Link
@@ -53,6 +57,14 @@ export default async function ReciboPage({
       </div>
 
       <CollaboratorTabs companyId={id} userId={userId} active="recibos" />
+
+      <div className="mt-6 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
+        <span className="text-sm font-medium text-slate-700">Data do pagamento</span>
+        <PagoEmCampo
+          receiptId={receipt.id}
+          inicial={receipt.paidAt ? receipt.paidAt.toISOString().slice(0, 10) : ""}
+        />
+      </div>
 
       <ReciboEditor
         receipt={{

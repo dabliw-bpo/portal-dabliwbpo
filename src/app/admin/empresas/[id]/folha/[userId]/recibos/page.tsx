@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatCents } from "@/lib/format";
 import { CollaboratorHeader, CollaboratorTabs, loadCollaborator } from "../collaborator-tabs";
 import { NovoReciboForm } from "./novo-recibo-form";
+import { PagoEmCampo } from "./pago-em-campo";
 
 function signatureState(receipt: {
   companySignatureImage: string | null;
@@ -45,6 +46,9 @@ export default async function ColaboradorRecibosPage({
                 Emitido em
               </th>
               <th scope="col" className="px-4 py-2 font-medium">
+                Pago em
+              </th>
+              <th scope="col" className="px-4 py-2 font-medium">
                 Descrição
               </th>
               <th scope="col" className="px-4 py-2 font-medium">
@@ -62,6 +66,12 @@ export default async function ColaboradorRecibosPage({
                 <tr key={receipt.id}>
                   <td className="px-4 py-2 text-slate-600">
                     {receipt.issuedAt.toLocaleDateString("pt-BR")}
+                  </td>
+                  <td className="px-4 py-2">
+                    <PagoEmCampo
+                      receiptId={receipt.id}
+                      inicial={receipt.paidAt ? receipt.paidAt.toISOString().slice(0, 10) : ""}
+                    />
                   </td>
                   <td className="px-4 py-2">
                     <Link
@@ -86,7 +96,7 @@ export default async function ColaboradorRecibosPage({
             })}
             {receipts.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
+                <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
                   Nenhum recibo emitido ainda.
                 </td>
               </tr>

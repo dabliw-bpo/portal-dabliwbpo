@@ -23,7 +23,7 @@ export function NovoReciboForm({
       <h2 className="text-sm font-semibold text-slate-900">Novo recibo</h2>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-6">
-        <div className="flex flex-col gap-1 sm:col-span-4">
+        <div className="flex flex-col gap-1 sm:col-span-6">
           <label htmlFor="description" className="text-sm font-medium text-slate-700">
             Descrição do pagamento
           </label>
@@ -35,7 +35,7 @@ export function NovoReciboForm({
             className={inputBase}
           />
         </div>
-        <div className="flex flex-col gap-1 sm:col-span-2">
+        <div className="flex flex-col gap-1 sm:col-span-3">
           <label htmlFor="amount" className="text-sm font-medium text-slate-700">
             Valor (R$)
           </label>
@@ -47,6 +47,13 @@ export function NovoReciboForm({
             placeholder="1.500,00"
             className={inputBase}
           />
+        </div>
+        <div className="flex flex-col gap-1 sm:col-span-3">
+          <label htmlFor="paidAt" className="text-sm font-medium text-slate-700">
+            Data do pagamento
+          </label>
+          <input id="paidAt" name="paidAt" type="date" required className={inputBase} />
+          <p className="text-xs text-slate-500">Dia em que o valor foi pago ao colaborador.</p>
         </div>
       </div>
 

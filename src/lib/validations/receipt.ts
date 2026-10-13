@@ -37,3 +37,24 @@ export const receiptSchema = z.object({
     z.number().int().min(1, "Informe um valor maior que zero.")
   ),
 });
+
+/**
+ * Dia do pagamento, como sai de `<input type="date">` (AAAA-MM-DD). A data
+ * entra no banco como meia-noite UTC e é exibida em UTC, para não recuar um
+ * dia no fuso de Brasília.
+ */
+export const paidAtSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Informe a data do pagamento.")
+  .refine((value) => {
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return (
+      date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+    );
+  }, "Data do pagamento inválida.");
+
+export function paidAtToDate(value: string): Date {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}

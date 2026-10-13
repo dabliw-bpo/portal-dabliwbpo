@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
-import { receiptSchema } from "@/lib/validations/receipt";
+import { paidAtSchema, paidAtToDate, receiptSchema } from "@/lib/validations/receipt";
 import { buildReceiptPdf } from "@/lib/receipt-pdf";
 import { deleteStoredFile, readPublicAsset, saveFile } from "@/lib/storage";
 import { sendDocumentUploadedEmail } from "@/lib/email";
@@ -38,6 +38,10 @@ export async function createReceiptAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
+  const paidAt = paidAtSchema.safeParse(String(formData.get("paidAt") ?? ""));
+  if (!paidAt.success) {
+    return { error: paidAt.error.issues[0]?.message ?? "Informe a data do pagamento." };
+  }
 
   const receipt = await prisma.paymentReceipt.create({
     data: {
@@ -45,11 +49,46 @@ export async function createReceiptAction(
       collaboratorUserId,
       description: parsed.data.description,
       amountCents: parsed.data.amountCents,
+      paidAt: paidAtToDate(paidAt.data),
     },
   });
 
   revalidatePath(`/admin/empresas/${companyId}/folha/${collaboratorUserId}/recibos`);
   redirect(`/admin/empresas/${companyId}/folha/${collaboratorUserId}/recibos/${receipt.id}`);
+}
+
+/**
+ * Registra (ou corrige) o dia em que o valor foi pago. Fica fora de
+ * `updateReceiptAction` de propósito: é um controle interno que não vai no PDF,
+ * então vale também para recibos já enviados e assinados. Vazio limpa o campo.
+ */
+export async function setReceiptPaidAtAction(
+  receiptId: string,
+  _prevState: ReceiptFormState,
+  formData: FormData
+): Promise<ReceiptFormState> {
+  const session = await auth();
+  requireRole(session, ["ADMIN"]);
+
+  const raw = String(formData.get("paidAt") ?? "").trim();
+  let paidAt: Date | null = null;
+  if (raw !== "") {
+    const parsed = paidAtSchema.safeParse(raw);
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? "Data inválida." };
+    }
+    paidAt = paidAtToDate(parsed.data);
+  }
+
+  const receipt = await prisma.paymentReceipt.update({
+    where: { id: receiptId },
+    data: { paidAt },
+  });
+
+  const base = `/admin/empresas/${receipt.companyId}/folha/${receipt.collaboratorUserId}/recibos`;
+  revalidatePath(base);
+  revalidatePath(`${base}/${receiptId}`);
+  return { success: paidAt ? "Salvo." : "Data removida." };
 }
 
 export async function updateReceiptAction(
