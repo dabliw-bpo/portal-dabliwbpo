@@ -113,7 +113,11 @@ export default async function EmpresaTarefasPage({
           />
         </div>
 
-        <ArvoreTarefas servicos={arvore} voltar={`/admin/empresas/${id}/tarefas`} />
+        <ArvoreTarefas
+          servicos={arvore}
+          voltar={`/admin/empresas/${id}/tarefas`}
+          acoes={{ companyId: id, responsaveis: assignees }}
+        />
 
         <p className="text-xs text-slate-500">
           {incluirEncerradas

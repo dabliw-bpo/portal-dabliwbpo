@@ -42,10 +42,15 @@ export type MonthNode = {
 };
 
 export type AccountNode = {
+  /** Id da conta bancária, ou "-" quando o serviço não é por conta. */
   key: string;
   /** `null` quando o serviço não é por conta bancária. */
   label: string | null;
   months: MonthNode[];
+  /** Demandas em aberto da conta (as que as ações em lote alcançam). */
+  open: number;
+  /** Quem responde pelas demandas em aberto: nomes distintos, "Sem responsável" incluso. */
+  responsaveis: string[];
 };
 
 export type ServiceNode = {
@@ -234,7 +239,11 @@ export function buildCompanyTree(
     // fica com o primeiro e só vira "inativo" se todos estiverem inativos.
     draft.recurrence ??= contract.recurrence;
     draft.contractActive = (draft.contractActive ?? false) || contract.active;
-    accountFor(draft, contract.bankAccountId, contract.bankAccount);
+    // Contrato desativado (série excluída) não mantém a conta na árvore: ela só
+    // aparece se ainda houver demanda para mostrar, vinda do laço de tarefas.
+    if (contract.active) {
+      accountFor(draft, contract.bankAccountId, contract.bankAccount);
+    }
   }
 
   for (const task of tasks) {
@@ -243,13 +252,22 @@ export function buildCompanyTree(
   }
 
   return [...services.values()]
+    .filter((draft) => draft.accounts.size > 0)
     .map((draft): ServiceNode => {
       const accounts = [...draft.accounts.entries()]
-        .map(([key, node]): AccountNode => ({
-          key,
-          label: node.label,
-          months: buildMonths(node.tasks),
-        }))
+        .map(([key, node]): AccountNode => {
+          const months = buildMonths(node.tasks);
+          const names = new Set(
+            node.tasks.filter((t) => isOpen(t.status)).map((t) => t.assigneeName ?? "Sem responsável")
+          );
+          return {
+            key,
+            label: node.label,
+            months,
+            open: months.reduce((sum, m) => sum + m.open, 0),
+            responsaveis: [...names].sort((a, b) => collator.compare(a, b)),
+          };
+        })
         .sort((a, b) => collator.compare(a.label ?? "", b.label ?? ""));
       const allMonths = accounts.flatMap((a) => a.months);
       return {

@@ -12,12 +12,16 @@ import { ASSIGNABLE_USERS } from "@/lib/tasks/assignees";
 import { taskNotificationEmail } from "@/lib/tasks/notify";
 import { applyDeadlineTime } from "@/lib/tasks/recurrence";
 import { assertCanActOnTask } from "@/lib/tasks/scope";
+import { OPEN_STATUSES, isOpen } from "@/lib/tasks/urgency";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/validations/document";
 import {
   attachDocumentSchema,
   canTransition,
   changeStatusSchema,
   createDemandSchema,
+  deleteSeriesSchema,
+  deleteTaskSchema,
+  reassignSchema,
   toggleChecklistSchema,
 } from "@/lib/validations/task";
 
@@ -402,4 +406,224 @@ export async function createDemandAction(
 
   revalidateTaskLists();
   return { success: "Demanda aberta." };
+}
+
+// ---------------------------------------------------------------------------
+// Exclusão e troca de responsável (admin)
+//
+// "Excluir" aqui é cancelar com motivo, não apagar a linha: o gerador diário
+// recria qualquer período que não exista mais, então uma demanda apagada
+// voltaria no dia seguinte. Cancelada ela continua ocupando o período (a
+// unique contrato + período segue valendo), some da lista e guarda o motivo no
+// histórico — e dá para reativá-la pela lista de ocultas.
+// ---------------------------------------------------------------------------
+
+export async function deleteTaskAction(
+  _prevState: TaskActionState,
+  formData: FormData
+): Promise<TaskActionState> {
+  const session = await auth();
+  try {
+    const authSession = requireRole(session, ["ADMIN"]);
+
+    const parsed = deleteTaskSchema.safeParse({
+      taskId: formData.get("taskId"),
+      reason: formData.get("reason"),
+    });
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+    }
+
+    const task = await prisma.task.findUnique({
+      where: { id: parsed.data.taskId },
+      select: { id: true, status: true },
+    });
+    if (!task) {
+      return { error: "Atividade não encontrada." };
+    }
+    if (!isOpen(task.status)) {
+      return {
+        error:
+          task.status === "CONCLUIDA"
+            ? "Atividade concluída — reabra antes de excluir."
+            : "Esta atividade já foi excluída.",
+      };
+    }
+
+    await prisma.$transaction([
+      prisma.task.update({
+        where: { id: task.id },
+        data: { status: "CANCELADA", completedAt: null, completedById: null },
+      }),
+      prisma.taskHistory.create({
+        data: {
+          taskId: task.id,
+          fromStatus: task.status,
+          toStatus: "CANCELADA",
+          authorId: authSession.user.id,
+          note: `Excluída: ${parsed.data.reason}`,
+        },
+      }),
+    ]);
+
+    revalidateTask(task.id);
+    return { success: "Atividade excluída." };
+  } catch (error) {
+    if (error instanceof AuthzError) {
+      return { error: error.message };
+    }
+    throw error;
+  }
+}
+
+/**
+ * Exclui a série inteira de uma conta: cancela todas as demandas em aberto e
+ * desativa o contrato, para o gerador não abrir mais nenhuma. As concluídas
+ * ficam como estão.
+ */
+export async function deleteSeriesAction(
+  _prevState: TaskActionState,
+  formData: FormData
+): Promise<TaskActionState> {
+  const session = await auth();
+  try {
+    const authSession = requireRole(session, ["ADMIN"]);
+
+    const parsed = deleteSeriesSchema.safeParse({
+      companyId: formData.get("companyId"),
+      serviceId: formData.get("serviceId"),
+      bankAccountId: formData.get("bankAccountId"),
+      reason: formData.get("reason"),
+    });
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+    }
+    const { companyId, serviceId, reason } = parsed.data;
+    const bankAccountId = parsed.data.bankAccountId ?? null;
+
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const open = await tx.task.findMany({
+          where: { companyId, serviceId, bankAccountId, status: { in: [...OPEN_STATUSES] } },
+          select: { id: true, status: true },
+        });
+        if (open.length > 0) {
+          await tx.task.updateMany({
+            where: { id: { in: open.map((t) => t.id) } },
+            data: { status: "CANCELADA", completedAt: null, completedById: null },
+          });
+          await tx.taskHistory.createMany({
+            data: open.map((t) => ({
+              taskId: t.id,
+              fromStatus: t.status,
+              toStatus: "CANCELADA" as const,
+              authorId: authSession.user.id,
+              note: `Excluída com a série: ${reason}`,
+            })),
+          });
+        }
+        const contracts = await tx.serviceContract.updateMany({
+          where: { companyId, serviceId, bankAccountId },
+          data: { active: false },
+        });
+        return { tasks: open.length, contracts: contracts.count };
+      },
+      { timeout: 30_000 }
+    );
+
+    revalidateTaskLists();
+    return {
+      success: `${result.tasks} demanda(s) excluída(s)${
+        result.contracts > 0 ? " e contrato desativado" : ""
+      }.`,
+    };
+  } catch (error) {
+    if (error instanceof AuthzError) {
+      return { error: error.message };
+    }
+    throw error;
+  }
+}
+
+/**
+ * Troca o responsável de todas as demandas em aberto de uma conta (ou de todas
+ * as contas do serviço) de uma vez e atualiza o responsável padrão dos
+ * contratos, para as próximas demandas já nascerem com ele.
+ */
+export async function reassignTasksAction(
+  _prevState: TaskActionState,
+  formData: FormData
+): Promise<TaskActionState> {
+  const session = await auth();
+  try {
+    const authSession = requireRole(session, ["ADMIN"]);
+
+    const parsed = reassignSchema.safeParse({
+      companyId: formData.get("companyId"),
+      serviceId: formData.get("serviceId"),
+      bankAccountId: formData.get("bankAccountId"),
+      assigneeId: formData.get("assigneeId"),
+    });
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+    }
+    const { companyId, serviceId } = parsed.data;
+    const bankAccountId = parsed.data.bankAccountId;
+    const assigneeId = parsed.data.assigneeId ?? null;
+
+    let assigneeName = "Sem responsável";
+    if (assigneeId) {
+      const assignee = await prisma.user.findFirst({
+        where: { AND: [{ id: assigneeId }, ASSIGNABLE_USERS] },
+        select: { name: true },
+      });
+      if (!assignee) {
+        return { error: "Responsável inválido." };
+      }
+      assigneeName = assignee.name;
+    }
+
+    const scopeWhere = { companyId, serviceId, ...(bankAccountId ? { bankAccountId } : {}) };
+
+    const changed = await prisma.$transaction(
+      async (tx) => {
+        const open = await tx.task.findMany({
+          where: { ...scopeWhere, status: { in: [...OPEN_STATUSES] } },
+          select: { id: true, status: true, assigneeId: true, assignee: { select: { name: true } } },
+        });
+        const toChange = open.filter((t) => t.assigneeId !== assigneeId);
+        if (toChange.length > 0) {
+          await tx.task.updateMany({
+            where: { id: { in: toChange.map((t) => t.id) } },
+            data: { assigneeId },
+          });
+          await tx.taskHistory.createMany({
+            data: toChange.map((t) => ({
+              taskId: t.id,
+              fromStatus: null,
+              toStatus: t.status,
+              authorId: authSession.user.id,
+              note: `Responsável alterado: ${t.assignee?.name ?? "Sem responsável"} → ${assigneeName}`,
+            })),
+          });
+        }
+        await tx.serviceContract.updateMany({ where: scopeWhere, data: { assigneeId } });
+        return toChange.length;
+      },
+      { timeout: 30_000 }
+    );
+
+    revalidateTaskLists();
+    return {
+      success:
+        changed === 0
+          ? `Nada a alterar: as demandas em aberto já estão com ${assigneeName}.`
+          : `${changed} demanda(s) passaram para ${assigneeName}. As próximas já nascem com ele.`,
+    };
+  } catch (error) {
+    if (error instanceof AuthzError) {
+      return { error: error.message };
+    }
+    throw error;
+  }
 }

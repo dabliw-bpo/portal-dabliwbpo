@@ -6,9 +6,11 @@ import type { TaskOrigin, TaskStatus } from "@prisma/client";
 import {
   changeTaskStatusAction,
   completeTaskAction,
+  deleteTaskAction,
   toggleChecklistItemAction,
   type TaskActionState,
 } from "@/lib/actions/tasks";
+import { buttonDanger, buttonSecondary, inputBase } from "@/components/ui/styles";
 import { TASK_STATUS_LABELS } from "./task-status-badge";
 
 const initialState: TaskActionState = {};
@@ -41,8 +43,19 @@ const ORIGEM: Partial<Record<TaskOrigin, string>> = {
  * regra barrar, o motivo aparece na própria linha em vez de a caixa marcar e
  * desmarcar sozinha.
  */
-export function LinhaDemanda({ dados, voltar }: { dados: LinhaDemandaDados; voltar: string }) {
+export function LinhaDemanda({
+  dados,
+  voltar,
+  podeExcluir = false,
+}: {
+  dados: LinhaDemandaDados;
+  voltar: string;
+  /** Só o admin exclui; a tela da equipe não mostra o botão. */
+  podeExcluir?: boolean;
+}) {
   const [aberta, setAberta] = useState(false);
+  const [excluindoAberto, setExcluindoAberto] = useState(false);
+  const [excluiState, excluiAction, excluindo] = useActionState(deleteTaskAction, initialState);
   const [concluirState, concluirAction, concluindo] = useActionState(
     completeTaskAction,
     initialState
@@ -144,8 +157,53 @@ export function LinhaDemanda({ dados, voltar }: { dados: LinhaDemandaDados; volt
           >
             Abrir
           </Link>
+          {podeExcluir && !encerrada && (
+            <button
+              type="button"
+              onClick={() => setExcluindoAberto((v) => !v)}
+              aria-expanded={excluindoAberto}
+              className="text-red-700 underline hover:text-red-900"
+            >
+              Excluir
+            </button>
+          )}
         </span>
       </div>
+
+      {excluindoAberto && podeExcluir && !encerrada && (
+        <form
+          action={excluiAction}
+          className="ml-8 mt-1.5 flex flex-wrap items-end gap-2 rounded-md border border-red-200 bg-red-50 p-2"
+        >
+          <input type="hidden" name="taskId" value={dados.id} />
+          <label className="flex min-w-60 flex-1 flex-col gap-1 text-xs font-medium text-red-900">
+            Motivo da exclusão ({dados.dia})
+            <input
+              name="reason"
+              required
+              minLength={3}
+              maxLength={300}
+              className={inputBase}
+              placeholder="Ex.: feriado nacional, sem expediente bancário"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={excluindo}
+            className={`${buttonDanger} border border-red-300 bg-white`}
+          >
+            {excluindo ? "Excluindo..." : "Excluir demanda"}
+          </button>
+          <button type="button" onClick={() => setExcluindoAberto(false)} className={buttonSecondary}>
+            Cancelar
+          </button>
+          {excluiState.error && (
+            <p className="basis-full text-xs text-red-700" role="alert">
+              {excluiState.error}
+            </p>
+          )}
+        </form>
+      )}
 
       {concluirState.error && (
         <p className="ml-8 mt-1 text-xs text-red-600" role="alert">

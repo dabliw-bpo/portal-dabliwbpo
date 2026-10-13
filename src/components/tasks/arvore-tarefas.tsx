@@ -1,4 +1,5 @@
 import { monthStartsOpen, type ServiceNode, type TreeTask } from "@/lib/tasks/tree";
+import { AcoesSerie } from "./acoes-serie";
 import { LinhaDemanda, type LinhaDemandaDados } from "./linha-demanda";
 
 function paraLinha(task: TreeTask): LinhaDemandaDados {
@@ -40,7 +41,10 @@ export function ArvoreTarefas({
   servicos,
   voltar,
   vazio = "Esta empresa ainda não tem serviço contratado nem demanda aberta. Contrate um serviço ou abra uma demanda avulsa.",
+  acoes,
 }: {
+  /** Presente só para o admin: liga as ações em lote e a exclusão por demanda. */
+  acoes?: { companyId: string; responsaveis: Array<{ id: string; name: string }> };
   servicos: ServiceNode[];
   /** Caminho para a tela de atividade devolver o usuário a esta aba. */
   voltar: string;
@@ -75,6 +79,19 @@ export function ArvoreTarefas({
           </div>
           {servico.recurrence && <p className="mt-0.5 text-xs text-slate-500">{servico.recurrence}</p>}
 
+          {acoes && servico.accounts.some((conta) => conta.label) && servico.open > 0 && (
+            <AcoesSerie
+              companyId={acoes.companyId}
+              serviceId={servico.key}
+              bankAccountId={null}
+              rotulo={`todas as contas de ${servico.name}`}
+              abertas={servico.open}
+              atuais={[...new Set(servico.accounts.flatMap((conta) => conta.responsaveis))]}
+              responsaveis={acoes.responsaveis}
+              permitirExcluir={false}
+            />
+          )}
+
           <div className="mt-3 flex flex-col gap-3">
             {servico.accounts.map((conta) => (
               <div
@@ -83,6 +100,18 @@ export function ArvoreTarefas({
               >
                 {conta.label && (
                   <p className="text-sm font-medium text-slate-800">{conta.label}</p>
+                )}
+
+                {acoes && conta.open > 0 && (
+                  <AcoesSerie
+                    companyId={acoes.companyId}
+                    serviceId={servico.key}
+                    bankAccountId={conta.key}
+                    rotulo={conta.label ?? servico.name}
+                    abertas={conta.open}
+                    atuais={conta.responsaveis}
+                    responsaveis={acoes.responsaveis}
+                  />
                 )}
 
                 {conta.months.length === 0 && (
@@ -118,7 +147,12 @@ export function ArvoreTarefas({
                       </summary>
                       <ul className="ml-5 divide-y divide-slate-100">
                         {mes.tasks.map((task) => (
-                          <LinhaDemanda key={task.id} dados={paraLinha(task)} voltar={voltar} />
+                          <LinhaDemanda
+                            key={task.id}
+                            dados={paraLinha(task)}
+                            voltar={voltar}
+                            podeExcluir={Boolean(acoes)}
+                          />
                         ))}
                       </ul>
                     </details>

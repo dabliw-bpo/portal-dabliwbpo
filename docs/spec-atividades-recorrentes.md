@@ -529,3 +529,20 @@ da tela da atividade. Anexar um documento continua possível, como opcional.
 - **Lista enxuta:** a árvore da empresa mostra só o que está em aberto. As concluídas e canceladas saem
   da lista e voltam pelo link "Mostrar N concluídas ocultas" (`?concluidas=1`), onde também dá para
   reabrir. A fila `/atividades` já abria em "não concluídas".
+
+## Ações em lote e exclusão com motivo (13/10/2026)
+
+Na aba Gestão de Tarefas (só o admin; a tela da equipe da Matriz não mostra):
+
+- **Alterar responsável de todas** — por conta bancária e, no nível do serviço, para todas as contas
+  de uma vez. Troca o responsável das demandas **em aberto** e o responsável padrão do contrato (as
+  próximas nascem com ele). Cada demanda alterada ganha uma linha no histórico.
+- **Excluir toda a tarefa** (por conta) — cancela as demandas em aberto da conta, com motivo, e
+  **desativa o contrato** para o gerador não abrir mais nenhuma. As concluídas ficam. Reativa-se pela
+  tabela "Serviços contratados".
+- **Excluir** (por demanda) — cancela uma demanda com motivo obrigatório (3 a 300 caracteres).
+
+"Excluir" é **cancelar**, não apagar a linha: o gerador diário recriaria qualquer período inexistente,
+então uma demanda apagada voltaria no dia seguinte. Cancelada, ela continua ocupando o período, some
+da lista, guarda o motivo no histórico e volta pelo link "Mostrar … ocultas" (reativar = CANCELADA →
+PENDENTE na tela da atividade).

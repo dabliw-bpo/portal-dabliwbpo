@@ -22,10 +22,10 @@ export function AlternaEncerradas({
       className="text-sm text-slate-500 underline hover:text-slate-900"
     >
       {ativo
-        ? "Ocultar concluídas"
+        ? "Ocultar concluídas e excluídas"
         : total === 1
-          ? "Mostrar 1 concluída oculta"
-          : `Mostrar ${total} concluídas ocultas`}
+          ? "Mostrar 1 concluída ou excluída oculta"
+          : `Mostrar ${total} concluídas e excluídas ocultas`}
     </Link>
   );
 }

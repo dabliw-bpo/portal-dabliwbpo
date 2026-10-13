@@ -66,3 +66,36 @@ export const createDemandSchema = z.object({
   assigneeId: optionalText(100),
   note: optionalText(500),
 });
+
+const motivoSchema = z
+  .string()
+  .trim()
+  .min(3, "Informe o motivo (mínimo de 3 caracteres).")
+  .max(300, "Motivo muito longo (máximo de 300 caracteres).");
+
+/** "-" é a chave da árvore para "sem conta bancária"; vira ausente. */
+const contaOpcional = z.preprocess(
+  (value) => (value === null || value === "" || value === "-" ? undefined : value),
+  z.string().trim().max(100).optional()
+);
+
+export const deleteTaskSchema = z.object({
+  taskId: z.string().min(1),
+  reason: motivoSchema,
+});
+
+export const deleteSeriesSchema = z.object({
+  companyId: z.string().min(1),
+  serviceId: z.string().min(1),
+  bankAccountId: contaOpcional,
+  reason: motivoSchema,
+});
+
+export const reassignSchema = z.object({
+  companyId: z.string().min(1),
+  serviceId: z.string().min(1),
+  /** Ausente = todas as contas do serviço. */
+  bankAccountId: contaOpcional,
+  /** Vazio = sem responsável. */
+  assigneeId: optionalText(100),
+});
