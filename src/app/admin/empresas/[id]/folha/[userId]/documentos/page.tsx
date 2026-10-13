@@ -12,9 +12,17 @@ export default async function ColaboradorDocumentosPage({
   const { id, userId } = await params;
   const { company, user } = await loadCollaborator(id, userId);
 
-  // Payslips and vacation papers have their own tabs; everything else lands here.
+  // Payslips, vacation papers and payment receipts have their own tabs;
+  // everything else lands here. A receipt's PDF is stored as type OTHER, so the
+  // type filter alone lets it in — the link to its PaymentReceipt is what
+  // tells it apart. Without this the receipts showed up in two places.
   const documents = await prisma.document.findMany({
-    where: { ownerUserId: userId, taskId: null, type: { in: ["CONTRACT", "OTHER"] } },
+    where: {
+      ownerUserId: userId,
+      taskId: null,
+      type: { in: ["CONTRACT", "OTHER"] },
+      paymentReceipt: null,
+    },
     orderBy: { createdAt: "desc" },
     include: { signature: { select: { signedAt: true } } },
   });
