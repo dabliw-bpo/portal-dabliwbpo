@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { homePathForRole } from "@/lib/authz";
-import { PortalNav } from "@/components/layout/portal-nav";
+import { ShellInterno } from "@/components/layout/shell-interno";
 
 export default async function AdminLayout({
   children,
@@ -17,16 +17,15 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <PortalNav
-        title="Admin"
-        userName={session?.user?.name ?? ""}
-        links={[
-          { href: "/admin", label: "Painel", exact: true },
-          { href: "/admin/empresas", label: "Empresas" },
-        ]}
-      />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>
-    </div>
+    <ShellInterno
+      title="Admin"
+      userName={session?.user?.name ?? ""}
+      links={[
+        { href: "/admin", label: "Painel", exact: true },
+        { href: "/admin/empresas", label: "Empresas" },
+      ]}
+    >
+      {children}
+    </ShellInterno>
   );
 }

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { homePathForRole, isInternalRole } from "@/lib/authz";
 import { isHeadquartersStaff } from "@/lib/tasks/scope";
-import { PortalNav } from "@/components/layout/portal-nav";
+import { ShellInterno } from "@/components/layout/shell-interno";
 
 /**
  * Área da equipe interna do BPO. Diferente de `/admin`, que é exclusiva do
@@ -52,22 +52,23 @@ export default async function AtividadesLayout({
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <PortalNav
-        title={isCollaborator ? "Minhas atividades" : "Operação"}
-        userName={session.user.name ?? ""}
-        links={links}
-      />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        {permitido ? (
-          children
-        ) : (
-          <div role="alert" className="max-w-xl rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Seu cadastro não está na Matriz, e o acesso às atividades e às empresas é da equipe
-            cadastrada nela. Peça a um administrador para ajustar o seu cadastro.
-          </div>
-        )}
-      </main>
-    </div>
+    <ShellInterno
+      title={isCollaborator ? "Minhas atividades" : "Operação"}
+      userName={session.user.name ?? ""}
+      links={links}
+      larguraMaxima="max-w-6xl"
+    >
+      {permitido ? (
+        children
+      ) : (
+        <div
+          role="alert"
+          className="max-w-xl rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        >
+          Seu cadastro não está na Matriz, e o acesso às atividades e às empresas é da equipe
+          cadastrada nela. Peça a um administrador para ajustar o seu cadastro.
+        </div>
+      )}
+    </ShellInterno>
   );
 }

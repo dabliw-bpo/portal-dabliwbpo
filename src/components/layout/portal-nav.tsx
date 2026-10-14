@@ -10,6 +10,7 @@ export function PortalNav({
   avatarUrl = null,
   brand = null,
   links,
+  menuLateralFixo = false,
 }: {
   title: string;
   userName: string;
@@ -17,6 +18,11 @@ export function PortalNav({
   /** The signed-in user's own company, shown in place of the DABLIW mark. */
   brand?: { name: string; logoUrl: string | null } | null;
   links: NavLinkItem[];
+  /**
+   * Quando a página tem o menu lateral fixo (áreas internas), o botão da
+   * gaveta só aparece no celular: de tela média para cima o menu já está à vista.
+   */
+  menuLateralFixo?: boolean;
 }) {
   // O desfoque fica numa camada ::before, e não no próprio header: um
   // backdrop-filter no header viraria o contêiner da gaveta (position: fixed)
@@ -25,14 +31,16 @@ export function PortalNav({
     <header className="border-b border-slate-200 bg-white print:hidden portal:sticky portal:top-0 portal:z-30 portal:border-fio portal:bg-transparent portal:before:absolute portal:before:inset-0 portal:before:-z-10 portal:before:bg-breu/85 portal:before:backdrop-blur-xl">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 portal:gap-4 portal:px-5 portal:py-3.5">
         <div className="flex items-center gap-3 portal:min-w-0">
-          <NavDrawer
-            title={title}
-            links={links}
-            signOutAction={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}
-          />
+          <div className={menuLateralFixo ? "md:hidden" : undefined}>
+            <NavDrawer
+              title={title}
+              links={links}
+              signOutAction={async () => {
+                "use server";
+                await signOut({ redirectTo: "/login" });
+              }}
+            />
+          </div>
           {brand?.logoUrl ? (
             // As logos são feitas para fundo branco; no portal escuro ganham
             // uma plaquinha marfim em vez de virar um retângulo branco solto.
