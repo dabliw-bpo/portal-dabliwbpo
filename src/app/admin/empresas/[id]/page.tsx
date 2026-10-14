@@ -4,13 +4,20 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buttonPrimary } from "@/components/ui/styles";
 import { getAvatarUrl } from "@/lib/avatar";
+import { loadCompanyAlerts } from "@/lib/company-alerts";
+import {
+  PendenciasEmpresa,
+  parseFiltroPendencias,
+} from "@/components/companies/pendencias-empresa";
 import { UsuariosTable } from "@/components/users/usuarios-table";
 import { CompanyTabs } from "./company-tabs";
 
 export default async function AdminEmpresaDetalhePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const session = await auth();
   if (!session?.user) {
@@ -18,10 +25,14 @@ export default async function AdminEmpresaDetalhePage({
   }
 
   const { id } = await params;
-  const company = await prisma.company.findUnique({
-    where: { id },
-    include: { users: { orderBy: { name: "asc" } } },
-  });
+  const filtro = parseFiltroPendencias((await searchParams).filtro);
+  const [company, [alerts]] = await Promise.all([
+    prisma.company.findUnique({
+      where: { id },
+      include: { users: { orderBy: { name: "asc" } } },
+    }),
+    loadCompanyAlerts(id),
+  ]);
 
   if (!company) {
     notFound();
@@ -46,6 +57,8 @@ export default async function AdminEmpresaDetalhePage({
       </div>
 
       <CompanyTabs companyId={id} active="pessoas" />
+
+      {alerts && <PendenciasEmpresa alerts={alerts} filtro={filtro} />}
 
       <UsuariosTable
         users={rows}

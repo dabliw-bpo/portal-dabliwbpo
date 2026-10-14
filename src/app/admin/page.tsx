@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { listPendingWork, loadDashboardStats } from "@/lib/pending";
+import { loadDashboardStats } from "@/lib/pending";
+import { loadCompanyAlerts } from "@/lib/company-alerts";
 import { listMonthBirthdays, todayInBrazil } from "@/lib/birthdays";
-import { APP_TIME_ZONE, formatVacationPeriod } from "@/lib/format";
+import { APP_TIME_ZONE } from "@/lib/format";
 import { ResendAllButton } from "@/components/documents/resend-all-button";
+import { PainelEmpresas } from "@/components/dashboard/painel-empresas";
 
 // O reenvio em lote lê arquivos e envia anexos; precisa de mais que o padrão.
 export const maxDuration = 60;
@@ -99,8 +101,13 @@ const MONTH_NAMES = [
 
 export default async function AdminPage() {
   const session = await auth();
-  const { vacations, documents } = await listPendingWork();
-  const [birthdays, stats] = await Promise.all([listMonthBirthdays(), loadDashboardStats()]);
+  const [alerts, birthdays, stats] = await Promise.all([
+    loadCompanyAlerts(),
+    listMonthBirthdays(),
+    loadDashboardStats(),
+  ]);
+  const overdueTasks = alerts.reduce((sum, company) => sum + company.overdueTasks, 0);
+  const pendingDocuments = alerts.reduce((sum, company) => sum + company.documents.length, 0);
   const { month, day } = todayInBrazil();
 
   const firstName = session?.user?.name?.trim().split(/\s+/)[0] ?? "";
@@ -117,70 +124,27 @@ export default async function AdminPage() {
       <h1 className="text-lg font-semibold text-slate-900">Olá, {firstName}</h1>
       <p className="mt-1 text-sm text-slate-500 first-letter:uppercase">{today}</p>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile label="Empresas" value={stats.companies} href="/admin/empresas" />
         <StatTile label="Pessoas ativas" value={stats.activePeople} />
         <StatTile label="Aguardando ação" value={stats.pending} />
+        <StatTile label="Tarefas atrasadas" value={overdueTasks} />
       </div>
 
       <div className="mt-6 flex flex-col gap-6">
-        <SectionCard
-          title="Férias aguardando revisão"
-          count={vacations.length}
-          needsAction
-          emptyMessage="Nenhuma solicitação de férias pendente."
-        >
-          {vacations.map((request) => (
-            <li
-              key={request.id}
-              className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-            >
-              <div className="text-sm">
-                <p className="font-medium text-slate-900">{request.collaborator.name}</p>
-                <p className="text-slate-600">
-                  {request.collaborator.company?.name ?? "Sem empresa"} ·{" "}
-                  {formatVacationPeriod(request)}
-                </p>
+        <section aria-labelledby="painel-empresas">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <h2 id="painel-empresas" className="text-sm font-semibold text-slate-900">
+              Pendências por empresa
+            </h2>
+            {pendingDocuments > 0 && (
+              <div className="ml-auto">
+                <ResendAllButton />
               </div>
-              <Link
-                href={`/admin/ferias/${request.id}?returnTo=${encodeURIComponent("/admin")}`}
-                className="text-sm text-slate-900 underline hover:text-slate-700"
-              >
-                Revisar
-              </Link>
-            </li>
-          ))}
-        </SectionCard>
-
-        <SectionCard
-          title="Documentos aguardando assinatura"
-          count={documents.length}
-          needsAction
-          action={documents.length > 0 ? <ResendAllButton /> : null}
-          emptyMessage="Nenhum documento pendente de assinatura."
-        >
-          {documents.map((document) => (
-            <li
-              key={document.id}
-              className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-            >
-              <div className="text-sm">
-                <p className="font-medium text-slate-900">{document.title}</p>
-                <p className="text-slate-600">
-                  {document.owner.company?.name ?? "Sem empresa"} · aguardando{" "}
-                  {document.owner.name} desde{" "}
-                  {document.createdAt.toLocaleDateString("pt-BR")}
-                </p>
-              </div>
-              <Link
-                href={`/admin/documentos/${document.id}`}
-                className="text-sm text-slate-900 underline hover:text-slate-700"
-              >
-                Abrir
-              </Link>
-            </li>
-          ))}
-        </SectionCard>
+            )}
+          </div>
+          <PainelEmpresas empresas={alerts} />
+        </section>
 
         <SectionCard
           title={`Aniversariantes de ${MONTH_NAMES[month - 1]}`}

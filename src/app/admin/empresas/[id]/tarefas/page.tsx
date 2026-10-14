@@ -4,7 +4,12 @@ import { APP_TIME_ZONE, formatDateOnly } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { describeRecurrence } from "@/lib/tasks/recurrence";
 import { listAssignableUsers } from "@/lib/tasks/assignees";
-import { JANELA_HISTORICO_DIAS, countEncerradas, loadCompanyTasks } from "@/lib/tasks/company-tasks";
+import {
+  JANELA_HISTORICO_DIAS,
+  countEncerradas,
+  loadCompanyTasks,
+  parseRecorte,
+} from "@/lib/tasks/company-tasks";
 import { buildCompanyTree } from "@/lib/tasks/tree";
 import { ContractsPanel } from "@/components/services/contracts-panel";
 import { AcoesEmpresa } from "@/components/tasks/acoes-empresa";
@@ -20,7 +25,9 @@ export default async function EmpresaTarefasPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
-  const incluirEncerradas = (await searchParams).concluidas === "1";
+  const query = await searchParams;
+  const incluirEncerradas = query.concluidas === "1";
+  const recorte = parseRecorte(query.filtro);
   const agora = new Date();
 
   const [company, services, assignees, tasks, encerradas] = await Promise.all([
@@ -45,7 +52,7 @@ export default async function EmpresaTarefasPage({
     }),
     listAssignableUsers(),
     // A rota é só do ADMIN (layout e proxy), então o recorte de papel é vazio.
-    loadCompanyTasks(id, {}, agora, { incluirEncerradas }),
+    loadCompanyTasks(id, {}, agora, { incluirEncerradas, recorte }),
     countEncerradas(id, {}),
   ]);
 
@@ -93,11 +100,23 @@ export default async function EmpresaTarefasPage({
                 </>
               )}
             </p>
-            <AlternaEncerradas
-              ativo={incluirEncerradas}
-              total={encerradas}
-              href={`/admin/empresas/${id}/tarefas`}
-            />
+            {recorte ? (
+              <p className="text-sm text-slate-600">
+                Mostrando só as demandas {recorte === "vencidas" ? "vencidas" : "que vencem hoje"}.{" "}
+                <Link
+                  href={`/admin/empresas/${id}/tarefas`}
+                  className="underline hover:text-slate-900"
+                >
+                  Ver todas
+                </Link>
+              </p>
+            ) : (
+              <AlternaEncerradas
+                ativo={incluirEncerradas}
+                total={encerradas}
+                href={`/admin/empresas/${id}/tarefas`}
+              />
+            )}
           </div>
           <AcoesEmpresa
             companyId={id}
