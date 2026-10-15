@@ -361,3 +361,49 @@ export async function sendTaskCompletedEmail(input: TaskCompletedEmailInput): Pr
     return { ok: false, error: (error as Error).message };
   }
 }
+
+/**
+ * Lembrete mensal para o colaborador anexar o controle de ponto do mês que
+ * acabou de fechar. O texto segue o modelo aprovado pelo cliente: não
+ * personalizar o tratamento ("Prezados(as)") nem acrescentar avisos.
+ */
+export async function sendTimeClockReminderEmail({
+  to,
+  monthLabel,
+  url,
+}: {
+  to: string;
+  /** Mês a que o ponto se refere, por extenso: "setembro de 2026". */
+  monthLabel: string;
+  url: string;
+}): Promise<SendResult> {
+  const client = getTransporter();
+  if (!client) {
+    const error = "GMAIL_USER/GMAIL_APP_PASSWORD não configurados.";
+    console.warn(`[email] ${error} Lembrete de ponto não enviado.`);
+    return { ok: false, error };
+  }
+
+  const body = `O controle de ponto ref. ao mês de ${monthLabel} já está disponível para anexar. Por gentileza, finalize o preenchimento e anexe o arquivo no link abaixo.`;
+
+  try {
+    await client.sendMail({
+      from: `"DABLIW BPO" <${process.env.GMAIL_USER}>`,
+      to,
+      encoding: "base64",
+      subject: `Controle de ponto de ${monthLabel}: disponível para anexar`,
+      text: ["Prezados(as),", body, url, "Atenciosamente,\nDABLIW BPO"].join("\n\n"),
+      html: [
+        `<p>Prezados(as),</p>`,
+        `<p>${escapeHtml(body)}</p>`,
+        `<p><a href="${escapeHtml(url)}" style="display:inline-block;background:#0f172a;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none">Anexar o controle de ponto</a></p>`,
+        `<p style="color:#64748b;font-size:13px">Se o botão não abrir, copie este endereço no navegador:<br>${escapeHtml(url)}</p>`,
+        `<p>Atenciosamente,<br>DABLIW BPO</p>`,
+      ].join(""),
+    });
+    return { ok: true };
+  } catch (error) {
+    console.error("[email] Falha ao enviar lembrete de ponto:", error);
+    return { ok: false, error: (error as Error).message };
+  }
+}

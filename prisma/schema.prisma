@@ -159,6 +159,7 @@ model User {
   paymentReceipts       PaymentReceipt[]    @relation("ReceiptCollaborator")
   timeClockFiles        TimeClockFile[]     @relation("TimeClockCollaborator")
   uploadedTimeClockFiles TimeClockFile[]    @relation("TimeClockUploader")
+  timeClockReminders    TimeClockReminder[]
 
   @@index([companyId])
 }
@@ -576,6 +577,21 @@ model TimeClockFile {
 
   @@index([collaboratorUserId, referenceMonth])
   @@index([companyId, referenceMonth])
+}
+
+/// Lembrete mensal do ponto já enviado a cada colaborador. A unique faz do
+/// registro uma reserva: reexecutar o agendamento não manda o mesmo aviso duas
+/// vezes, e o horário de envio fica guardado.
+model TimeClockReminder {
+  id                 String   @id @default(cuid())
+  collaboratorUserId String
+  /// Mês a que o ponto se refere ("AAAA-MM"), não o mês do envio.
+  referenceMonth     String
+  sentAt             DateTime @default(now())
+
+  collaborator User @relation(fields: [collaboratorUserId], references: [id], onDelete: Cascade)
+
+  @@unique([collaboratorUserId, referenceMonth])
 }
 
 model GenerationRun {

@@ -10,7 +10,11 @@ import { Sobrelinha } from "@/components/portal/sobrelinha";
  * enviou, mês a mês. O que ele envia aparece para o BPO na aba Controle de
  * ponto do cadastro dele.
  */
-export default async function PortalColaboradorPontoPage() {
+export default async function PortalColaboradorPontoPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await auth();
   if (!session?.user) {
     redirect("/login");
@@ -21,6 +25,11 @@ export default async function PortalColaboradorPontoPage() {
     viewer: { id: session.user.id, role: session.user.role },
   });
 
+  // O lembrete mensal leva ?mes=AAAA-MM: o formulário já abre no mês citado.
+  const pedido = (await searchParams).mes;
+  const mesPedido = Array.isArray(pedido) ? pedido[0] : pedido;
+  const mesPadrao = opcoes.some((opcao) => opcao.chave === mesPedido) ? mesPedido! : mesAtual;
+
   return (
     <div>
       <Sobrelinha>Fotos e arquivos do seu ponto</Sobrelinha>
@@ -29,7 +38,7 @@ export default async function PortalColaboradorPontoPage() {
       </h1>
 
       <div className="mt-10">
-        <PontoUpload meses={opcoes} mesPadrao={mesAtual} />
+        <PontoUpload meses={opcoes} mesPadrao={mesPadrao} />
       </div>
 
       <PontoEnvios arquivos={arquivos} meses={meses} />

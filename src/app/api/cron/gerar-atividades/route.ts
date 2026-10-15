@@ -1,19 +1,9 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { generateTasks } from "@/lib/tasks/generate";
 
 // A geração de uma carteira grande passa dos 10 s padrão na primeira rodada.
 export const maxDuration = 300;
-
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  // Sem segredo configurado a rota fica fechada para todo mundo, em vez de aberta.
-  if (!secret) return false;
-
-  const received = Buffer.from(request.headers.get("authorization") ?? "");
-  const expected = Buffer.from(`Bearer ${secret}`);
-  return received.length === expected.length && timingSafeEqual(received, expected);
-}
 
 /**
  * Geração diária das atividades recorrentes (vercel.json → crons). A Vercel
@@ -21,7 +11,7 @@ function authorized(request: Request): boolean {
  * de novo no mesmo dia não duplica nada (unique contrato + período).
  */
 export async function GET(request: Request) {
-  if (!authorized(request)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   }
 
