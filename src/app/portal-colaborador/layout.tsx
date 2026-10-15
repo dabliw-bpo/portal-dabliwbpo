@@ -38,6 +38,7 @@ export default async function PortalColaboradorLayout({
           { href: "/portal-colaborador", label: "Início", exact: true },
           { href: "/portal-colaborador/documentos", label: "Meus documentos" },
           { href: "/portal-colaborador/ferias", label: "Férias" },
+          { href: "/portal-colaborador/ponto", label: "Controle de ponto" },
           { href: "/portal-colaborador/perfil", label: "Meu perfil" },
         ]}
       />

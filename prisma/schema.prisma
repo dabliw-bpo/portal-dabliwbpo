@@ -99,6 +99,7 @@ model Company {
   serviceContracts     ServiceContract[]
   tasks                Task[]
   paymentReceipts      PaymentReceipt[]
+  timeClockFiles       TimeClockFile[]
 }
 
 model BankAccount {
@@ -156,6 +157,8 @@ model User {
   checkedChecklistItems TaskChecklistItem[]
   taskHistoryEntries    TaskHistory[]
   paymentReceipts       PaymentReceipt[]    @relation("ReceiptCollaborator")
+  timeClockFiles        TimeClockFile[]     @relation("TimeClockCollaborator")
+  uploadedTimeClockFiles TimeClockFile[]    @relation("TimeClockUploader")
 
   @@index([companyId])
 }
@@ -549,6 +552,30 @@ model TaskHistory {
   author User @relation(fields: [authorId], references: [id])
 
   @@index([taskId])
+}
+
+/// Comprovantes de ponto enviados no mês: fotos do cartão ou da folha de ponto,
+/// PDFs. É o controle de recebimento — o arquivo em si não é interpretado.
+model TimeClockFile {
+  id                 String   @id @default(cuid())
+  companyId          String
+  collaboratorUserId String
+  /// Competência (YYYY-MM) a que o comprovante se refere; pode diferir do mês
+  /// do envio quando o colaborador manda o de um mês anterior.
+  referenceMonth     String
+  filePath           String
+  fileName           String
+  mimeType           String
+  fileSize           Int
+  uploadedByUserId   String
+  createdAt          DateTime @default(now())
+
+  company      Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  collaborator User    @relation("TimeClockCollaborator", fields: [collaboratorUserId], references: [id])
+  uploadedBy   User    @relation("TimeClockUploader", fields: [uploadedByUserId], references: [id])
+
+  @@index([collaboratorUserId, referenceMonth])
+  @@index([companyId, referenceMonth])
 }
 
 model GenerationRun {

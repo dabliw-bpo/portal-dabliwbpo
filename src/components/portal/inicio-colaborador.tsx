@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   CalendarBlank,
+  Camera,
   FileText,
   ListChecks,
   UserCircle,
@@ -27,6 +28,12 @@ const ATALHOS = [
     Icone: CalendarBlank,
     titulo: "Férias",
     descricao: "Solicitar e acompanhar",
+  },
+  {
+    href: "/portal-colaborador/ponto",
+    Icone: Camera,
+    titulo: "Controle de ponto",
+    descricao: "Enviar fotos e arquivos do mês",
   },
   {
     href: "/portal-colaborador/perfil",
@@ -145,7 +152,11 @@ export function InicioColaborador({
         <nav
           aria-label="Atalhos"
           className={`mt-16 grid gap-px border border-fio bg-fio ${
-            atalhos.length > 3 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"
+            atalhos.length > 4
+              ? "sm:grid-cols-2 lg:grid-cols-5"
+              : atalhos.length > 3
+                ? "sm:grid-cols-2 lg:grid-cols-4"
+                : "sm:grid-cols-3"
           }`}
         >
           {atalhos.map(({ href, Icone, titulo, descricao }) => (

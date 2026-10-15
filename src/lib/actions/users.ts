@@ -225,13 +225,24 @@ export async function deleteUsersAction(
   let deletedCount = 0;
 
   for (const id of ids) {
-    const [ownedDocs, uploadedDocs, signatures, vacationsAsCollaborator, vacationsAsReviewer, user] =
+    const [
+      ownedDocs,
+      uploadedDocs,
+      signatures,
+      vacationsAsCollaborator,
+      vacationsAsReviewer,
+      timeClockFiles,
+      user,
+    ] =
       await Promise.all([
         prisma.document.count({ where: { ownerUserId: id } }),
         prisma.document.count({ where: { uploadedByUserId: id } }),
         prisma.signature.count({ where: { userId: id } }),
         prisma.vacationRequest.count({ where: { collaboratorUserId: id } }),
         prisma.vacationRequest.count({ where: { reviewedByUserId: id } }),
+        prisma.timeClockFile.count({
+          where: { OR: [{ collaboratorUserId: id }, { uploadedByUserId: id }] },
+        }),
         prisma.user.findUnique({ where: { id } }),
       ]);
 
@@ -245,7 +256,12 @@ export async function deleteUsersAction(
     }
 
     const hasRelatedRecords =
-      ownedDocs > 0 || uploadedDocs > 0 || signatures > 0 || vacationsAsCollaborator > 0 || vacationsAsReviewer > 0;
+      ownedDocs > 0 ||
+      uploadedDocs > 0 ||
+      signatures > 0 ||
+      vacationsAsCollaborator > 0 ||
+      vacationsAsReviewer > 0 ||
+      timeClockFiles > 0;
 
     if (hasRelatedRecords) {
       blockedNames.push(user.name);

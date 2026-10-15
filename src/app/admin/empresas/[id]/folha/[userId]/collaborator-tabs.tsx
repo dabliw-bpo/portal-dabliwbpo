@@ -26,7 +26,7 @@ export function CollaboratorTabs({
 }: {
   companyId: string;
   userId: string;
-  active: "cadastro" | "holerites" | "ferias" | "documentos" | "recibos";
+  active: "cadastro" | "holerites" | "ferias" | "documentos" | "recibos" | "ponto";
 }) {
   const base = `/admin/empresas/${companyId}/folha/${userId}`;
   const tabs = [
@@ -35,6 +35,7 @@ export function CollaboratorTabs({
     { key: "ferias", label: "Férias", href: `${base}/ferias` },
     { key: "documentos", label: "Outros documentos", href: `${base}/documentos` },
     { key: "recibos", label: "Recibos de pagamento", href: `${base}/recibos` },
+    { key: "ponto", label: "Controle de ponto", href: `${base}/ponto` },
   ] as const;
 
   return (
