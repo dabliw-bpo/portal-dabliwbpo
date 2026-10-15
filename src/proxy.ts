@@ -26,7 +26,9 @@ export default auth((req) => {
 
   if (!session?.user) {
     const loginUrl = new URL("/login", req.nextUrl.origin);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    // Com a query junto: o lembrete do ponto abre /portal-colaborador/ponto?mes=…
+    // e, sem ela, depois do login o formulário voltaria para o mês atual.
+    loginUrl.searchParams.set("callbackUrl", `${pathname}${req.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
 
